@@ -17,6 +17,7 @@ public class PotionBoard : MonoBehaviour
     public Node[,] potionBoard;
     public GameObject potionBoardGO;
     private List<GameObject> potionsToDestroy = new();
+    public GameObject potionParent;
 
     [SerializeField] private Potion selectedPotion;
     [SerializeField] private bool isProcessingMove;
@@ -78,6 +79,7 @@ public class PotionBoard : MonoBehaviour
                     int randomIndex = Random.Range(0, potionPrefabs.Length);
 
                     GameObject potion = Instantiate(potionPrefabs[randomIndex], position, Quaternion.identity);
+                    potion.transform.SetParent(potionParent.transform);
                     potion.GetComponent<Potion>().SetIndicies(x, y);
                     potionBoard[x, y] = new Node(true, potion);
                     potionsToDestroy.Add(potion);
@@ -85,7 +87,7 @@ public class PotionBoard : MonoBehaviour
             }
         }
 
-        if (CheckBoard())
+        if (CheckBoard(false))
         {
             Debug.Log("We have matches let's re-create the board");
             InitializeBoard();
@@ -107,12 +109,20 @@ public class PotionBoard : MonoBehaviour
     }
 
 
-    public bool CheckBoard()
+    public bool CheckBoard(bool _takeAction)
     {
         Debug.Log("Checking Board");
         bool hasMatched = false;
 
         List<Potion> potionsToRemove = new();
+        
+        foreach(Node nodePotion in potionBoard)
+        {
+            if (nodePotion.potion != null)
+            {
+                nodePotion.potion.GetComponent<Potion>().isMatched = false;
+            }
+        }
 
         for (int x = 0; x < width; x++)
         {
@@ -133,7 +143,7 @@ public class PotionBoard : MonoBehaviour
 
                         if (matchedPotions.connectedPotions.Count >= 3)
                         {
-                            //complex matching...
+                            MatchResult superMatchedPotions = SuperMatch(matchedPotions);
 
                             potionsToRemove.AddRange(matchedPotions.connectedPotions);
 
@@ -147,7 +157,186 @@ public class PotionBoard : MonoBehaviour
             }
         }
 
+        if (_takeAction)
+        {
+            foreach (Potion potionToRemove in potionsToRemove)
+            {
+                potionToRemove.isMatched = false;
+            }
+
+            RemoveAndRefill(potionsToRemove);
+
+            if (CheckBoard(false))
+            {
+                CheckBoard(true);
+            }
+        }
+
         return hasMatched;
+    }
+
+    private void RemoveAndRefill(List<Potion> potionToRemove)
+    {
+        foreach (Potion potion in potionToRemove)
+        {
+            int _xIndex = potion.xIndex;
+            int _yIndex = potion.yIndex;
+
+            Destroy(potion.gameObject);
+
+            potionBoard[_xIndex, _yIndex] = new Node(true, null);
+        }
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (potionBoard[x, y].potion == null)
+                {
+                    Debug.Log("The location X: " + x + " Y: " + y + " is empty, attempting to refill it.");
+                    RefillPotion(x, y);
+                }
+            }
+        }
+    }
+
+    private void RefillPotion(int x, int y)
+    {
+        int yOffset = 1;
+
+        while (y + yOffset < height && potionBoard[x, y + yOffset].potion == null)
+        {
+            Debug.Log("The potion above me is null, but i'm not at the top of the board yet, so add the my yOffset and try again. Current Offset is: " + yOffset + " I'm about to add 1.");
+            yOffset++;
+        }
+
+        // we've either hit the top of the board or we foun a potion
+
+        if (y + yOffset < height && potionBoard[x, y + yOffset].potion != null)
+        {
+            //we've found a potion
+
+            Potion potionAbove = potionBoard[x, y + yOffset].potion.GetComponent<Potion>();
+
+            //Move it to the correct location
+
+            Vector3 targetPos = new Vector3(x - spacingX, y - spacingY, potionAbove.transform.position.z);
+            Debug.Log("I've found a potion when refilling the board and it was in the location: [" + x + "," + (y + yOffset) + "] we have moved it to the location: [" + x + "i" + y + "]");
+            // Move to location
+            potionAbove.MoveToTarget(targetPos);
+            // Update incidices
+            potionAbove.SetIndicies(x, y);
+            // Update out potionBoard
+            potionBoard[x, y] = potionBoard[x, y + yOffset];
+            // Set the location the potion came from to null
+            potionBoard[x, y + yOffset] = new Node(true, null);
+
+        }
+
+        //if we've hit the top of the board without finding a potion
+        if (y + yOffset == height)
+        {
+            Debug.Log("I've reached the top of the board without finding a potion");
+            SpawnPotionAtTop(x);
+        }
+
+    }
+
+    private void SpawnPotionAtTop(int x)
+    {
+        int index = FindIndexOfLowestNull(x);
+        int locationToMoveTo = 8 - index;
+        Debug.Log("About to spawn a potion, ideally i'd like to put it in the index of: " + index);
+        // get a random potion
+        int randomIndex = Random.Range(0, potionPrefabs.Length);
+        GameObject newPotion = Instantiate(potionPrefabs[randomIndex], new Vector2(x - spacingX, height - spacingY), Quaternion.identity);
+        newPotion.transform.SetParent(potionParent.transform);
+        // set indices
+        newPotion.GetComponent<Potion>().SetIndicies(x, index);
+
+        // set it on the potion board
+        potionBoard[x, index] = new Node(true, newPotion);
+        //move it to that location
+        Vector3 targetPosition = new Vector3(newPotion.transform.position.x, newPotion.transform.position.y - locationToMoveTo, newPotion.transform.position.z);
+        newPotion.GetComponent<Potion>().MoveToTarget(targetPosition);
+    }
+
+    private int FindIndexOfLowestNull(int x)
+    {
+        int lowestNull = 99;
+        for (int y = 7; y >= 0; y--)
+        {
+            if (potionBoard[x, y].potion == null)
+            {
+                lowestNull = y;
+            }
+        }
+        return lowestNull;
+    }
+
+    #region Cascading Potions
+
+    #endregion
+
+    private MatchResult SuperMatch(MatchResult _matchedResults)
+    {
+        if (_matchedResults.direction == MatchDirection.Horizontal || _matchedResults.direction == MatchDirection.LongHorizontal)
+        {
+            foreach (Potion pot in _matchedResults.connectedPotions)
+            {
+                List<Potion> extraConnectedPotions = new();
+
+                CheckDirection(pot, new Vector2Int(0, 1), extraConnectedPotions);
+
+                CheckDirection(pot, new Vector2Int(0, -1), extraConnectedPotions);
+
+                if (extraConnectedPotions.Count >= 2)
+                {
+                    Debug.Log("I have a super Horizontal Match");
+                    extraConnectedPotions.AddRange(_matchedResults.connectedPotions);
+
+                    return new MatchResult
+                    {
+                        connectedPotions = extraConnectedPotions,
+                        direction = MatchDirection.Super
+                    };
+                }
+            }
+            return new MatchResult
+            {
+                connectedPotions = _matchedResults.connectedPotions,
+                direction = _matchedResults.direction
+            };
+        }
+        else if (_matchedResults.direction == MatchDirection.Vertical || _matchedResults.direction == MatchDirection.LongVertical)
+        {
+            foreach (Potion pot in _matchedResults.connectedPotions)
+            {
+                List<Potion> extraConnectedPotions = new();
+
+                CheckDirection(pot, new Vector2Int(1, 0), extraConnectedPotions);
+
+                CheckDirection(pot, new Vector2Int(-1, 0), extraConnectedPotions);
+
+                if (extraConnectedPotions.Count >= 2)
+                {
+                    Debug.Log("I have a super Vertical Match");
+                    extraConnectedPotions.AddRange(_matchedResults.connectedPotions);
+
+                    return new MatchResult
+                    {
+                        connectedPotions = extraConnectedPotions,
+                        direction = MatchDirection.Super
+                    };
+                }
+            }
+            return new MatchResult
+            {
+                connectedPotions = _matchedResults.connectedPotions,
+                direction = _matchedResults.direction
+            };
+        }
+        return null;
     }
 
     MatchResult IsConnected(Potion potion)
@@ -320,7 +509,7 @@ public class PotionBoard : MonoBehaviour
     {
         yield return new WaitForSeconds(0.2f);
 
-        bool hasMatched = CheckBoard();
+        bool hasMatched = CheckBoard(true);
 
         if (!hasMatched)
         {
