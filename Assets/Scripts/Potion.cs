@@ -1,5 +1,5 @@
-
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Potion : MonoBehaviour
@@ -33,8 +33,7 @@ public class Potion : MonoBehaviour
     {
         StartCoroutine(MoveCoroutine(_targetPos));
     }
-
-    //MoveCoroutine 
+    //MoveCoroutine
     private IEnumerator MoveCoroutine(Vector2 _targetPos)
     {
         isMoving = true;
@@ -53,6 +52,7 @@ public class Potion : MonoBehaviour
 
             yield return null;
         }
+
         transform.position = _targetPos;
         isMoving = false;
     }
