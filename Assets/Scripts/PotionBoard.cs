@@ -515,6 +515,11 @@ public class PotionBoard : MonoBehaviour
         {
             DoSwap(_currentPotion, _targetPotion);
         }
+        else
+        {
+            GameManager.Instance.ProcessTurn(10, true);
+        }
+
         isProcessingMove = false;
     }
 
@@ -545,5 +550,4 @@ public enum MatchDirection
     Super,
     None
 }
-
 

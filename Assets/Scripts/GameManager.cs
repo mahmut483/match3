@@ -44,7 +44,8 @@ public class GameManager : MonoBehaviour
     public void ProcessTurn(int _pointsToGain, bool _subtractMoves)
     {
         points += _pointsToGain;
-        if(points >= goal)
+
+        if (_subtractMoves)
         {
             moves--;
         }
