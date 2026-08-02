@@ -1,9 +1,8 @@
 using UnityEngine;
 
-public class Node : MonoBehaviour
+public class Node
 {
     public bool isUsable;
-
     public GameObject potion;
 
     public Node(bool _isUsable, GameObject _potion)
@@ -11,5 +10,4 @@ public class Node : MonoBehaviour
         isUsable = _isUsable;
         potion = _potion;
     }
-
 }

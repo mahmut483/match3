@@ -986,19 +986,16 @@ MonoBehaviour:
   spacingX: 0
   spacingY: 0
   potionPrefabs:
-  - {fileID: 1851892327564259573, guid: b306f92029f094643a2a5bf85b0d7030, type: 3}
+  - {fileID: 3595170509169294249, guid: 102215078bf1a4e3ababb888554a1af2, type: 3}
   - {fileID: 5950841720331794117, guid: 2c42dca46194c4d10a76ccf5b06673f8, type: 3}
   - {fileID: 2833861034928168496, guid: 4781cdd799cad4694a01be9e9f6018e0, type: 3}
   - {fileID: 1753609176466578889, guid: 5e9555dbafc0b4411b931bb358a62b53, type: 3}
+  - {fileID: 1851892327564259573, guid: b306f92029f094643a2a5bf85b0d7030, type: 3}
   potionParent: {fileID: 1190611720}
   potionParentGO: {fileID: 0}
   potionToDestroy: []
   isProcessingMove: 0
   selectedPotion: {fileID: 0}
-  destroyParticlesRed: {fileID: 7114066461626933240, guid: 69f7010f3af9a467789da87803ff8c5a, type: 3}
-  destroyParticlesBlue: {fileID: 7114066461626933240, guid: 1551f5396d7454b8092902859a1131d6, type: 3}
-  destroyParticlesGreen: {fileID: 7114066461626933240, guid: 55baf4c092f644bbb949ca8c5e33026e, type: 3}
-  destroyParticlesPurple: {fileID: 7114066461626933240, guid: 41d185d6c273542abb8f182fdfb3d6c4, type: 3}
   arrayLayout:
     rows:
     - row: 000000000000
@@ -1046,7 +1043,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 1024}
+  m_AnchoredPosition: {x: -673, y: 273}
   m_SizeDelta: {x: 386.47, y: 290.38}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1051519481
@@ -1343,8 +1340,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 2, y: -409.09998}
-  m_SizeDelta: {x: 115.9, y: -672.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -1150, y: -100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1399910414
 MonoBehaviour:

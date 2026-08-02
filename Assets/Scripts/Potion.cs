@@ -5,22 +5,18 @@ using UnityEngine;
 public class Potion : MonoBehaviour
 {
 
-    public PotionType potionType;
+    // Değerler
+   public PotionType potionType;
 
-    public int xIndex;
-    public int yIndex;
+   public int xIndex;
+   public int yIndex;
 
-    public bool isMatched;
-    private Vector2 currentPos;
-    private Vector2 targetPos;
+   public bool isMatched;
+   public bool isMoving;
 
-    public bool isMoving;
+   public Vector2 currentPos;
+   public Vector2 targetPos;
 
-    public Potion(int _x, int _y)
-    {
-        xIndex = _x;
-        yIndex = _y;
-    }
 
     public void SetIndicies(int _x, int _y)
     {
@@ -34,33 +30,35 @@ public class Potion : MonoBehaviour
         StartCoroutine(MoveCoroutine(_targetPos));
     }
 
-    //MoveCoroutine 
     private IEnumerator MoveCoroutine(Vector2 _targetPos)
     {
         isMoving = true;
+        float elaspeed = 0f;
         float duration = 0.2f;
+        Vector2 startPos = transform.position;
 
-        Vector2 startPosition = transform.position;
-        float elaspedTime = 0f;
-
-        while (elaspedTime < duration)
+        while (elaspeed < duration)
         {
-            float t = elaspedTime / duration;
+            elaspeed += Time.deltaTime;
 
-            transform.position = Vector2.Lerp(startPosition, _targetPos, t);
+            float t = Mathf.Clamp01(elaspeed / duration);
 
-            elaspedTime += Time.deltaTime;
+            float easadT = 1f - Mathf.Pow(1f - t, 3f);
+            
+            transform.position = Vector2.Lerp(startPos, _targetPos, easadT);
 
             yield return null;
         }
         transform.position = _targetPos;
         isMoving = false;
     }
+    
 }
 
+// PotionType enum
 public enum PotionType
 {
-    Red,
+    Red, 
     Blue,
     Purple,
     Green,

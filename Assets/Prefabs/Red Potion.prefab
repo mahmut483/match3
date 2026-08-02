@@ -31,7 +31,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.073, y: 0.241, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -135,6 +135,8 @@ MonoBehaviour:
   yIndex: 0
   isMatched: 0
   isMoving: 0
+  currentPos: {x: 0, y: 0}
+  targetPos: {x: 0, y: 0}
 --- !u!114 &7462031337022880261
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -152,6 +154,8 @@ MonoBehaviour:
   yIndex: 0
   isMatched: 0
   isMoving: 0
+  currentPos: {x: 0, y: 0}
+  targetPos: {x: 0, y: 0}
 --- !u!61 &-1040902296160928320
 BoxCollider2D:
   m_ObjectHideFlags: 0
