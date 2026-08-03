@@ -137,6 +137,7 @@ public class PotionBoard : MonoBehaviour
     // ardından connectedPotions ile eşleşen potion'ların 3'e eşit veya fazla olup olmadığını kontrol ederiz 
     private bool CheckBoard(bool _takeAction)
     {
+
         bool hasMatched = false;
 
         List<Potion> potionsToRemove = new();
@@ -164,7 +165,7 @@ public class PotionBoard : MonoBehaviour
 
                         if (matchedPotions.connectedPotions.Count >= 3)
                         {
-                            PotionType potionType = potion.potionType;
+                            
                             MatchResult superMatch = SuperMatch(matchedPotions);
 
                             potionsToRemove.AddRange(superMatch.connectedPotions);
@@ -174,7 +175,7 @@ public class PotionBoard : MonoBehaviour
                                 item.isMatched = true;
                             }
                             hasMatched = true;
-                            //Debug.Log("CheckDirection çalıştı! PotionType: " + potionType );
+                            
                         }
                     }
                 }
@@ -188,12 +189,9 @@ public class PotionBoard : MonoBehaviour
                 item.isMatched = false;
             }
 
-            RemoveAndRefill(potionsToRemove);
+            StartCoroutine(RemoveAndRefill(potionsToRemove));
 
-            if (CheckBoard(false))
-            {
-                CheckBoard(true);
-            }
+            
         }
 
         return hasMatched;
@@ -204,9 +202,8 @@ public class PotionBoard : MonoBehaviour
     // Parametre olarak aldığımız listenin tüm elemanlarını destroy ediyoruz 
     // Kaydettiğimiz x ve y indexlerini potionBoard'a kaydediyoruz 
     // Tüm potionBoard'u geziyoruz ve null olan potion board'ları RefillPotion methoduna parametere olarak gönderiyoruz. 
-    private void RemoveAndRefill(List<Potion> potionsToRemove)
+    private IEnumerator RemoveAndRefill(List<Potion> potionsToRemove)
     {
-        
 
         foreach (Potion item in potionsToRemove)
         {
@@ -243,6 +240,13 @@ public class PotionBoard : MonoBehaviour
                 }
             }
         }
+
+        yield return new WaitForSeconds(1.2f);
+
+        if (CheckBoard(false))
+            {
+                CheckBoard(true);
+            }
     }
     
     
@@ -271,7 +275,7 @@ public class PotionBoard : MonoBehaviour
 
             potion.SetIndicies(x, y);
 
-            potion.MoveToTarget(targetPos);
+            potion.MoveToDown(targetPos);
 
             potionBoard[x, y] = potionBoard[x, y + yOffset];
             potionBoard[x, y + yOffset] = new Node(true, null);
@@ -301,7 +305,7 @@ public class PotionBoard : MonoBehaviour
         newPotion.GetComponent<Potion>().SetIndicies(x, index);
         potionBoard[x, index] = new Node(true, newPotion);
         Vector3 targetPos = new Vector3((x - spacingX) / 1.5f, (index - spacingY) / 1.5f, newPotion.transform.position.z);
-        newPotion.GetComponent<Potion>().MoveToTarget(targetPos);
+        newPotion.GetComponent<Potion>().MoveToDown(targetPos);
     }
 
     // FindIndexOfLowestNull: Belirli bir sütundaki en aşağıda bulunan null node'un değerini döndürür
@@ -342,8 +346,8 @@ public class PotionBoard : MonoBehaviour
             {
                 List<Potion> extraConnectedPotion = new();
 
-                CheckDirection(pot, new Vector2Int(1, 0), extraConnectedPotion);
-                CheckDirection(pot, new Vector2Int(-1, 0), extraConnectedPotion);
+                CheckDirection(pot, new Vector2Int(0, 1), extraConnectedPotion);
+                CheckDirection(pot, new Vector2Int(0, -1), extraConnectedPotion);
 
                 if (extraConnectedPotion.Count >= 2)
                 {
@@ -367,8 +371,8 @@ public class PotionBoard : MonoBehaviour
             {
                 List<Potion> extraConnectedPotion = new();
 
-                CheckDirection(pot, new Vector2Int(0, 1), extraConnectedPotion);
-                CheckDirection(pot, new Vector2Int(0, -1), extraConnectedPotion);
+                CheckDirection(pot, new Vector2Int(1, 0), extraConnectedPotion);
+                CheckDirection(pot, new Vector2Int(-1, 0), extraConnectedPotion);
 
                 if (extraConnectedPotion.Count >= 2)
                 {
@@ -555,7 +559,7 @@ public class PotionBoard : MonoBehaviour
     // IEnumerator ProcessMatches:
     private IEnumerator ProcessMatches(Potion _currentPotion, Potion _targePotion)
     {
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(1.2f);
 
         bool hasMatched = CheckBoard(true);
 

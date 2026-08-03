@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using System.Collections;
 
 [CustomPropertyDrawer(typeof(ArrayLayout))]
 public class CustPropertyDrawer : PropertyDrawer
@@ -36,6 +35,6 @@ public class CustPropertyDrawer : PropertyDrawer
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        return 18f * 10;
+        return 18f * 8;
     }
 }

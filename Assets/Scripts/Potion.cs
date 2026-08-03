@@ -17,6 +17,9 @@ public class Potion : MonoBehaviour
    public Vector2 currentPos;
    public Vector2 targetPos;
 
+   private float swapSpeed = 0.2f;
+   private float downSpeed = 1f;
+
 
     public void SetIndicies(int _x, int _y)
     {
@@ -27,14 +30,18 @@ public class Potion : MonoBehaviour
     //MoveToTarget
     public void MoveToTarget(Vector2 _targetPos)
     {
-        StartCoroutine(MoveCoroutine(_targetPos));
+        StartCoroutine(MoveCoroutine(_targetPos, swapSpeed));
     }
 
-    private IEnumerator MoveCoroutine(Vector2 _targetPos)
+    public void MoveToDown(Vector2 _targetPos)
+    {
+        StartCoroutine(MoveCoroutine(_targetPos, downSpeed));
+    }
+
+    private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration)
     {
         isMoving = true;
         float elaspeed = 0f;
-        float duration = 0.2f;
         Vector2 startPos = transform.position;
 
         while (elaspeed < duration)
