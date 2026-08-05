@@ -17,7 +17,7 @@ public class Potion : MonoBehaviour
    public Vector2 currentPos;
    public Vector2 targetPos;
 
-   private float swapSpeed = 0.2f;
+   public float swapSpeed = .5f;
    private float downSpeed = 1f;
 
 

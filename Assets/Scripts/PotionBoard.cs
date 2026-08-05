@@ -7,17 +7,24 @@ public class PotionBoard : MonoBehaviour
 {
     // Değerler 11
     //define the size of the board
-    public int width = 6;
-    public int height = 8;
+    [SerializeField] private int width = 6;
+    [SerializeField] private int height = 8;
     //define some spacing for the board
-    public float spacingX;
-    public float spacingY;
+    [SerializeField] private float spacingX;
+    [SerializeField] private float spacingY;
     //get a reference to our potion prefabs
-    public GameObject[] potionPrefabs;
-    public Node[,] potionBoard;
-    public GameObject potionParent;
-    public GameObject potionParentGO;
-    public List<GameObject> potionToDestroy = new();
+    [SerializeField] private GameObject[] potionPrefabs;
+    [SerializeField] private Node[,] potionBoard;
+    [SerializeField] private GameObject potionParent;
+    [SerializeField] private GameObject potionParentGO;
+    private List<GameObject> potionToDestroy = new();
+
+    private Vector2 superMatchTargetPos;
+
+    public bool isSuperMatch = false;
+    private bool isSlideingSuperMatch = false;
+
+
 
     //get a reference to the collection nodes potionBoard + GO
     
@@ -62,6 +69,8 @@ public class PotionBoard : MonoBehaviour
                 SelectPotions(potion);
             }
         }
+
+        
     }
 
     //InitializeBoard Board oluşturma methodu
@@ -170,6 +179,11 @@ public class PotionBoard : MonoBehaviour
 
                             potionsToRemove.AddRange(superMatch.connectedPotions);
 
+                            if (superMatch.direction == MatchDirection.LongHorizontal || superMatch.direction == MatchDirection.LongVertical || superMatch.direction == MatchDirection.Super)
+                            {
+                                isSuperMatch = true;
+                            }
+
                             foreach (Potion item in superMatch.connectedPotions)
                             {
                                 item.isMatched = true;
@@ -189,8 +203,8 @@ public class PotionBoard : MonoBehaviour
                 item.isMatched = false;
             }
 
-            StartCoroutine(RemoveAndRefill(potionsToRemove));
 
+            StartCoroutine(RemoveAndRefill(potionsToRemove, superMatchTargetPos));
             
         }
 
@@ -202,7 +216,7 @@ public class PotionBoard : MonoBehaviour
     // Parametre olarak aldığımız listenin tüm elemanlarını destroy ediyoruz 
     // Kaydettiğimiz x ve y indexlerini potionBoard'a kaydediyoruz 
     // Tüm potionBoard'u geziyoruz ve null olan potion board'ları RefillPotion methoduna parametere olarak gönderiyoruz. 
-    private IEnumerator RemoveAndRefill(List<Potion> potionsToRemove)
+    private IEnumerator RemoveAndRefill(List<Potion> potionsToRemove, Vector2 _targetPos)
     {
 
         foreach (Potion item in potionsToRemove)
@@ -210,25 +224,33 @@ public class PotionBoard : MonoBehaviour
             int _xIndex = item.xIndex;
             int _yIndex = item.yIndex;
 
-            Destroy(item.gameObject);
-            Debug.Log("CheckDirection çalıştı! PotionType: " + item.potionType);
-            if(item.potionType == PotionType.Red)
+            if (isSuperMatch)
             {
-                Instantiate(destroyParticlesRed, item.transform.position, Quaternion.identity);
-            }else if (item.potionType == PotionType.Blue)
-            {
-                Instantiate(destroyParticlesBlue, item.transform.position, Quaternion.identity);
-            }else if (item.potionType == PotionType.Green)
-            {
-                Instantiate(destroyParticlesGreen, item.transform.position, Quaternion.identity);
-            }else if (item.potionType == PotionType.Purple)
-            {
-                Instantiate(destroyParticlesPurple, item.transform.position, Quaternion.identity);
+                item.MoveToTarget(_targetPos);
+                StartCoroutine(SuperMatchDestroy(item));
             }
-            
+            else
+            {
+                Destroy(item.gameObject);
+                if(item.potionType == PotionType.Red)
+                {
+                    Instantiate(destroyParticlesRed, item.transform.position, Quaternion.identity);
+                }else if (item.potionType == PotionType.Blue)
+                {
+                    Instantiate(destroyParticlesBlue, item.transform.position, Quaternion.identity);
+                }else if (item.potionType == PotionType.Green)
+                {
+                    Instantiate(destroyParticlesGreen, item.transform.position, Quaternion.identity);
+                }else if (item.potionType == PotionType.Purple)
+                {
+                    Instantiate(destroyParticlesPurple, item.transform.position, Quaternion.identity);
+                }
+            }
 
             potionBoard[_xIndex, _yIndex] = new Node(true, null);
         }
+
+        
 
         for (int x = 0; x < width; x++)
         {
@@ -241,12 +263,36 @@ public class PotionBoard : MonoBehaviour
             }
         }
 
-        yield return new WaitForSeconds(1.2f);
+        isSuperMatch = false;
+
+        yield return new WaitForSeconds(1f);
 
         if (CheckBoard(false))
-            {
-                CheckBoard(true);
-            }
+        {
+            CheckBoard(true);
+        }
+    }
+
+    private IEnumerator SuperMatchDestroy(Potion item)
+    {
+        yield return new WaitForSeconds(1);
+            
+        Destroy(item.gameObject);
+        if(item.potionType == PotionType.Red)
+        {
+            Instantiate(destroyParticlesRed, item.transform.position, Quaternion.identity);
+        }else if (item.potionType == PotionType.Blue)
+        {
+            Instantiate(destroyParticlesBlue, item.transform.position, Quaternion.identity);
+        }else if (item.potionType == PotionType.Green)
+        {
+            Instantiate(destroyParticlesGreen, item.transform.position, Quaternion.identity);
+        }else if (item.potionType == PotionType.Purple)
+        {
+            Instantiate(destroyParticlesPurple, item.transform.position, Quaternion.identity);
+        }
+        isSuperMatch = false;
+        isSlideingSuperMatch = false;
     }
     
     
@@ -260,6 +306,8 @@ public class PotionBoard : MonoBehaviour
     // Bir if kontrolü ile Board'un en üstünde isek SpawnPotionAtTop methodunu çağırırız
     private void RefillPotion(int x, int y)
     {
+
+
         int yOffset = 1;
 
         while (y + yOffset < height && potionBoard[x, y + yOffset].potion == null)
@@ -447,7 +495,7 @@ public class PotionBoard : MonoBehaviour
             {
                 connectedPotions = connectedPotions,
                 direction = MatchDirection.LongVertical
-            };
+            }; 
         }
         else
         {
@@ -531,6 +579,8 @@ public class PotionBoard : MonoBehaviour
     {
         if(!IsAdjacent(_currenPotion, _targetPotion)) return;
 
+        superMatchTargetPos = new Vector2(_targetPotion.transform.position.x, _targetPotion.transform.position.y);
+
         DoSwap(_currenPotion, _targetPotion);
 
         isProcessingMove = true;
@@ -541,6 +591,8 @@ public class PotionBoard : MonoBehaviour
     // do swap
     private void DoSwap(Potion _currentPotion, Potion _targetPotion)
     {
+        Vector3 currentPos = _currentPotion.transform.position;
+        Vector3 targetPos = _targetPotion.transform.position;
         GameObject temp = potionBoard[_currentPotion.xIndex, _currentPotion.yIndex].potion;
         potionBoard[_currentPotion.xIndex, _currentPotion.yIndex].potion = potionBoard[_targetPotion.xIndex, _targetPotion.yIndex].potion;
         potionBoard[_targetPotion.xIndex, _targetPotion.yIndex].potion = temp;
@@ -552,14 +604,14 @@ public class PotionBoard : MonoBehaviour
         _targetPotion.xIndex = tempXIndex;
         _targetPotion.yIndex = tempYIndex;
 
-        _currentPotion.MoveToTarget(potionBoard[_targetPotion.xIndex, _targetPotion.yIndex].potion.transform.position);
-        _targetPotion.MoveToTarget(potionBoard[_currentPotion.xIndex, _currentPotion.yIndex].potion.transform.position);
+        _currentPotion.MoveToTarget(targetPos);
+        _targetPotion.MoveToTarget(currentPos);
     }
 
     // IEnumerator ProcessMatches:
     private IEnumerator ProcessMatches(Potion _currentPotion, Potion _targePotion)
     {
-        yield return new WaitForSeconds(1.2f);
+        yield return new WaitForSeconds(.6f);
 
         bool hasMatched = CheckBoard(true);
 

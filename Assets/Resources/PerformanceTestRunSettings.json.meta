@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5f3d5da1c596242eb8464e4603a65907
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 278941
+  packageName: Gem Hunter Match - 2D Sample Project
+  packageVersion: 1.6
+  assetPath: Assets/Resources/PerformanceTestRunSettings.json
+  uploadId: 853326

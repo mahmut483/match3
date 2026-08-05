@@ -986,10 +986,10 @@ MonoBehaviour:
   spacingX: 0
   spacingY: 0
   potionPrefabs:
-  - {fileID: 1851892327564259573, guid: b306f92029f094643a2a5bf85b0d7030, type: 3}
-  - {fileID: 5950841720331794117, guid: 2c42dca46194c4d10a76ccf5b06673f8, type: 3}
-  - {fileID: 2833861034928168496, guid: 4781cdd799cad4694a01be9e9f6018e0, type: 3}
-  - {fileID: 1753609176466578889, guid: 5e9555dbafc0b4411b931bb358a62b53, type: 3}
+  - {fileID: 7927807542344970782, guid: bb60bc505e820734584f3d8bd0a16f53, type: 3}
+  - {fileID: 7927807542344970782, guid: 04a81442ef4438841a0074ba8568d5d9, type: 3}
+  - {fileID: 3930743957587144660, guid: f3e47e37930ff8f48b693da87b4025c7, type: 3}
+  - {fileID: 7927807542344970782, guid: 924c8da2c1342cd41a99abdae62388df, type: 3}
   potionParent: {fileID: 1190611720}
   potionParentGO: {fileID: 0}
   potionToDestroy: []
