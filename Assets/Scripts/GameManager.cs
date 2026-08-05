@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -20,6 +21,8 @@ public class GameManager : MonoBehaviour
     public TMP_Text pointsTXT;
     public TMP_Text movesTXT;
     public TMP_Text goalTXT;
+
+    [SerializeField] private GameObject outOfMovesPanel;
 
     private void  Awake()
     {
@@ -65,7 +68,8 @@ public class GameManager : MonoBehaviour
 
             isGameEnded = true;
             backgroundPanel.SetActive(true);
-            losePanel.SetActive(true);
+            outOfMovesPanel.SetActive(true);
+
             return;
         }
     }

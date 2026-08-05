@@ -34,6 +34,8 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private ParticleSystem destroyParticlesBlue;
     [SerializeField] private ParticleSystem destroyParticlesGreen;
     [SerializeField] private ParticleSystem destroyParticlesPurple;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip matchClip, superMatchClip;
     
 
     //layoutArray
@@ -55,6 +57,9 @@ public class PotionBoard : MonoBehaviour
     // Ray ile hangi position'a tıkladığını alırız sonra if kontrollerini yaparız sonra tıkladığımız potion'ı bir referansa kaydederiz.
     private void Update()
     {
+        if(GameManager.Instance.isGameEnded) return;
+        if(isProcessingMove) return;
+        
         if (Pointer.current.press.wasPressedThisFrame)
         {
             Ray ray = Camera.main.ScreenPointToRay(Pointer.current.position.ReadValue());
@@ -62,8 +67,6 @@ public class PotionBoard : MonoBehaviour
 
             if (hit.collider != null && hit.collider.gameObject.GetComponent<Potion>())
             {
-                if(isProcessingMove) return;
-
                 Potion potion = hit.collider.gameObject.GetComponent<Potion>();
 
                 SelectPotions(potion);
@@ -119,6 +122,7 @@ public class PotionBoard : MonoBehaviour
 
         if (CheckBoard(false))
         {
+            isSuperMatch = false;
             InitializeBoard();
         }
     }
@@ -227,6 +231,8 @@ public class PotionBoard : MonoBehaviour
             if (isSuperMatch)
             {
                 item.MoveToTarget(_targetPos);
+                audioSource.clip = superMatchClip;
+                audioSource.Play();
                 StartCoroutine(SuperMatchDestroy(item));
             }
             else
@@ -245,6 +251,8 @@ public class PotionBoard : MonoBehaviour
                 {
                     Instantiate(destroyParticlesPurple, item.transform.position, Quaternion.identity);
                 }
+                audioSource.clip = matchClip;
+                audioSource.Play();
             }
 
             potionBoard[_xIndex, _yIndex] = new Node(true, null);
