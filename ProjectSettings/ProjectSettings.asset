@@ -899,7 +899,7 @@ PlayerSettings:
   cloudProjectId: 073d12b8-2029-4c52-9189-e63fcc784827
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: 2d-game-match3
+  projectName: match3
   organizationId: mahmut4833
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0

@@ -1,7 +1,7 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     public GameObject backgroundPanel; // grey background
     public GameObject victoryPanel;
     public GameObject losePanel;
+    
 
     public int goal; // the amount of points you need to get to to win.
     public int moves; // the number of turns you can take
@@ -23,6 +24,8 @@ public class GameManager : MonoBehaviour
     public TMP_Text goalTXT;
 
     [SerializeField] private GameObject outOfMovesPanel;
+    [SerializeField] private Animator charAnimCtrl;
+    [SerializeField] private GameObject confetti;
 
     private void  Awake()
     {
@@ -38,9 +41,9 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {  
-        pointsTXT.text = "Points: " + points.ToString(); 
-        movesTXT.text = "Moves: " + moves.ToString(); 
-        goalTXT.text = "Goal: " + goal.ToString(); 
+        pointsTXT.text = points.ToString(); 
+        movesTXT.text = moves.ToString(); 
+        goalTXT.text = goal.ToString(); 
     }
 
     public void ProcessTurn(int _pointsToGain, bool _subtractMoves)
@@ -56,16 +59,16 @@ public class GameManager : MonoBehaviour
         {
             //you've won the game
             isGameEnded = true;
-
-            //Display a victory screen
+            charAnimCtrl.SetTrigger("Win");
             backgroundPanel.SetActive(true);
-            victoryPanel.SetActive(true);
+            confetti.SetActive(true);
+            StartCoroutine(WaitForConfetti());
             return;
         }
         if (moves == 0)
         {
             // lose the game
-
+            charAnimCtrl.SetTrigger("Lose");
             isGameEnded = true;
             backgroundPanel.SetActive(true);
             outOfMovesPanel.SetActive(true);
@@ -74,15 +77,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // attached to a button to change scene when winning
-    public void WinGame()
+    private IEnumerator WaitForConfetti()
     {
-        SceneManager.LoadScene(0);
-    }
-
-    // attached to a button to change scene when losing
-    public void LoseGame()
-    {
-        SceneManager.LoadScene(0);
+        yield return new WaitForSeconds(2);
+        victoryPanel.SetActive(true);
     }
 }

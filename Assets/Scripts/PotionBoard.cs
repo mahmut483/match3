@@ -92,7 +92,7 @@ public class PotionBoard : MonoBehaviour
         DestroyPotions();
 
         spacingX = (float)(width - 1) / 2;
-        spacingY = (float)((height) / 2) + 2;
+        spacingY = (float)((height) / 2) + 1;
 
         potionBoard = new Node[width, height];
 
