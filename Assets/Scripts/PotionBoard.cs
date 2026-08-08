@@ -28,6 +28,8 @@ public class PotionBoard : MonoBehaviour
     public bool isSuperMatch = false;
     [SerializeField] private BoardState currentState = BoardState.Initializing;
 
+    private List<GameObject> deactivePotionPool = new();
+
 
 
     //get a reference to the collection nodes potionBoard + GO
@@ -142,6 +144,8 @@ public class PotionBoard : MonoBehaviour
             }
         }
 
+
+
     }
 
     // Mevcut hücrede yatay veya dikey üçlü eşleşme oluşturmayacak
@@ -211,7 +215,9 @@ public class PotionBoard : MonoBehaviour
         {
             foreach (GameObject item in potionToDestroy)
             {
-                Destroy(item);
+                item.SetActive(false);
+                deactivePotionPool.Add(item);
+
             }
             potionToDestroy.Clear();
         }
@@ -327,7 +333,8 @@ public class PotionBoard : MonoBehaviour
             }
             else
             {
-                Destroy(item.gameObject);
+                item.gameObject.SetActive(false);
+                deactivePotionPool.Add(item.gameObject);
                 if(item.potionType == PotionType.Red)
                 {
                     Instantiate(destroyParticlesRed, item.transform.position, Quaternion.identity);
@@ -372,7 +379,8 @@ public class PotionBoard : MonoBehaviour
     {
         yield return new WaitUntil(() => !item.isMoving);
             
-        Destroy(item.gameObject);
+        item.gameObject.SetActive(false);
+        deactivePotionPool.Add(item.gameObject);
         if(item.potionType == PotionType.Red)
         {
             Instantiate(destroyParticlesRed, item.transform.position, Quaternion.identity);
@@ -393,7 +401,7 @@ public class PotionBoard : MonoBehaviour
     {
         foreach (Potion potion in potions)
         {
-            if (potion != null)
+            if (potion != null && potion.gameObject.activeSelf)
             {
                 return false;
             }
@@ -473,10 +481,13 @@ public class PotionBoard : MonoBehaviour
         int index = FindIndexOfLowestNull(x);
         int locationToMoveTo = height - index;
 
-        int randomIndex = Random.Range(0, potionPrefabs.Length);
+        int randomIndex = Random.Range(0, deactivePotionPool.Count);
 
-        GameObject newPotion = Instantiate(potionPrefabs[randomIndex], new Vector2((x - spacingX) / 1.5f, (height - spacingY) / 1.5f), Quaternion.identity);
-        newPotion.transform.SetParent(potionParent.transform);
+        GameObject newPotion = deactivePotionPool[randomIndex];
+        newPotion.transform.position = new Vector2((x - spacingX) / 1.5f, (height - spacingY) / 1.5f);
+
+        newPotion.gameObject.SetActive(true);
+        deactivePotionPool.Remove(newPotion);
         newPotion.GetComponent<Potion>().SetIndicies(x, index);
         potionBoard[x, index] = new Node(true, newPotion);
         Vector3 targetPos = new Vector3((x - spacingX) / 1.5f, (index - spacingY) / 1.5f, newPotion.transform.position.z);
@@ -650,7 +661,7 @@ public class PotionBoard : MonoBehaviour
         int x = pot.xIndex + direction.x;
         int y = pot.yIndex + direction.y;
 
-        while (x >= 0 && x < width && y >= 0 && y < height)
+        while (x >= 0 && x < width && y >= 0 && y < 8)
         {
             if (potionBoard[x, y].isUsable)
             {
@@ -704,6 +715,7 @@ public class PotionBoard : MonoBehaviour
     private void SwapPotion(Potion _currenPotion, Potion _targetPotion)
     {
         if(!IsAdjacent(_currenPotion, _targetPotion)) return;
+        if(_targetPotion.transform.position.y >= 2) return;
 
         superMatchTargetPos = new Vector2(_targetPotion.transform.position.x, _targetPotion.transform.position.y);
 
