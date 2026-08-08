@@ -20,6 +20,9 @@ public class PotionBoard : MonoBehaviour
     private List<GameObject> potionToDestroy = new();
     private readonly List<Potion> currentMatches = new();
 
+    private Vector2 currentMousePosition;
+    private Vector2 firstMousePosition;
+
     private Vector2 superMatchTargetPos;
 
     public bool isSuperMatch = false;
@@ -29,7 +32,8 @@ public class PotionBoard : MonoBehaviour
 
     //get a reference to the collection nodes potionBoard + GO
     
-    [SerializeField] private Potion selectedPotion;
+    [SerializeField] private Potion firstSelectedPotion;
+    [SerializeField] private Potion secondSelectedPotion;
     [SerializeField] private ParticleSystem destroyParticlesRed;
     [SerializeField] private ParticleSystem destroyParticlesBlue;
     [SerializeField] private ParticleSystem destroyParticlesGreen;
@@ -61,7 +65,7 @@ public class PotionBoard : MonoBehaviour
         if(GameManager.Instance.isGameEnded) return;
         if(currentState != BoardState.Idle) return;
         
-        if (Pointer.current.press.wasPressedThisFrame)
+        if (Pointer.current.press.isPressed)
         {
             Ray ray = Camera.main.ScreenPointToRay(Pointer.current.position.ReadValue());
             RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
@@ -70,11 +74,28 @@ public class PotionBoard : MonoBehaviour
             {
                 Potion potion = hit.collider.gameObject.GetComponent<Potion>();
 
-                SelectPotions(potion);
+                if (firstSelectedPotion == null)
+                {
+                    firstSelectedPotion = potion;
+                }
+
+                if (hit.collider.gameObject.GetComponent<Potion>() != firstSelectedPotion)
+                {
+                    secondSelectedPotion = potion;
+                }
+
+                if (firstSelectedPotion != null && secondSelectedPotion != null)
+                {
+                    SwapPotion(firstSelectedPotion, secondSelectedPotion);
+                }
+
             }
         }
-
-        
+        else
+        {
+            firstSelectedPotion = null;
+            secondSelectedPotion = null;
+        }
     }
 
     //InitializeBoard Board oluşturma methodu
@@ -663,18 +684,18 @@ public class PotionBoard : MonoBehaviour
     // else if Başka bir potion'a tıklanırsa SwapPotion methodu çağırılır ve selectedPotion'a null girilir
     private void SelectPotions(Potion _potion)
     {
-        if (selectedPotion == null)
-        {
-            selectedPotion = _potion;
-        }else if (selectedPotion == _potion)
-        {
-            selectedPotion = null;
-        }
-        else if(selectedPotion != _potion)
-        {
-            SwapPotion(selectedPotion, _potion);
-            selectedPotion = null;
-        }
+        // if (selectedPotion == null)
+        // {
+        //     selectedPotion = _potion;
+        // }else if (selectedPotion == _potion)
+        // {
+        //     selectedPotion = null;
+        // }
+        // else if(selectedPotion != _potion)
+        // {
+        //     SwapPotion(selectedPotion, _potion);
+        //     selectedPotion = null;
+        // }
     }
     // SwapPotion: _currentPotion ve _targetPotion adında Potion type'ında iki adet parametre alır
     // ilk başta bir if sorgusu ile currenPotion ve targetPotion'un isAdjacent true olduğunu kontrol ederiz(early exit) 
