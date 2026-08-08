@@ -2197,7 +2197,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PotionBoard
   width: 6
-  height: 20
+  height: 8
   spacingX: 0
   spacingY: 0
   potionPrefabs:
@@ -2208,7 +2208,7 @@ MonoBehaviour:
   potionParent: {fileID: 1190611720}
   potionParentGO: {fileID: 0}
   isSuperMatch: 1
-  currentState: 0
+  isProcessingMove: 0
   selectedPotion: {fileID: 0}
   destroyParticlesRed: {fileID: 7114066461626933240, guid: 69f7010f3af9a467789da87803ff8c5a, type: 3}
   destroyParticlesBlue: {fileID: 7114066461626933240, guid: 1551f5396d7454b8092902859a1131d6, type: 3}
@@ -2219,18 +2219,6 @@ MonoBehaviour:
   superMatchClip: {fileID: 8300000, guid: 7bd6b897eb5ca4b7d88a205c4a51640c, type: 3}
   arrayLayout:
     rows:
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
     - row: 000000000000
     - row: 000000000000
     - row: 000000000000

@@ -4,37 +4,64 @@ using UnityEditor;
 [CustomPropertyDrawer(typeof(ArrayLayout))]
 public class CustPropertyDrawer : PropertyDrawer
 {
+    private const int RowCount = 20;
+    private const int ColumnCount = 6;
+    private const float CellHeight = 18f;
 
-
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    public override void OnGUI(
+        Rect position,
+        SerializedProperty property,
+        GUIContent label)
     {
         EditorGUI.PrefixLabel(position, label);
-        Rect newposition = position;
-        newposition.y += 144f;
-        SerializedProperty data = property.FindPropertyRelative("rows");
-        //data.rows[0][]
-        if (data.arraySize != 8)
-            data.arraySize = 8;
-        for (int j = 0; j < 8; j++)
+
+        Rect newPosition = position;
+
+        // 20 satır × 18 piksel
+        newPosition.y += CellHeight * RowCount;
+        newPosition.height = CellHeight;
+        newPosition.width = position.width / ColumnCount;
+
+        SerializedProperty data =
+            property.FindPropertyRelative("rows");
+
+        if (data.arraySize != RowCount)
         {
-            SerializedProperty row = data.GetArrayElementAtIndex(j).FindPropertyRelative("row");
-            newposition.height = 18f;
-            if (row.arraySize != 6)
-                row.arraySize = 6;
-            newposition.width = position.width / 6;
-            for (int i = 0; i < 6; i++)
+            data.arraySize = RowCount;
+        }
+
+        for (int j = 0; j < RowCount; j++)
+        {
+            SerializedProperty row = data
+                .GetArrayElementAtIndex(j)
+                .FindPropertyRelative("row");
+
+            if (row.arraySize != ColumnCount)
             {
-                EditorGUI.PropertyField(newposition, row.GetArrayElementAtIndex(i), GUIContent.none);
-                newposition.x += newposition.width;
+                row.arraySize = ColumnCount;
             }
 
-            newposition.x = position.x;
-            newposition.y -= 18f;
+            for (int i = 0; i < ColumnCount; i++)
+            {
+                EditorGUI.PropertyField(
+                    newPosition,
+                    row.GetArrayElementAtIndex(i),
+                    GUIContent.none
+                );
+
+                newPosition.x += newPosition.width;
+            }
+
+            newPosition.x = position.x;
+            newPosition.y -= CellHeight;
         }
     }
 
-    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+    public override float GetPropertyHeight(
+        SerializedProperty property,
+        GUIContent label)
     {
-        return 18f * 8;
+        // 20 grid satırı + 1 başlık satırı
+        return CellHeight * (RowCount + 1);
     }
 }

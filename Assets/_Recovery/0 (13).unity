@@ -2207,7 +2207,7 @@ MonoBehaviour:
   - {fileID: 7927807542344970782, guid: 924c8da2c1342cd41a99abdae62388df, type: 3}
   potionParent: {fileID: 1190611720}
   potionParentGO: {fileID: 0}
-  isSuperMatch: 1
+  isSuperMatch: 0
   currentState: 0
   selectedPotion: {fileID: 0}
   destroyParticlesRed: {fileID: 7114066461626933240, guid: 69f7010f3af9a467789da87803ff8c5a, type: 3}
