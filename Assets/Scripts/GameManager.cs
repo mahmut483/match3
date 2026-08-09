@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour
     public int points; // the current points you have earned.
 
     public bool isGameEnded;
+    private bool isPlayedlast3MovesClip = false;
 
     public TMP_Text pointsTXT;
     public TMP_Text movesTXT;
@@ -26,6 +27,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject outOfMovesPanel;
     [SerializeField] private Animator charAnimCtrl;
     [SerializeField] private GameObject confetti;
+
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip last3MoveClip;
+    [SerializeField] private AudioClip winClip;
+    [SerializeField] private AudioClip lostClip;
 
     private void  Awake()
     {
@@ -36,6 +42,7 @@ public class GameManager : MonoBehaviour
     {
         moves = _moves;
         goal = _goal;
+        isPlayedlast3MovesClip = false;
     }
 
     // Update is called once per frame
@@ -63,15 +70,26 @@ public class GameManager : MonoBehaviour
             backgroundPanel.SetActive(true);
             confetti.SetActive(true);
             StartCoroutine(WaitForConfetti());
+            audioSource.clip = winClip;
+            audioSource.Play();
             return;
         }
-        if (moves == 0)
+        if (moves <= 3 && moves != 0 && !isPlayedlast3MovesClip)
+        {
+            charAnimCtrl.SetTrigger("LowMove");
+            audioSource.clip = last3MoveClip;
+            audioSource.Play();
+            isPlayedlast3MovesClip = true;
+        }
+        else if (moves == 0)
         {
             // lose the game
             charAnimCtrl.SetTrigger("Lose");
             isGameEnded = true;
             backgroundPanel.SetActive(true);
             outOfMovesPanel.SetActive(true);
+            audioSource.clip = lostClip;
+            audioSource.Play();
 
             return;
         }

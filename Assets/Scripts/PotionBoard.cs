@@ -18,14 +18,8 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private GameObject potionParent;
     [SerializeField] private GameObject potionParentGO;
     private List<GameObject> potionToDestroy = new();
-    private readonly List<Potion> currentMatches = new();
+    private readonly List<MatchResult> currentMatchGroups = new();
 
-    private Vector2 currentMousePosition;
-    private Vector2 firstMousePosition;
-
-    private Vector2 superMatchTargetPos;
-
-    public bool isSuperMatch = false;
     [SerializeField] private BoardState currentState = BoardState.Initializing;
 
     private List<GameObject> deactivePotionPool = new();
@@ -34,7 +28,8 @@ public class PotionBoard : MonoBehaviour
 
     //get a reference to the collection nodes potionBoard + GO
     
-    [SerializeField] private Potion firstSelectedPotion;
+    private Potion firstSelectedPotion;
+
     [SerializeField] private Potion secondSelectedPotion;
     [SerializeField] private ParticleSystem destroyParticlesRed;
     [SerializeField] private ParticleSystem destroyParticlesBlue;
@@ -79,6 +74,7 @@ public class PotionBoard : MonoBehaviour
                 if (firstSelectedPotion == null)
                 {
                     firstSelectedPotion = potion;
+                    potion.setSelectedVisual(true);
                 }
 
                 if (hit.collider.gameObject.GetComponent<Potion>() != firstSelectedPotion)
@@ -95,6 +91,11 @@ public class PotionBoard : MonoBehaviour
         }
         else
         {
+            if (firstSelectedPotion != null)
+            {
+                firstSelectedPotion.setSelectedVisual(false);
+            }
+
             firstSelectedPotion = null;
             secondSelectedPotion = null;
         }
@@ -232,16 +233,15 @@ public class PotionBoard : MonoBehaviour
     // Potion'Un eşleşmediğinden emin oluruz 
     // IsConnected ile potion'ların sağ sol yukarı aşağısı kontrol edilir
     // ardından connectedPotions ile eşleşen potion'ların 3'e eşit veya fazla olup olmadığını kontrol ederiz 
-    private bool CheckBoard(bool _takeAction)
+    private bool CheckBoard(bool _takeAction, Potion preferredPotion = null)
     {
         bool hasMatched = false;
 
-        List<Potion> potionsToRemove = new();
+        List<Potion> matchedPotionsThisCheck = new();
 
         if (_takeAction)
         {
-            currentMatches.Clear();
-            isSuperMatch = false;
+            currentMatchGroups.Clear();
         }
 
         foreach (Node item in potionBoard)
@@ -263,24 +263,28 @@ public class PotionBoard : MonoBehaviour
                     if (!potion.isMatched)
                     {
 
-                       MatchResult matchedPotions = IsConnected(potion);
+                        MatchResult matchedPotions = IsConnected(potion);
 
                         if (matchedPotions.connectedPotions.Count >= 3)
                         {
-                            
-                            MatchResult superMatch = SuperMatch(matchedPotions);
+                            MatchResult matchGroup = SuperMatch(matchedPotions);
 
-                            potionsToRemove.AddRange(superMatch.connectedPotions);
-
-                            if (_takeAction &&
-                                (superMatch.direction == MatchDirection.LongHorizontal ||
-                                 superMatch.direction == MatchDirection.LongVertical ||
-                                 superMatch.direction == MatchDirection.Super))
+                            if (_takeAction)
                             {
-                                isSuperMatch = true;
+                                if (matchGroup.IsSuperMatch)
+                                {
+                                    matchGroup.targetPosition = ChooseSuperMatchTarget(
+                                        matchGroup,
+                                        preferredPotion
+                                    );
+                                }
+
+                                currentMatchGroups.Add(matchGroup);
                             }
 
-                            foreach (Potion item in superMatch.connectedPotions)
+                            matchedPotionsThisCheck.AddRange(matchGroup.connectedPotions);
+
+                            foreach (Potion item in matchGroup.connectedPotions)
                             {
                                 item.isMatched = true;
                             }
@@ -294,9 +298,7 @@ public class PotionBoard : MonoBehaviour
 
         if (_takeAction)
         {
-            currentMatches.AddRange(potionsToRemove);
-
-            foreach (Potion item in potionsToRemove)
+            foreach (Potion item in matchedPotionsThisCheck)
             {
                 item.isMatched = false;
             }
@@ -305,54 +307,59 @@ public class PotionBoard : MonoBehaviour
         return hasMatched;
     }
 
-    // RemoveAndRefill: İçerisinde Potion type'ında değerler tutan bir list'i parametre olarak alıyoruz.
-    // Parametre olarak aldığımız list foreach ile tüm elemanlarının x ve y index'lerini bir referansa kaydediyoruz
-    // Parametre olarak aldığımız listenin tüm elemanlarını destroy ediyoruz 
-    // Kaydettiğimiz x ve y indexlerini potionBoard'a kaydediyoruz 
-    // Tüm potionBoard'u geziyoruz ve null olan potion board'ları RefillPotion methoduna parametere olarak gönderiyoruz. 
-    private IEnumerator RemoveAndRefill(List<Potion> potionsToRemove, Vector2 _targetPos)
+    private Vector2 ChooseSuperMatchTarget(MatchResult matchGroup, Potion preferredPotion)
     {
-
-        foreach (Potion item in potionsToRemove)
+        if (preferredPotion != null && matchGroup.connectedPotions.Contains(preferredPotion))
         {
-            int _xIndex = item.xIndex;
-            int _yIndex = item.yIndex;
+            return preferredPotion.transform.position;
+        }
 
-            if (isSuperMatch)
+        int randomIndex = Random.Range(0, matchGroup.connectedPotions.Count);
+        return matchGroup.connectedPotions[randomIndex].transform.position;
+    }
+
+    // Her eşleşme grubunu kendi türü ve hedef konumuyla temizler.
+    // Böylece aynı turdaki normal ve süper eşleşmeler birbirine karışmaz.
+    private IEnumerator RemoveAndRefill(List<MatchResult> matchGroups)
+    {
+        List<Potion> potionsToRemove = new();
+
+        foreach (MatchResult matchGroup in matchGroups)
+        {
+            if (matchGroup.IsSuperMatch)
             {
-                if (item.transform.position.x != superMatchTargetPos.x && item.transform.position.y != superMatchTargetPos.y)
-                {
-                    int randomIndex = Random.Range(0, potionsToRemove.Count);
-                    superMatchTargetPos = new Vector2(potionsToRemove[randomIndex].transform.position.x, potionsToRemove[randomIndex].transform.position.y);
-                    _targetPos = superMatchTargetPos;
-                }
-                item.MoveToTarget(_targetPos);
-                StartCoroutine(SuperMatchDestroy(item));
-                audioSource.clip = superMatchClip;
-                audioSource.Play();
+                audioSource.PlayOneShot(superMatchClip);
             }
             else
             {
-                item.gameObject.SetActive(false);
-                deactivePotionPool.Add(item.gameObject);
-                if(item.potionType == PotionType.Red)
-                {
-                    Instantiate(destroyParticlesRed, item.transform.position, Quaternion.identity);
-                }else if (item.potionType == PotionType.Blue)
-                {
-                    Instantiate(destroyParticlesBlue, item.transform.position, Quaternion.identity);
-                }else if (item.potionType == PotionType.Green)
-                {
-                    Instantiate(destroyParticlesGreen, item.transform.position, Quaternion.identity);
-                }else if (item.potionType == PotionType.Purple)
-                {
-                    Instantiate(destroyParticlesPurple, item.transform.position, Quaternion.identity);
-                }
-                audioSource.clip = matchClip;
-                audioSource.Play();
+                audioSource.PlayOneShot(matchClip);
             }
 
-            potionBoard[_xIndex, _yIndex] = new Node(true, null);
+            foreach (Potion item in matchGroup.connectedPotions)
+            {
+                if (item == null || potionsToRemove.Contains(item))
+                {
+                    continue;
+                }
+
+                potionsToRemove.Add(item);
+
+                int xIndex = item.xIndex;
+                int yIndex = item.yIndex;
+
+                potionBoard[xIndex, yIndex] = new Node(true, null);
+
+                if (matchGroup.IsSuperMatch)
+                {
+                    item.MoveToTarget(matchGroup.targetPosition);
+                    StartCoroutine(SuperMatchDestroy(item));
+                }
+                else
+                {
+                    SpawnDestroyParticle(item);
+                    ReturnPotionToPool(item);
+                }
+            }
         }
 
         yield return new WaitUntil(() => AreAllMatchedPotionsDestroyed(potionsToRemove));
@@ -371,16 +378,30 @@ public class PotionBoard : MonoBehaviour
         }
 
         yield return new WaitUntil(() => !IsAnyPotionMoving());
-
-        isSuperMatch = false;
     }
 
     private IEnumerator SuperMatchDestroy(Potion item)
     {
         yield return new WaitUntil(() => !item.isMoving);
-            
+
+        SpawnDestroyParticle(item);
+        ReturnPotionToPool(item);
+    }
+
+    private void ReturnPotionToPool(Potion item)
+    {
+        item.isMatched = false;
+        item.isMoving = false;
         item.gameObject.SetActive(false);
-        deactivePotionPool.Add(item.gameObject);
+
+        if (!deactivePotionPool.Contains(item.gameObject))
+        {
+            deactivePotionPool.Add(item.gameObject);
+        }
+    }
+
+    private void SpawnDestroyParticle(Potion item)
+    {
         if(item.potionType == PotionType.Red)
         {
             Instantiate(destroyParticlesRed, item.transform.position, Quaternion.identity);
@@ -394,7 +415,6 @@ public class PotionBoard : MonoBehaviour
         {
             Instantiate(destroyParticlesPurple, item.transform.position, Quaternion.identity);
         }
-        isSuperMatch = false;
     }
 
     private bool AreAllMatchedPotionsDestroyed(List<Potion> potions)
@@ -717,12 +737,13 @@ public class PotionBoard : MonoBehaviour
         if(!IsAdjacent(_currenPotion, _targetPotion)) return;
         if(_targetPotion.transform.position.y >= 2) return;
 
-        superMatchTargetPos = new Vector2(_targetPotion.transform.position.x, _targetPotion.transform.position.y);
-
+        _currenPotion.setSelectedVisual(false);
         currentState = BoardState.Swapping;
         DoSwap(_currenPotion, _targetPotion);
 
         StartCoroutine(ProcessMatches(_currenPotion, _targetPotion));
+        firstSelectedPotion = null;
+        secondSelectedPotion = null;
     }
 
     // do swap
@@ -754,7 +775,7 @@ public class PotionBoard : MonoBehaviour
         );
 
         currentState = BoardState.Checking;
-        bool hasMatched = CheckBoard(true);
+        bool hasMatched = CheckBoard(true, _currentPotion);
 
         if (!hasMatched)
         {
@@ -774,9 +795,9 @@ public class PotionBoard : MonoBehaviour
         {
             currentState = BoardState.Clearing;
 
-            List<Potion> matchesToRemove = new List<Potion>(currentMatches);
+            List<MatchResult> matchGroups = new List<MatchResult>(currentMatchGroups);
 
-            yield return RemoveAndRefill(matchesToRemove, superMatchTargetPos);
+            yield return RemoveAndRefill(matchGroups);
 
             currentState = BoardState.Checking;
             hasMatched = CheckBoard(true);
@@ -800,6 +821,12 @@ public class MatchResult
 {
     public List<Potion> connectedPotions;
     public MatchDirection direction;
+    public Vector2 targetPosition;
+
+    public bool IsSuperMatch =>
+        direction == MatchDirection.LongHorizontal ||
+        direction == MatchDirection.LongVertical ||
+        direction == MatchDirection.Super;
 }
 
 public enum MatchDirection

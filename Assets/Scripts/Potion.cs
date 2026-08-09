@@ -20,6 +20,26 @@ public class Potion : MonoBehaviour
    public float swapSpeed = .5f;
    private float downSpeed = 1f;
 
+   [SerializeField] private GameObject selectedVisual;
+
+
+    public void setSelectedVisual(bool isPressing)
+    {
+        if (selectedVisual == null)
+        {
+            return;
+        }
+
+        if (isPressing)
+        {
+            selectedVisual.SetActive(true);
+        }
+        else
+        {
+            selectedVisual.SetActive(false);
+        }
+    }
+
 
     public void SetIndicies(int _x, int _y)
     {
@@ -33,14 +53,20 @@ public class Potion : MonoBehaviour
         StartCoroutine(MoveCoroutine(_targetPos, swapSpeed));
     }
 
-    public void MoveToDown(Vector2 _targetPos)
+    public void MoveToDown(Vector2 _targetPos, float startDelay = 0f)
     {
-        StartCoroutine(MoveCoroutine(_targetPos, downSpeed));
+        StartCoroutine(MoveCoroutine(_targetPos, downSpeed, startDelay));
     }
 
-    private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration)
+    private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration, float startDelay = 0f)
     {
         isMoving = true;
+
+        if (startDelay > 0f)
+        {
+            yield return new WaitForSeconds(startDelay);
+        }
+
         float elaspeed = 0f;
         Vector2 startPos = transform.position;
 
