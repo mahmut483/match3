@@ -20,16 +20,12 @@ public class Potion : MonoBehaviour
    public float swapSpeed = .5f;
    private float downSpeed = 1f;
 
-   [SerializeField] private GameObject selectedVisual;
+   [SerializeField] private GameObject selectedVisual; 
 
+    
 
     public void setSelectedVisual(bool isPressing)
     {
-        if (selectedVisual == null)
-        {
-            return;
-        }
-
         if (isPressing)
         {
             selectedVisual.SetActive(true);

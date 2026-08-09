@@ -76,6 +76,7 @@ public class PotionBoard : MonoBehaviour
                     firstSelectedPotion = potion;
                     potion.setSelectedVisual(true);
                 }
+                
 
                 if (hit.collider.gameObject.GetComponent<Potion>() != firstSelectedPotion)
                 {

@@ -42,7 +42,6 @@ public class GameManager : MonoBehaviour
     {
         moves = _moves;
         goal = _goal;
-        isPlayedlast3MovesClip = false;
     }
 
     // Update is called once per frame
