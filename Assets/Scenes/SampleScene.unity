@@ -2208,9 +2208,8 @@ MonoBehaviour:
   - {fileID: 7927807542344970782, guid: 924c8da2c1342cd41a99abdae62388df, type: 3}
   potionParent: {fileID: 1190611720}
   potionParentGO: {fileID: 0}
-  isSuperMatch: 1
   currentState: 0
-  selectedPotion: {fileID: 0}
+  secondSelectedPotion: {fileID: 0}
   destroyParticlesRed: {fileID: 7114066461626933240, guid: 69f7010f3af9a467789da87803ff8c5a, type: 3}
   destroyParticlesBlue: {fileID: 7114066461626933240, guid: 1551f5396d7454b8092902859a1131d6, type: 3}
   destroyParticlesGreen: {fileID: 7114066461626933240, guid: 55baf4c092f644bbb949ca8c5e33026e, type: 3}
@@ -2385,8 +2384,8 @@ MonoBehaviour:
   backgroundPanel: {fileID: 516126082}
   victoryPanel: {fileID: 1530944413}
   losePanel: {fileID: 1945671538}
-  goal: 409
-  moves: 40
+  goal: 42
+  moves: 20
   points: 0
   isGameEnded: 0
   pointsTXT: {fileID: 363502408}
@@ -2395,6 +2394,10 @@ MonoBehaviour:
   outOfMovesPanel: {fileID: 1265628479}
   charAnimCtrl: {fileID: 140967398}
   confetti: {fileID: 1094832598}
+  audioSource: {fileID: 1076215352}
+  last3MoveClip: {fileID: 8300000, guid: c5e2a73ad4706440f93bf05df0b465fe, type: 3}
+  winClip: {fileID: 8300000, guid: 2667a0a008b044e218b63df62e2be749, type: 3}
+  lostClip: {fileID: 8300000, guid: 6cc24d84ab29ccb42b10883a180916bc, type: 3}
 --- !u!82 &1076215352
 AudioSource:
   m_ObjectHideFlags: 0
