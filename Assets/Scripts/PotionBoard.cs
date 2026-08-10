@@ -37,6 +37,7 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private ParticleSystem destroyParticlesPurple;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip matchClip, superMatchClip;
+    [SerializeField, Min(0f)] private float dropStaggerDelay = 0.04f;
     
 
     //layoutArray
@@ -369,11 +370,15 @@ public class PotionBoard : MonoBehaviour
 
         for (int x = 0; x < width; x++)
         {
+            int dropOrder = 0;
+
             for (int y = 0; y < height; y++)
             {
                 if (potionBoard[x, y].potion == null)
                 {
-                    RefillPotion(x, y);
+                    float startDelay = dropOrder * dropStaggerDelay;
+                    RefillPotion(x, y, startDelay);
+                    dropOrder++;
                 }
             }
         }
@@ -460,7 +465,7 @@ public class PotionBoard : MonoBehaviour
     // Sonra potionBoad ile potion'un bulunduğu node'u boş node'a atarız
     // Sonra kayan potion'un eski konumunu null oolarka güncelleriz
     // Bir if kontrolü ile Board'un en üstünde isek SpawnPotionAtTop methodunu çağırırız
-    private void RefillPotion(int x, int y)
+    private void RefillPotion(int x, int y, float startDelay)
     {
         
 
@@ -479,7 +484,7 @@ public class PotionBoard : MonoBehaviour
 
             potion.SetIndicies(x, y);
 
-            potion.MoveToDown(targetPos);
+            potion.MoveToDown(targetPos, startDelay);
 
             potionBoard[x, y] = potionBoard[x, y + yOffset];
             potionBoard[x, y + yOffset] = new Node(true, null);
@@ -487,7 +492,7 @@ public class PotionBoard : MonoBehaviour
 
         if (y + yOffset == height)
         {
-            SpawnPotionAtTop(x);
+            SpawnPotionAtTop(x, startDelay);
         }
     }
 
@@ -497,7 +502,7 @@ public class PotionBoard : MonoBehaviour
     // yeni bir newPotion oluştururuz
     // sonra bu yeni poiton'nu poitonBoard iki boyutlu dizisine kayıt ederiz
     // Sonra Vector3 type'ında bir targetPos oluştururuz ve MoveToTarge methoduna veririz 
-    private void SpawnPotionAtTop(int x)
+    private void SpawnPotionAtTop(int x, float startDelay)
     {
         int index = FindIndexOfLowestNull(x);
         int locationToMoveTo = height - index;
@@ -512,7 +517,7 @@ public class PotionBoard : MonoBehaviour
         newPotion.GetComponent<Potion>().SetIndicies(x, index);
         potionBoard[x, index] = new Node(true, newPotion);
         Vector3 targetPos = new Vector3((x - spacingX) / 1.5f, (index - spacingY) / 1.5f, newPotion.transform.position.z);
-        newPotion.GetComponent<Potion>().MoveToDown(targetPos);
+        newPotion.GetComponent<Potion>().MoveToDown(targetPos, startDelay);
     }
 
     // FindIndexOfLowestNull: Belirli bir sütundaki en aşağıda bulunan null node'un değerini döndürür
