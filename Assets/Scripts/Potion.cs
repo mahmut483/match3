@@ -72,7 +72,7 @@ public class Potion : MonoBehaviour
 
             float t = Mathf.Clamp01(elaspeed / duration);
 
-            float easadT = 1f - Mathf.Pow(1f - t, 3f);
+            float easadT = 1f - Mathf.Pow(1f - t, 9f);
             
             transform.position = Vector2.Lerp(startPos, _targetPos, easadT);
 
