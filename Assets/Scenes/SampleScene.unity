@@ -2235,11 +2235,6 @@ MonoBehaviour:
     - row: 000000000000
     - row: 000000000000
     - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
-    - row: 000000000000
 --- !u!82 &1016066662
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2385,8 +2380,8 @@ MonoBehaviour:
   backgroundPanel: {fileID: 516126082}
   victoryPanel: {fileID: 1530944413}
   losePanel: {fileID: 1945671538}
-  goal: 42
-  moves: 20
+  goal: 1096
+  moves: 710
   points: 0
   isGameEnded: 0
   pointsTXT: {fileID: 363502408}
