@@ -8,7 +8,7 @@ public class PotionBoard : MonoBehaviour
     // Değerler 11
     //define the size of the board
     [SerializeField] private int width = 6;
-    [SerializeField] private int height = 20;
+    [SerializeField] private int height = 15;
     //define some spacing for the board
     [SerializeField] private float spacingX;
     [SerializeField] private float spacingY;
@@ -23,6 +23,7 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private BoardState currentState = BoardState.Initializing;
 
     private List<GameObject> deactivePotionPool = new();
+    private bool waitForPointerRelease = false;
 
 
 
@@ -61,9 +62,17 @@ public class PotionBoard : MonoBehaviour
     private void Update()
     {
         if(GameManager.Instance.isGameEnded) return;
-        if(currentState != BoardState.Idle) return;
+        if(currentState == BoardState.Swapping) return;
+
+        if (waitForPointerRelease)
+        {
+            if (!Pointer.current.press.isPressed)
+            {
+                waitForPointerRelease = false;
+            }
+        }
         
-        if (Pointer.current.press.isPressed)
+        if (Pointer.current.press.isPressed && !waitForPointerRelease)
         {
             Ray ray = Camera.main.ScreenPointToRay(Pointer.current.position.ReadValue());
             RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
@@ -119,7 +128,7 @@ public class PotionBoard : MonoBehaviour
         DestroyPotions();
 
         spacingX = (float)(width - 1) / 2;
-        spacingY = (float)((height) / 2) - 5;
+        spacingY = (float)((height) / 2) - 2;
 
         potionBoard = new Node[width, height];
 
@@ -715,25 +724,6 @@ public class PotionBoard : MonoBehaviour
 
     #region Swaping Potions
 
-    // SelectPotions: potion seçme ve selected'a kayıt etme methodu. Potion type'ında bir parametre alırız
-    // ilk önce selectedPotion'ın null olup olmadığını kontrol eceriz, eğer null ise parametreyi selectedPotion'a atarız
-    // else if selectedPotion'ın içinde aldığımız parametre var ise onu null yaparız 
-    // else if Başka bir potion'a tıklanırsa SwapPotion methodu çağırılır ve selectedPotion'a null girilir
-    private void SelectPotions(Potion _potion)
-    {
-        // if (selectedPotion == null)
-        // {
-        //     selectedPotion = _potion;
-        // }else if (selectedPotion == _potion)
-        // {
-        //     selectedPotion = null;
-        // }
-        // else if(selectedPotion != _potion)
-        // {
-        //     SwapPotion(selectedPotion, _potion);
-        //     selectedPotion = null;
-        // }
-    }
     // SwapPotion: _currentPotion ve _targetPotion adında Potion type'ında iki adet parametre alır
     // ilk başta bir if sorgusu ile currenPotion ve targetPotion'un isAdjacent true olduğunu kontrol ederiz(early exit) 
     // DoSwap method'du çağırılır, currentPotion ve targetPotion parametre olarak verilir
@@ -750,6 +740,7 @@ public class PotionBoard : MonoBehaviour
         StartCoroutine(ProcessMatches(_currenPotion, _targetPotion));
         firstSelectedPotion = null;
         secondSelectedPotion = null;
+        waitForPointerRelease = true;
     }
 
     // do swap

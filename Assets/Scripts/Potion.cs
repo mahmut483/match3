@@ -17,8 +17,8 @@ public class Potion : MonoBehaviour
    public Vector2 currentPos;
    public Vector2 targetPos;
 
-   public float swapSpeed = .5f;
-   private float downSpeed = 1f;
+   private float swapSpeed = .12f;
+   private float downSpeed = .24f;
 
    [SerializeField] private GameObject selectedVisual; 
 
@@ -71,10 +71,8 @@ public class Potion : MonoBehaviour
             elaspeed += Time.deltaTime;
 
             float t = Mathf.Clamp01(elaspeed / duration);
-
-            float easadT = 1f - Mathf.Pow(1f - t, 9f);
             
-            transform.position = Vector2.Lerp(startPos, _targetPos, easadT);
+            transform.position = Vector2.Lerp(startPos, _targetPos, t);
 
             yield return null;
         }

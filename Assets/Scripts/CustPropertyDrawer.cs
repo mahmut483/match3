@@ -4,7 +4,7 @@ using UnityEditor;
 [CustomPropertyDrawer(typeof(ArrayLayout))]
 public class CustPropertyDrawer : PropertyDrawer
 {
-    private const int RowCount = 20;
+    private const int RowCount = 15;
     private const int ColumnCount = 6;
     private const float CellHeight = 18f;
 

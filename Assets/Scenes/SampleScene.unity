@@ -2198,7 +2198,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PotionBoard
   width: 6
-  height: 20
+  height: 15
   spacingX: 0
   spacingY: 0
   potionPrefabs:
@@ -2217,6 +2217,7 @@ MonoBehaviour:
   audioSource: {fileID: 1016066662}
   matchClip: {fileID: 8300000, guid: ffb159a21c8a04135a5616979c828fab, type: 3}
   superMatchClip: {fileID: 8300000, guid: 7bd6b897eb5ca4b7d88a205c4a51640c, type: 3}
+  dropStaggerDelay: 0.04
   arrayLayout:
     rows:
     - row: 000000000000
