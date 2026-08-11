@@ -36,6 +36,7 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private ParticleSystem destroyParticlesBlue;
     [SerializeField] private ParticleSystem destroyParticlesGreen;
     [SerializeField] private ParticleSystem destroyParticlesPurple;
+    [SerializeField] private ParticleSystem explodingPaticles;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip matchClip, superMatchClip;
     [SerializeField, Min(0f)] private float dropStaggerDelay = 0.04f;
@@ -80,6 +81,15 @@ public class PotionBoard : MonoBehaviour
             if (hit.collider != null && hit.collider.gameObject.GetComponent<Potion>())
             {
                 Potion potion = hit.collider.gameObject.GetComponent<Potion>();
+
+                if (potion.potionType == PotionType.Bomb && currentState == BoardState.Idle)
+                {
+                    waitForPointerRelease = true;
+
+                    StartCoroutine(BombExploding(potion));
+
+                    return;
+                }
 
                 if (firstSelectedPotion == null)
                 {
@@ -284,10 +294,7 @@ public class PotionBoard : MonoBehaviour
                             {
                                 if (matchGroup.IsSuperMatch)
                                 {
-                                    matchGroup.targetPosition = ChooseSuperMatchTarget(
-                                        matchGroup,
-                                        preferredPotion
-                                    );
+                                    matchGroup.protectedPotion = ChooseSuperMatchTarget(matchGroup, preferredPotion);
                                 }
 
                                 currentMatchGroups.Add(matchGroup);
@@ -318,15 +325,18 @@ public class PotionBoard : MonoBehaviour
         return hasMatched;
     }
 
-    private Vector2 ChooseSuperMatchTarget(MatchResult matchGroup, Potion preferredPotion)
+    private Potion ChooseSuperMatchTarget(MatchResult matchGroup, Potion preferredPotion)
     {
         if (preferredPotion != null && matchGroup.connectedPotions.Contains(preferredPotion))
         {
-            return preferredPotion.transform.position;
+            return preferredPotion;
         }
 
         int randomIndex = Random.Range(0, matchGroup.connectedPotions.Count);
-        return matchGroup.connectedPotions[randomIndex].transform.position;
+
+        Potion survivePotion = matchGroup.connectedPotions[randomIndex];
+
+        return survivePotion;
     }
 
     // Her eşleşme grubunu kendi türü ve hedef konumuyla temizler.
@@ -348,8 +358,13 @@ public class PotionBoard : MonoBehaviour
 
             foreach (Potion item in matchGroup.connectedPotions)
             {
-                if (item == null || potionsToRemove.Contains(item))
+                if (item == null || potionsToRemove.Contains(item) )
                 {
+                    continue;
+                }
+                if(item == matchGroup.protectedPotion)
+                {
+                    item.Bomb(true);
                     continue;
                 }
 
@@ -362,7 +377,7 @@ public class PotionBoard : MonoBehaviour
 
                 if (matchGroup.IsSuperMatch)
                 {
-                    item.MoveToTarget(matchGroup.targetPosition);
+                    item.MoveToTarget(matchGroup.protectedPotion.transform.position);
                     StartCoroutine(SuperMatchDestroy(item));
                 }
                 else
@@ -395,16 +410,134 @@ public class PotionBoard : MonoBehaviour
         yield return new WaitUntil(() => !IsAnyPotionMoving());
     }
 
+
+   private IEnumerator BombExploding(Potion firstBomb)
+    {
+        currentState = BoardState.Clearing;
+
+        
+
+        Queue<Vector2Int> bombQueue = new();
+        HashSet<Vector2Int> explodedBombs = new();
+
+        bombQueue.Enqueue(
+            new Vector2Int(firstBomb.xIndex, firstBomb.yIndex)
+        );
+
+        while (bombQueue.Count > 0)
+        {
+            Vector2Int bombPosition = bombQueue.Dequeue();
+
+            // Aynı bomba merkezi ikinci kez çalışmasın.
+            if (!explodedBombs.Add(bombPosition))
+            {
+                continue;
+            }
+
+            for (int xIndex = bombPosition.x - 1; xIndex <= bombPosition.x + 1; xIndex++)
+            {
+                for (int yIndex = bombPosition.y - 1; yIndex <= bombPosition.y + 1; yIndex++)
+                {
+                    if (xIndex < 0 || xIndex >= width || yIndex < 0 || yIndex >= 8)
+                    {
+                        continue;
+                    }
+
+                    Node node = potionBoard[xIndex, yIndex];
+
+                    if (node == null || !node.isUsable || node.potion == null)
+                    {
+                        continue;
+                    }
+
+                    Potion potion = node.potion.GetComponent<Potion>();
+
+                    if (potion == null)
+                    {
+                        continue;
+                    }
+
+                    if(xIndex == bombPosition.x && yIndex == bombPosition.y)
+                    {
+                        Instantiate(explodingPaticles, potion.transform.position, Quaternion.identity);
+                    }
+
+                    // Pool metodu potionType'ı eski haline
+                    // getireceği için bunu önce kaydet.
+                    bool isAnotherBomb = potion.potionType == PotionType.Bomb;
+
+                    Vector2Int potionPosition = new Vector2Int(potion.xIndex, potion.yIndex);
+
+                    // Önce board'dan kaldır.
+                    potionBoard[xIndex, yIndex] = new Node(true, null);
+
+                    ReturnPotionToPool(potion);
+
+                    // Başka bombaysa daha sonra patlatılmak
+                    // üzere kuyruğa ekle.
+                    if (isAnotherBomb && !explodedBombs.Contains(potionPosition))
+                    {
+                        bombQueue.Enqueue(potionPosition);
+                    }
+                }
+            }
+        }
+
+        // Bütün bomba zinciri tamamlandıktan sonra
+        // mevcut refill kodun burada yalnızca bir kez çalışmalı.
+        currentState = BoardState.Refilling;
+
+        for (int x = 0; x < width; x++)
+        {
+            int dropOrder = 0;
+
+            for (int y = 0; y < height; y++)
+            {
+                if (potionBoard[x, y].potion == null)
+                {
+                    float startDelay = dropOrder * dropStaggerDelay;
+
+                    RefillPotion(x, y, startDelay);
+                    dropOrder++;
+                }
+            }
+        }
+
+        yield return new WaitUntil(
+            () => !IsAnyPotionMoving()
+        );
+
+        // Buradan sonra cascade kontrol kodun çalışabilir.
+        currentState = BoardState.Checking;
+
+        bool hasMatched = CheckBoard(true);
+
+        while (hasMatched)
+        {
+            currentState = BoardState.Clearing;
+
+            List<MatchResult> matchGroups = new List<MatchResult>(currentMatchGroups);
+
+            yield return RemoveAndRefill(matchGroups);
+
+            currentState = BoardState.Checking;
+            hasMatched = CheckBoard(true);
+        }
+
+        currentState = BoardState.Idle;
+    }
+
     private IEnumerator SuperMatchDestroy(Potion item)
     {
         yield return new WaitUntil(() => !item.isMoving);
 
-        SpawnDestroyParticle(item);
+
         ReturnPotionToPool(item);
     }
 
     private void ReturnPotionToPool(Potion item)
     {
+        item.Bomb(false);
         item.isMatched = false;
         item.isMoving = false;
         item.gameObject.SetActive(false);
@@ -818,7 +951,7 @@ public class MatchResult
 {
     public List<Potion> connectedPotions;
     public MatchDirection direction;
-    public Vector2 targetPosition;
+    public Potion protectedPotion;
 
     public bool IsSuperMatch =>
         direction == MatchDirection.LongHorizontal ||

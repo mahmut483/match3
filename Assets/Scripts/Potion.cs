@@ -7,6 +7,7 @@ public class Potion : MonoBehaviour
 
     // Değerler
    public PotionType potionType;
+   private PotionType originalPotionType;
 
    public int xIndex;
    public int yIndex;
@@ -21,8 +22,12 @@ public class Potion : MonoBehaviour
    private float downSpeed = .24f;
 
    [SerializeField] private GameObject selectedVisual; 
+   [SerializeField] private GameObject bomb; 
 
-    
+    private void Awake()
+    {
+        originalPotionType = potionType;
+    }
 
     public void setSelectedVisual(bool isPressing)
     {
@@ -47,6 +52,20 @@ public class Potion : MonoBehaviour
     public void MoveToTarget(Vector2 _targetPos)
     {
         StartCoroutine(MoveCoroutine(_targetPos, swapSpeed));
+    }
+
+    public void Bomb(bool setActive)
+    {
+        if (setActive)
+        {
+            potionType = PotionType.Bomb;
+        bomb.SetActive(true);
+        }
+        else
+        {
+            potionType = originalPotionType;
+            bomb.SetActive(false);
+        }
     }
 
     public void MoveToDown(Vector2 _targetPos, float startDelay = 0f)
@@ -79,7 +98,6 @@ public class Potion : MonoBehaviour
         transform.position = _targetPos;
         isMoving = false;
     }
-    
 }
 
 // PotionType enum
@@ -89,5 +107,6 @@ public enum PotionType
     Blue,
     Purple,
     Green,
-    White
+    White,
+    Bomb
 }
