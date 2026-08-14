@@ -105,7 +105,7 @@ public enum PotionType
 {
     Red, 
     Blue,
-    Purple,
+    Yellow,
     Green,
     White,
     Bomb

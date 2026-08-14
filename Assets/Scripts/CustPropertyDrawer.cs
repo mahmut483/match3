@@ -5,7 +5,7 @@ using UnityEditor;
 public class CustPropertyDrawer : PropertyDrawer
 {
     private const int RowCount = 15;
-    private const int ColumnCount = 6;
+    private const int ColumnCount = 8;
     private const float CellHeight = 18f;
 
     public override void OnGUI(

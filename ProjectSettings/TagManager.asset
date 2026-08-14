@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 3
+  serializedVersion: 2
   tags: []
   layers:
   - Default
@@ -53,9 +53,3 @@ TagManager:
   - name: VFX
     uniqueID: 666422525
     locked: 0
-  - name: UI_Overlay
-    uniqueID: 1698078771
-    locked: 0
-  m_RenderingLayers:
-  - Default
-  m_MigratedRenderPipelines: []
