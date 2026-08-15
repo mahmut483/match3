@@ -1,0 +1,793 @@
+fileFormatVersion: 2
+guid: e99a24e4f66e643c08f0a5075fa1839b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4320171885256566181
+    second: MissionICO_0
+  - first:
+      213: -377660780132087867
+    second: MissionICO_1
+  - first:
+      213: -1584277383925444442
+    second: MissionICO_2
+  - first:
+      213: 2903916329229520203
+    second: MissionICO_3
+  - first:
+      213: 6002528321238910023
+    second: MissionICO_4
+  - first:
+      213: -1364580289413704121
+    second: MissionICO_5
+  - first:
+      213: -4836848338223244472
+    second: MissionICO_6
+  - first:
+      213: 1241324145663580919
+    second: MissionICO_7
+  - first:
+      213: 9215172238709769061
+    second: MissionICO_8
+  - first:
+      213: -4047907581326992798
+    second: MissionICO_9
+  - first:
+      213: -2134174493471987007
+    second: MissionICO_10
+  - first:
+      213: 1655367289989148621
+    second: MissionICO_11
+  - first:
+      213: -7842672503155751995
+    second: MissionICO_12
+  - first:
+      213: -5290768583639028474
+    second: MissionICO_13
+  - first:
+      213: 1573643808735256955
+    second: MissionICO_14
+  - first:
+      213: 7491634349634589696
+    second: MissionICO_15
+  - first:
+      213: 5241666214990826165
+    second: MissionICO_16
+  - first:
+      213: -8439250119721719503
+    second: MissionICO_17
+  - first:
+      213: -3386516264487624906
+    second: MissionICO_18
+  - first:
+      213: -616723139824669385
+    second: MissionICO_19
+  - first:
+      213: 868804342539255856
+    second: MissionICO_20
+  - first:
+      213: -1065614930941717532
+    second: MissionICO_21
+  - first:
+      213: 2926968709406888400
+    second: MissionICO_22
+  - first:
+      213: 7125029169569425910
+    second: MissionICO_23
+  - first:
+      213: 8193482847617525001
+    second: MissionICO_24
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MissionICO_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1239
+        height: 1196
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5a17a24f8aab04c0800000000000000
+      internalID: -4320171885256566181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_1
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 69
+        width: 19
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c741aa758742caf0800000000000000
+      internalID: -377660780132087867
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_2
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 85
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a05079fc14830ae0800000000000000
+      internalID: -1584277383925444442
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_3
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 62
+        width: 15
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4d8e2d0488cc4820800000000000000
+      internalID: 2903916329229520203
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_4
+      rect:
+        serializedVersion: 2
+        x: 374
+        y: 29
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 744caa594b34d4350800000000000000
+      internalID: 6002528321238910023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_5
+      rect:
+        serializedVersion: 2
+        x: 456
+        y: 85
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7461ff5e479001de0800000000000000
+      internalID: -1364580289413704121
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_6
+      rect:
+        serializedVersion: 2
+        x: 456
+        y: 21
+        width: 110
+        height: 61
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84bd3c7201010ecb0800000000000000
+      internalID: -4836848338223244472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_7
+      rect:
+        serializedVersion: 2
+        x: 557
+        y: 85
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fa9461dbb11a3110800000000000000
+      internalID: 1241324145663580919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_8
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 49
+        width: 25
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5634658b35ed2ef70800000000000000
+      internalID: 9215172238709769061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_9
+      rect:
+        serializedVersion: 2
+        x: 588
+        y: 23
+        width: 32
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26ad4636081f2d7c0800000000000000
+      internalID: -4047907581326992798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_10
+      rect:
+        serializedVersion: 2
+        x: 609
+        y: 15
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ca27e30b93e162e0800000000000000
+      internalID: -2134174493471987007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_11
+      rect:
+        serializedVersion: 2
+        x: 649
+        y: 61
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcfaa9c97cb09f610800000000000000
+      internalID: 1655367289989148621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_12
+      rect:
+        serializedVersion: 2
+        x: 649
+        y: 27
+        width: 41
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c38daf19ea392390800000000000000
+      internalID: -7842672503155751995
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_13
+      rect:
+        serializedVersion: 2
+        x: 715
+        y: 72
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60d266f310a6396b0800000000000000
+      internalID: -5290768583639028474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_14
+      rect:
+        serializedVersion: 2
+        x: 756
+        y: 87
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7168aed4b4b6d510800000000000000
+      internalID: 1573643808735256955
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_15
+      rect:
+        serializedVersion: 2
+        x: 764
+        y: 47
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0049515afb1a7f760800000000000000
+      internalID: 7491634349634589696
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_16
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 51
+        width: 49
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5bac1b7a6a32eb840800000000000000
+      internalID: 5241666214990826165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_17
+      rect:
+        serializedVersion: 2
+        x: 818
+        y: 15
+        width: 11
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 139605baab2c1ea80800000000000000
+      internalID: -8439250119721719503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_18
+      rect:
+        serializedVersion: 2
+        x: 850
+        y: 51
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63fd125666da001d0800000000000000
+      internalID: -3386516264487624906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_19
+      rect:
+        serializedVersion: 2
+        x: 876
+        y: 49
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73dacf56295f077f0800000000000000
+      internalID: -616723139824669385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_20
+      rect:
+        serializedVersion: 2
+        x: 884
+        y: 53
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0308e5842fc9e0c00800000000000000
+      internalID: 868804342539255856
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_21
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 27
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e3ddddbddc2631f0800000000000000
+      internalID: -1065614930941717532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_22
+      rect:
+        serializedVersion: 2
+        x: 930
+        y: 47
+        width: 23
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d191e0988eae9820800000000000000
+      internalID: 2926968709406888400
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_23
+      rect:
+        serializedVersion: 2
+        x: 936
+        y: 75
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f96b7a974031e260800000000000000
+      internalID: 7125029169569425910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MissionICO_24
+      rect:
+        serializedVersion: 2
+        x: 956
+        y: 23
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 905af7d2d3915b170800000000000000
+      internalID: 8193482847617525001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MissionICO_0: -4320171885256566181
+      MissionICO_1: -377660780132087867
+      MissionICO_10: -2134174493471987007
+      MissionICO_11: 1655367289989148621
+      MissionICO_12: -7842672503155751995
+      MissionICO_13: -5290768583639028474
+      MissionICO_14: 1573643808735256955
+      MissionICO_15: 7491634349634589696
+      MissionICO_16: 5241666214990826165
+      MissionICO_17: -8439250119721719503
+      MissionICO_18: -3386516264487624906
+      MissionICO_19: -616723139824669385
+      MissionICO_2: -1584277383925444442
+      MissionICO_20: 868804342539255856
+      MissionICO_21: -1065614930941717532
+      MissionICO_22: 2926968709406888400
+      MissionICO_23: 7125029169569425910
+      MissionICO_24: 8193482847617525001
+      MissionICO_3: 2903916329229520203
+      MissionICO_4: 6002528321238910023
+      MissionICO_5: -1364580289413704121
+      MissionICO_6: -4836848338223244472
+      MissionICO_7: 1241324145663580919
+      MissionICO_8: 9215172238709769061
+      MissionICO_9: -4047907581326992798
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

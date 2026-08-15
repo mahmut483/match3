@@ -1,0 +1,611 @@
+fileFormatVersion: 2
+guid: 617d0a34258184e62baa576bbfb7d0f0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7786434150475493041
+    second: ShopICO_0
+  - first:
+      213: -1715008142114343370
+    second: ShopICO_1
+  - first:
+      213: 463218399052691040
+    second: ShopICO_2
+  - first:
+      213: 2415149497755164885
+    second: ShopICO_3
+  - first:
+      213: -4772149058951699251
+    second: ShopICO_4
+  - first:
+      213: 1670162359274471401
+    second: ShopICO_5
+  - first:
+      213: 8184719939614175399
+    second: ShopICO_6
+  - first:
+      213: 4389196338505893634
+    second: ShopICO_7
+  - first:
+      213: 3673854920644530723
+    second: ShopICO_8
+  - first:
+      213: -4338065016073839446
+    second: ShopICO_9
+  - first:
+      213: 1112827997996881259
+    second: ShopICO_10
+  - first:
+      213: 7928955846134644419
+    second: ShopICO_11
+  - first:
+      213: 3393137793570716372
+    second: ShopICO_12
+  - first:
+      213: 1372810631924203900
+    second: ShopICO_13
+  - first:
+      213: 5634327098054088113
+    second: ShopICO_14
+  - first:
+      213: 2870554970290823609
+    second: ShopICO_15
+  - first:
+      213: -6596641359172656951
+    second: ShopICO_16
+  - first:
+      213: -5674888662423469267
+    second: ShopICO_17
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ShopICO_0
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 1179
+        width: 26
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1beef060b98fe0c60800000000000000
+      internalID: 7786434150475493041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_1
+      rect:
+        serializedVersion: 2
+        x: 518
+        y: 1199
+        width: 30
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6363f566e211338e0800000000000000
+      internalID: -1715008142114343370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_2
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 1173
+        width: 51
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 066f5f00eaead6600800000000000000
+      internalID: 463218399052691040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_3
+      rect:
+        serializedVersion: 2
+        x: 643
+        y: 1193
+        width: 40
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d0e8251ca5548120800000000000000
+      internalID: 2415149497755164885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_4
+      rect:
+        serializedVersion: 2
+        x: 689
+        y: 1175
+        width: 23
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc428fdf6bbe5cdb0800000000000000
+      internalID: -4772149058951699251
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_5
+      rect:
+        serializedVersion: 2
+        x: 731
+        y: 1173
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ef78cd11db9d2710800000000000000
+      internalID: 1670162359274471401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_6
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 1189
+        width: 23
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a072caab67f59170800000000000000
+      internalID: 8184719939614175399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_7
+      rect:
+        serializedVersion: 2
+        x: 866
+        y: 1196
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 207c61e90de89ec30800000000000000
+      internalID: 4389196338505893634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_8
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 1195
+        height: 1182
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 322965dd5972cf230800000000000000
+      internalID: 3673854920644530723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_9
+      rect:
+        serializedVersion: 2
+        x: 649
+        y: 1173
+        width: 17
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aac9e581ad81cc3c0800000000000000
+      internalID: -4338065016073839446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_10
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 1175
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6596bc0b2f817f00800000000000000
+      internalID: 1112827997996881259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_11
+      rect:
+        serializedVersion: 2
+        x: 711
+        y: 1179
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3cebc98255f490e60800000000000000
+      internalID: 7928955846134644419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_12
+      rect:
+        serializedVersion: 2
+        x: 736
+        y: 1180
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4da3cbb78d8d61f20800000000000000
+      internalID: 3393137793570716372
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_13
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 608
+        width: 13
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c71c8bb0ff33d0310800000000000000
+      internalID: 1372810631924203900
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_14
+      rect:
+        serializedVersion: 2
+        x: 433
+        y: 168
+        width: 11
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b51fdbc4a6213e40800000000000000
+      internalID: 5634327098054088113
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_15
+      rect:
+        serializedVersion: 2
+        x: 1035
+        y: 166
+        width: 12
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b1aa60698246d720800000000000000
+      internalID: 2870554970290823609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_16
+      rect:
+        serializedVersion: 2
+        x: 1069
+        y: 162
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c02dd362a50474a0800000000000000
+      internalID: -6596641359172656951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShopICO_17
+      rect:
+        serializedVersion: 2
+        x: 938
+        y: 96
+        width: 60
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d238b5014debe31b0800000000000000
+      internalID: -5674888662423469267
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ShopICO_0: 7786434150475493041
+      ShopICO_1: -1715008142114343370
+      ShopICO_10: 1112827997996881259
+      ShopICO_11: 7928955846134644419
+      ShopICO_12: 3393137793570716372
+      ShopICO_13: 1372810631924203900
+      ShopICO_14: 5634327098054088113
+      ShopICO_15: 2870554970290823609
+      ShopICO_16: -6596641359172656951
+      ShopICO_17: -5674888662423469267
+      ShopICO_2: 463218399052691040
+      ShopICO_3: 2415149497755164885
+      ShopICO_4: -4772149058951699251
+      ShopICO_5: 1670162359274471401
+      ShopICO_6: 8184719939614175399
+      ShopICO_7: 4389196338505893634
+      ShopICO_8: 3673854920644530723
+      ShopICO_9: -4338065016073839446
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
