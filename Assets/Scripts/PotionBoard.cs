@@ -51,8 +51,9 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private int bombPoints = 10;
 
 
-    //layoutArray
-    public ArrayLayout arrayLayout;
+    // Tahtanın görsel tilemap'inin yükleneceği Grid objesi.
+    [SerializeField] private Transform boardGrid;
+
     //public static of potionboard
     public static PotionBoard Instance;
 
@@ -146,6 +147,11 @@ public class PotionBoard : MonoBehaviour
     {
         DestroyPotions();
 
+        LoadBoardTilemap();
+
+        // Tahta şekli aktif level'ın ArrayLayout'undan okunur.
+        ArrayLayout levelLayout = GameManager.Instance.ActiveLevel.arrayLayout;
+
         spacingX = (float)(width - 1) / 2;
         spacingY = (float)((height) / 2) - 2.5f;
 
@@ -157,7 +163,7 @@ public class PotionBoard : MonoBehaviour
             {
                 Vector2 position = new Vector2((x - spacingX) * cellSize, (y - spacingY) * cellSize);
 
-                if (arrayLayout.rows[y].row[x])
+                if (levelLayout.rows[y].row[x])
                 {
                     potionBoard[x, y] = new Node(false, null);
                 }
@@ -178,6 +184,31 @@ public class PotionBoard : MonoBehaviour
 
 
 
+    }
+
+    // Aktif level'ın tilemap prefab'ını Grid altına kurar (yalnızca görsel).
+    // Level'da prefab tanımlı değilse sahnedeki mevcut tilemap olduğu gibi kalır.
+    private void LoadBoardTilemap()
+    {
+        GameObject tilemapPrefab = GameManager.Instance.ActiveLevel.boardTilemapPrefab;
+
+        if (tilemapPrefab == null || boardGrid == null)
+        {
+            return;
+        }
+
+        // Sahnede duran eski tahta görselini kaldır.
+        for (int i = boardGrid.childCount - 1; i >= 0; i--)
+        {
+            GameObject oldTilemap = boardGrid.GetChild(i).gameObject;
+            oldTilemap.SetActive(false);
+            Destroy(oldTilemap);
+        }
+
+        GameObject newTilemap = Instantiate(tilemapPrefab, boardGrid);
+        newTilemap.transform.localPosition = tilemapPrefab.transform.localPosition;
+        newTilemap.transform.localRotation = tilemapPrefab.transform.localRotation;
+        newTilemap.transform.localScale = tilemapPrefab.transform.localScale;
     }
 
     // Mevcut hücrede yatay veya dikey üçlü eşleşme oluşturmayacak

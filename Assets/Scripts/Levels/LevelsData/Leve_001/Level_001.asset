@@ -37,4 +37,4 @@ MonoBehaviour:
     - row: 0000000000000000
     - row: 0000000000000000
     - row: 0000000000000000
-  boardTilemapPrefab: {fileID: 0}
+  boardTilemapPrefab: {fileID: 9143670717479196255, guid: ac8d6d7401a54430487756795565e515, type: 3}

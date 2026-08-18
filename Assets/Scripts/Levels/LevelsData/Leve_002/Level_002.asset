@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 234e958390c4942bfa7aa399d4c3003f, type: 3}
+  m_Name: Level_002
+  m_EditorClassIdentifier: Assembly-CSharp::LevelData
+  level: 2
+  moves: 20
+  goal: 70
+  potionGoals:
+  - potionType: 1
+    amount: 3
+  - potionType: 3
+    amount: 6
+  arrayLayout:
+    rows:
+    - row: 0101010000010101
+    - row: 0101000000000101
+    - row: 0100000000000001
+    - row: 0000000000000000
+    - row: 0000000000000000
+    - row: 0100000000000001
+    - row: 0101000000000101
+    - row: 0101010000010101
+    - row: 0000000000000000
+    - row: 0000000000000000
+    - row: 0000000000000000
+    - row: 0000000000000000
+    - row: 0000000000000000
+    - row: 0000000000000000
+    - row: 0000000000000000
+  boardTilemapPrefab: {fileID: 9143670717479196255, guid: 2fee54628353a40f8aecd9bf01926a45, type: 3}

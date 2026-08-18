@@ -44,13 +44,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AudioClip winClip;
     [SerializeField] private AudioClip lostClip;
 
+    // PotionBoard tahtayı Start'ta kuruyor ve ActiveLevel'a ihtiyaç duyuyor.
+    // Tüm Awake'ler tüm Start'lardan önce çalıştığı için level çözümü burada yapılır.
     private void Awake()
     {
         Instance = this;
-    }
 
-    private void Start()
-    {
         // Menü/NextLevel bir level seçtiyse onu oyna; yoksa Inspector'daki test levelini.
         ActiveLevel = LevelLoader.selectedLevel != null ? LevelLoader.selectedLevel : levelData;
 
