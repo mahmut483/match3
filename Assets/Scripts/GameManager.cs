@@ -11,11 +11,14 @@ public class GameManager : MonoBehaviour
     public GameObject backgroundPanel; // grey background
     public GameObject victoryPanel;
     public GameObject losePanel;
-    
 
     public int goal; // the amount of points you need to get to to win.
     public int moves; // the number of turns you can take
     public int points; // the current points you have earned.
+
+    // Renk toplama hedefi: hangi tipten kaç adet patlatılacak.
+    public PotionType goalPotionType;
+    public int goalPotionTypeCount;
 
     public bool isGameEnded;
     private bool isPlayedlast3MovesClip = false;
@@ -23,6 +26,7 @@ public class GameManager : MonoBehaviour
     public TMP_Text pointsTXT;
     public TMP_Text movesTXT;
     public TMP_Text goalTXT;
+    public TMP_Text potionTypeGoalTXT;
 
     [SerializeField] private GameObject outOfMovesPanel;
     [SerializeField] private Animator charAnimCtrl;
@@ -33,7 +37,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AudioClip winClip;
     [SerializeField] private AudioClip lostClip;
 
-    private void  Awake()
+    private void Awake()
     {
         Instance = this;
     }
@@ -46,10 +50,28 @@ public class GameManager : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {  
-        pointsTXT.text = points.ToString() + " /"; 
-        movesTXT.text = moves.ToString(); 
-        goalTXT.text = goal.ToString(); 
+    {
+        pointsTXT.text = points.ToString() + " /";
+        movesTXT.text = moves.ToString();
+        goalTXT.text = goal.ToString();
+        potionTypeGoalTXT.text = goalPotionTypeCount.ToString();
+    }
+
+    // PotionBoard.ReturnPotionToPool temizlenen her taşı buraya bildirir.
+    // Hedef tipe uyan taşlar sayaçtan düşülür.
+    public void RegisterClearedPotion(PotionType type)
+    {
+        if (type == goalPotionType && goalPotionTypeCount > 0)
+        {
+            goalPotionTypeCount--;
+        }
+    }
+
+    // Cascade sırasında her eşleşme/patlama anında puan ekler.
+    // Kazanma/kaybetme kararı tur sonunda ProcessTurn'de verilir.
+    public void AddPoints(int amount)
+    {
+        points += amount;
     }
 
     public void ProcessTurn(int _pointsToGain, bool _subtractMoves)
@@ -61,7 +83,8 @@ public class GameManager : MonoBehaviour
             moves--;
         }
 
-        if (points >= goal)
+        // Kazanmak için hem puan hedefi hem renk toplama hedefi tamamlanmalı.
+        if (points >= goal && goalPotionTypeCount <= 0)
         {
             //you've won the game
             isGameEnded = true;

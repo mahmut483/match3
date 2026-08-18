@@ -29,7 +29,7 @@ public class PotionBoard : MonoBehaviour
 
 
     //get a reference to the collection nodes potionBoard + GO
-    
+
     private Potion firstSelectedPotion;
 
     [SerializeField] private Potion secondSelectedPotion;
@@ -41,17 +41,22 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip matchClip, superMatchClip, explodingClip;
     [SerializeField] private Animator superBombAnim;
-   
+
 
     [SerializeField, Min(0f)] private float dropStaggerDelay = 0.2f;
-    
+
+    // Puanlama: her eşleşme/patlama olayı anında puan verir (cascade dahil).
+    [SerializeField] private int matchPoints = 10;
+    [SerializeField] private int superMatchPoints = 15;
+    [SerializeField] private int bombPoints = 10;
+
 
     //layoutArray
     public ArrayLayout arrayLayout;
     //public static of potionboard
     public static PotionBoard Instance;
 
-    
+
     private void Awake()
     {
         Instance = this;
@@ -66,8 +71,8 @@ public class PotionBoard : MonoBehaviour
     // Ray ile hangi position'a tıkladığını alırız sonra if kontrollerini yaparız sonra tıkladığımız potion'ı bir referansa kaydederiz.
     private void Update()
     {
-        if(GameManager.Instance.isGameEnded) return;
-        if(currentState == BoardState.Swapping) return;
+        if (GameManager.Instance.isGameEnded) return;
+        if (currentState == BoardState.Swapping) return;
 
         if (waitForPointerRelease)
         {
@@ -76,7 +81,7 @@ public class PotionBoard : MonoBehaviour
                 waitForPointerRelease = false;
             }
         }
-        
+
         if (Pointer.current.press.isPressed && !waitForPointerRelease)
         {
             Ray ray = Camera.main.ScreenPointToRay(Pointer.current.position.ReadValue());
@@ -100,7 +105,7 @@ public class PotionBoard : MonoBehaviour
                     firstSelectedPotion = potion;
                     potion.setSelectedVisual(true);
                 }
-                
+
 
                 if (hit.collider.gameObject.GetComponent<Potion>() != firstSelectedPotion)
                 {
@@ -150,7 +155,7 @@ public class PotionBoard : MonoBehaviour
         {
             for (int x = 0; x < width; x++)
             {
-                Vector2 position = new Vector2((x - spacingX) * cellSize, (y - spacingY) * cellSize );
+                Vector2 position = new Vector2((x - spacingX) * cellSize, (y - spacingY) * cellSize);
 
                 if (arrayLayout.rows[y].row[x])
                 {
@@ -160,10 +165,11 @@ public class PotionBoard : MonoBehaviour
                 {
                     int randomIndex = GetValidPotionPrefabIndex(x, y);
 
-                    GameObject potion = Instantiate(potionPrefabs[randomIndex], position, Quaternion.identity);
-                    potion.transform.SetParent(potionParent.transform);
-                    potion.GetComponent<Potion>().SetIndicies(x, y);
-                    potionToDestroy.Add(potion);
+                    GameObject potionObject = Instantiate(potionPrefabs[randomIndex], position, Quaternion.identity);
+                    potionObject.transform.SetParent(potionParent.transform);
+                    Potion potion = potionObject.GetComponent<Potion>();
+                    potion.SetIndicies(x, y);
+                    potionToDestroy.Add(potionObject);
                     potionBoard[x, y] = new Node(true, potion);
 
                 }
@@ -188,7 +194,7 @@ public class PotionBoard : MonoBehaviour
             {
                 continue;
             }
-            
+
             PotionType candidateType = prefabPotion.potionType;
 
             if (!WouldCreateInitialMatch(x, y, candidateType))
@@ -210,7 +216,7 @@ public class PotionBoard : MonoBehaviour
     private bool WouldCreateInitialMatch(int x, int y, PotionType candidateType)
     {
         bool horizontalMatch = IsSamePotionType(x - 1, y, candidateType) && IsSamePotionType(x - 2, y, candidateType);
-        bool verticalMatch = IsSamePotionType(x, y -1, candidateType) && IsSamePotionType(x, y -2, candidateType);
+        bool verticalMatch = IsSamePotionType(x, y - 1, candidateType) && IsSamePotionType(x, y - 2, candidateType);
 
         return horizontalMatch || verticalMatch;
     }
@@ -229,9 +235,7 @@ public class PotionBoard : MonoBehaviour
             return false;
         }
 
-        Potion potion = node.potion.GetComponent<Potion>();
-
-        return potion != null && potion.potionType == candidateType;
+        return node.potion.potionType == candidateType;
     }
 
     // DestroyPotions: PotionToDestroy List dolu ise listedeki tüm elemanları gezer destroy ederiz sonra listeyi temizleriz
@@ -249,7 +253,7 @@ public class PotionBoard : MonoBehaviour
         }
     }
 
-        
+
     // CheckBoard: İlk başta console'a "Checking Match" yazdırırız ve hasMatch değerini oluştururuz
     // potionsToRemove list'i oluşturulur
     // tüm node'lar dolaşılır(foreach) içinde potion yoksa isMatched'lar false olur
@@ -273,7 +277,7 @@ public class PotionBoard : MonoBehaviour
         {
             if (item.potion != null)
             {
-                item.potion.GetComponent<Potion>().isMatched = false;
+                item.potion.isMatched = false;
             }
         }
 
@@ -283,7 +287,7 @@ public class PotionBoard : MonoBehaviour
             {
                 if (potionBoard[x, y].isUsable)
                 {
-                    Potion potion = potionBoard[x, y].potion.GetComponent<Potion>();
+                    Potion potion = potionBoard[x, y].potion;
 
                     if (!potion.isMatched)
                     {
@@ -311,7 +315,7 @@ public class PotionBoard : MonoBehaviour
                                 item.isMatched = true;
                             }
                             hasMatched = true;
-                            
+
                         }
                     }
                 }
@@ -354,19 +358,21 @@ public class PotionBoard : MonoBehaviour
             if (matchGroup.IsSuperMatch)
             {
                 audioSource.PlayOneShot(superMatchClip);
+                GameManager.Instance.AddPoints(superMatchPoints);
             }
             else
             {
                 audioSource.PlayOneShot(matchClip);
+                GameManager.Instance.AddPoints(matchPoints);
             }
 
             foreach (Potion item in matchGroup.connectedPotions)
             {
-                if (item == null || potionsToRemove.Contains(item) )
+                if (item == null || potionsToRemove.Contains(item))
                 {
                     continue;
                 }
-                if(item == matchGroup.protectedPotion)
+                if (item == matchGroup.protectedPotion)
                 {
                     item.Bomb(true);
                     continue;
@@ -402,7 +408,7 @@ public class PotionBoard : MonoBehaviour
 
             for (int y = 0; y < height; y++)
             {
-                if (potionBoard[x, y].potion == null)
+                if (potionBoard[x, y].isUsable && potionBoard[x, y].potion == null)
                 {
                     float startDelay = dropOrder * dropStaggerDelay;
                     RefillPotion(x, y, startDelay);
@@ -415,11 +421,11 @@ public class PotionBoard : MonoBehaviour
     }
 
 
-   private IEnumerator BombExploding(Potion firstBomb)
+    private IEnumerator BombExploding(Potion firstBomb)
     {
         currentState = BoardState.Clearing;
 
-        
+
 
         Queue<Vector2Int> bombQueue = new();
         HashSet<Vector2Int> explodedBombs = new();
@@ -444,6 +450,9 @@ public class PotionBoard : MonoBehaviour
             audioSource.clip = explodingClip;
             audioSource.Play();
 
+            // Her bomba patlaması puan verir (zincirdeki her bomba ayrı sayılır).
+            GameManager.Instance.AddPoints(bombPoints);
+
             for (int xIndex = bombPosition.x - 1; xIndex <= bombPosition.x + 1; xIndex++)
             {
                 for (int yIndex = bombPosition.y - 1; yIndex <= bombPosition.y + 1; yIndex++)
@@ -460,12 +469,7 @@ public class PotionBoard : MonoBehaviour
                         continue;
                     }
 
-                    Potion potion = node.potion.GetComponent<Potion>();
-
-                    if (potion == null)
-                    {
-                        continue;
-                    }
+                    Potion potion = node.potion;
 
                     // Pool metodu potionType'ı eski haline
                     // getireceği için bunu önce kaydet.
@@ -498,7 +502,7 @@ public class PotionBoard : MonoBehaviour
 
             for (int y = 0; y < height; y++)
             {
-                if (potionBoard[x, y].potion == null)
+                if (potionBoard[x, y].isUsable && potionBoard[x, y].potion == null)
                 {
                     float startDelay = dropOrder * dropStaggerDelay;
 
@@ -532,11 +536,11 @@ public class PotionBoard : MonoBehaviour
         currentState = BoardState.Idle;
     }
 
-       private IEnumerator SuperBombExplod(Potion _targetPotion)
+    private IEnumerator SuperBombExplod(Potion _targetPotion)
     {
         currentState = BoardState.Clearing;
 
-        Vector2Int bombPosition =  new Vector2Int(_targetPotion.xIndex, _targetPotion.yIndex);
+        Vector2Int bombPosition = new Vector2Int(_targetPotion.xIndex, _targetPotion.yIndex);
 
         Animator bombAnimator = _targetPotion.GetComponentInChildren<Animator>(true);
 
@@ -549,6 +553,8 @@ public class PotionBoard : MonoBehaviour
         Instantiate(explodingPaticles, explosionPosition, Quaternion.identity);
         audioSource.clip = explodingClip;
         audioSource.Play();
+
+        GameManager.Instance.AddPoints(bombPoints);
 
         for (int xIndex = bombPosition.x - 3; xIndex <= bombPosition.x + 3; xIndex++)
         {
@@ -563,21 +569,12 @@ public class PotionBoard : MonoBehaviour
                 {
                     continue;
                 }
-                Potion potion = node.potion.GetComponent<Potion>();
-                if (potion == null)
-                {
-                    continue;
-                }
-                // Pool metodu potionType'ı eski haline
-                // getireceği için bunu önce kaydet.
-                bool isAnotherBomb = potion.potionType == PotionType.Bomb;
-                Vector2Int potionPosition = new Vector2Int(potion.xIndex, potion.yIndex);
-                // Önce board'dan kaldır.
+                Potion potion = node.potion;
                 potionBoard[xIndex, yIndex] = new Node(true, null);
                 ReturnPotionToPool(potion);
             }
         }
-        
+
 
         // Bütün bomba zinciri tamamlandıktan sonra
         // mevcut refill kodun burada yalnızca bir kez çalışmalı.
@@ -589,7 +586,7 @@ public class PotionBoard : MonoBehaviour
 
             for (int y = 0; y < height; y++)
             {
-                if (potionBoard[x, y].potion == null)
+                if (potionBoard[x, y].isUsable && potionBoard[x, y].potion == null)
                 {
                     float startDelay = dropOrder * dropStaggerDelay;
 
@@ -634,6 +631,11 @@ public class PotionBoard : MonoBehaviour
     private void ReturnPotionToPool(Potion item)
     {
         item.Bomb(false);
+
+        // Temizlenen taşı hedef sayacına bildir. Bomb(false) tipi orijinaline
+        // döndürdüğü için patlayan bomba orijinal rengine sayılır.
+        GameManager.Instance.RegisterClearedPotion(item.potionType);
+
         item.isMatched = false;
         item.isMoving = false;
         item.gameObject.SetActive(false);
@@ -646,16 +648,19 @@ public class PotionBoard : MonoBehaviour
 
     private void SpawnDestroyParticle(Potion item)
     {
-        if(item.potionType == PotionType.Red)
+        if (item.potionType == PotionType.Red)
         {
             Instantiate(destroyParticlesRed, item.transform.position, Quaternion.identity);
-        }else if (item.potionType == PotionType.Blue)
+        }
+        else if (item.potionType == PotionType.Blue)
         {
             Instantiate(destroyParticlesBlue, item.transform.position, Quaternion.identity);
-        }else if (item.potionType == PotionType.Green)
+        }
+        else if (item.potionType == PotionType.Green)
         {
             Instantiate(destroyParticlesGreen, item.transform.position, Quaternion.identity);
-        }else if (item.potionType == PotionType.Yellow)
+        }
+        else if (item.potionType == PotionType.Yellow)
         {
             Instantiate(destroyParticlesPurple, item.transform.position, Quaternion.identity);
         }
@@ -683,9 +688,7 @@ public class PotionBoard : MonoBehaviour
                 continue;
             }
 
-            Potion potion = node.potion.GetComponent<Potion>();
-
-            if (potion.isMoving)
+            if (node.potion.isMoving)
             {
                 return true;
             }
@@ -693,8 +696,8 @@ public class PotionBoard : MonoBehaviour
 
         return false;
     }
-    
-    
+
+
     // RefillPotion: ilk başta bir while döngüsü ile üst cell'leri tararız, board'un dışında değilse ve node null ise yOffset'i 1 arttırırız
     // İf ile board'un içinde ve potion içeriği null olmayan bir node var mı kontrol ederiz
     // if koşulu true döndüğünde ilgili poiton'un referansını alırız ve bir Vector3 targetPos belirleriz
@@ -705,18 +708,21 @@ public class PotionBoard : MonoBehaviour
     // Bir if kontrolü ile Board'un en üstünde isek SpawnPotionAtTop methodunu çağırırız
     private void RefillPotion(int x, int y, float startDelay)
     {
-        
+        // Kapalı hücre asla doldurulmaz.
+        if (!potionBoard[x, y].isUsable) return;
 
         int yOffset = 1;
 
-        while (y + yOffset < height && potionBoard[x, y + yOffset].potion == null)
+        // Yukarı ararken kapalı VE boş hücreleri atla — taşlar kapalı hücrelerin üzerinden düşer.
+        while (y + yOffset < height &&
+               (!potionBoard[x, y + yOffset].isUsable || potionBoard[x, y + yOffset].potion == null))
         {
             yOffset++;
         }
 
         if (y + yOffset < height && potionBoard[x, y + yOffset].potion != null)
         {
-            Potion potion = potionBoard[x, y + yOffset].potion.GetComponent<Potion>();
+            Potion potion = potionBoard[x, y + yOffset].potion;
 
             Vector3 targetPos = new Vector3((x - spacingX) * cellSize, (y - spacingY) * cellSize, potion.transform.position.z);
 
@@ -743,19 +749,22 @@ public class PotionBoard : MonoBehaviour
     private void SpawnPotionAtTop(int x, float startDelay)
     {
         int index = FindIndexOfLowestNull(x);
-        int locationToMoveTo = height - index;
+
+        if (index == 99) return;                   // sütunda doldurulacak açık hücre yok
+        if (deactivePotionPool.Count == 0) return; // havuz boş — crash koruması
 
         int randomIndex = Random.Range(0, deactivePotionPool.Count);
 
-        GameObject newPotion = deactivePotionPool[randomIndex];
-        newPotion.transform.position = new Vector2((x - spacingX) * cellSize, (height - spacingY) * cellSize);
+        GameObject newPotionObject = deactivePotionPool[randomIndex];
+        newPotionObject.transform.position = new Vector2((x - spacingX) * cellSize, (height - spacingY) * cellSize);
 
-        newPotion.gameObject.SetActive(true);
-        deactivePotionPool.Remove(newPotion);
-        newPotion.GetComponent<Potion>().SetIndicies(x, index);
+        newPotionObject.SetActive(true);
+        deactivePotionPool.Remove(newPotionObject);
+        Potion newPotion = newPotionObject.GetComponent<Potion>();
+        newPotion.SetIndicies(x, index);
         potionBoard[x, index] = new Node(true, newPotion);
-        Vector3 targetPos = new Vector3((x - spacingX) * cellSize, (index - spacingY) * cellSize, newPotion.transform.position.z);
-        newPotion.GetComponent<Potion>().MoveToDown(targetPos, startDelay);
+        Vector3 targetPos = new Vector3((x - spacingX) * cellSize, (index - spacingY) * cellSize, newPotionObject.transform.position.z);
+        newPotion.MoveToDown(targetPos, startDelay);
     }
 
     // FindIndexOfLowestNull: Belirli bir sütundaki en aşağıda bulunan null node'un değerini döndürür
@@ -769,7 +778,7 @@ public class PotionBoard : MonoBehaviour
 
         for (int y = height - 1; y >= 0; y--)
         {
-            if (potionBoard[x, y].potion == null)
+            if (potionBoard[x, y].isUsable && potionBoard[x, y].potion == null)
             {
                 lowestNull = y;
             }
@@ -815,7 +824,8 @@ public class PotionBoard : MonoBehaviour
                 connectedPotions = _matchedResults.connectedPotions,
                 direction = _matchedResults.direction
             };
-        }else if (_matchedResults.direction == MatchDirection.Vertical || _matchedResults.direction == MatchDirection.LongVertical)
+        }
+        else if (_matchedResults.direction == MatchDirection.Vertical || _matchedResults.direction == MatchDirection.LongVertical)
         {
             foreach (Potion pot in _matchedResults.connectedPotions)
             {
@@ -897,7 +907,7 @@ public class PotionBoard : MonoBehaviour
             {
                 connectedPotions = connectedPotions,
                 direction = MatchDirection.LongVertical
-            }; 
+            };
         }
         else
         {
@@ -921,7 +931,7 @@ public class PotionBoard : MonoBehaviour
     private void CheckDirection(Potion pot, Vector2Int direction, List<Potion> connectedPotions)
     {
         PotionType potionType = pot.potionType;
-        
+
         int x = pot.xIndex + direction.x;
         int y = pot.yIndex + direction.y;
 
@@ -929,7 +939,7 @@ public class PotionBoard : MonoBehaviour
         {
             if (potionBoard[x, y].isUsable)
             {
-                Potion neighbourPotion = potionBoard[x, y].potion.GetComponent<Potion>();
+                Potion neighbourPotion = potionBoard[x, y].potion;
 
                 if (!neighbourPotion.isMatched && neighbourPotion.potionType == potionType)
                 {
@@ -937,7 +947,7 @@ public class PotionBoard : MonoBehaviour
 
                     x += direction.x;
                     y += direction.y;
-                    
+
                 }
                 else
                 {
@@ -959,8 +969,8 @@ public class PotionBoard : MonoBehaviour
     // State Swapping olarak güncellenir ve ProcessMatches coroutine'i başlatılır
     private void SwapPotion(Potion _currentPotion, Potion _targetPotion)
     {
-        if(!IsAdjacent(_currentPotion, _targetPotion)) return;
-        if(_targetPotion.transform.position.y >= 2) return;
+        if (!IsAdjacent(_currentPotion, _targetPotion)) return;
+        if (_targetPotion.transform.position.y >= 2) return;
 
         _currentPotion.setSelectedVisual(false);
         currentState = BoardState.Swapping;
@@ -977,7 +987,7 @@ public class PotionBoard : MonoBehaviour
     {
         Vector3 currentPos = _currentPotion.transform.position;
         Vector3 targetPos = _targetPotion.transform.position;
-        GameObject temp = potionBoard[_currentPotion.xIndex, _currentPotion.yIndex].potion;
+        Potion temp = potionBoard[_currentPotion.xIndex, _currentPotion.yIndex].potion;
         potionBoard[_currentPotion.xIndex, _currentPotion.yIndex].potion = potionBoard[_targetPotion.xIndex, _targetPotion.yIndex].potion;
         potionBoard[_targetPotion.xIndex, _targetPotion.yIndex].potion = temp;
 
@@ -1017,17 +1027,17 @@ public class PotionBoard : MonoBehaviour
             // Bomba patlaması, refill ve cascade tamamen bitsin.
             yield return SuperBombExplod(_currentPotion);
 
-            GameManager.Instance.ProcessTurn(10, true);
+            GameManager.Instance.ProcessTurn(0, true);
 
             // Normal CheckBoard ve geri swap çalışmasın.
             yield break;
-        } 
-        else if(bombToExplode != null)
+        }
+        else if (bombToExplode != null)
         {
             // Bomba patlaması, refill ve cascade tamamen bitsin.
             yield return BombExploding(bombToExplode);
 
-            GameManager.Instance.ProcessTurn(10, true);
+            GameManager.Instance.ProcessTurn(0, true);
 
             // Normal CheckBoard ve geri swap çalışmasın.
             yield break;
@@ -1048,7 +1058,7 @@ public class PotionBoard : MonoBehaviour
 
             if (_currentPotion.potionType == PotionType.Bomb)
             {
-                
+
             }
 
             currentState = BoardState.Idle;

@@ -9,8 +9,6 @@ public class Potion : MonoBehaviour
     public PotionType potionType;
     private PotionType originalPotionType;
 
-    [Serializefield] private bool potionABC;
-
     public int xIndex;
     public int yIndex;
 

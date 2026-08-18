@@ -3,9 +3,9 @@ using UnityEngine;
 public class Node
 {
     public bool isUsable;
-    public GameObject potion;
+    public Potion potion;
 
-    public Node(bool _isUsable, GameObject _potion)
+    public Node(bool _isUsable, Potion _potion)
     {
         isUsable = _isUsable;
         potion = _potion;
