@@ -6,23 +6,25 @@ public class Potion : MonoBehaviour
 {
 
     // Değerler
-   public PotionType potionType;
-   private PotionType originalPotionType;
+    public PotionType potionType;
+    private PotionType originalPotionType;
 
-   public int xIndex;
-   public int yIndex;
+    [Serializefield] private bool potionABC;
 
-   public bool isMatched;
-   public bool isMoving;
+    public int xIndex;
+    public int yIndex;
 
-   public Vector2 currentPos;
-   public Vector2 targetPos;
+    public bool isMatched;
+    public bool isMoving;
 
-   private float swapSpeed = .12f;
-   private float downSpeed = .24f;
+    public Vector2 currentPos;
+    public Vector2 targetPos;
 
-   [SerializeField] private GameObject selectedVisual; 
-   [SerializeField] private GameObject bomb; 
+    private float swapSpeed = .12f;
+    private float downSpeed = .24f;
+
+    [SerializeField] private GameObject selectedVisual;
+    [SerializeField] private GameObject bomb;
 
     private void Awake()
     {
@@ -59,7 +61,7 @@ public class Potion : MonoBehaviour
         if (setActive)
         {
             potionType = PotionType.Bomb;
-        bomb.SetActive(true);
+            bomb.SetActive(true);
         }
         else
         {
@@ -90,7 +92,7 @@ public class Potion : MonoBehaviour
             elaspeed += Time.deltaTime;
 
             float t = Mathf.Clamp01(elaspeed / duration);
-            
+
             transform.position = Vector2.Lerp(startPos, _targetPos, t);
 
             yield return null;
@@ -103,7 +105,7 @@ public class Potion : MonoBehaviour
 // PotionType enum
 public enum PotionType
 {
-    Red, 
+    Red,
     Blue,
     Yellow,
     Green,
