@@ -3,15 +3,35 @@ using UnityEngine.SceneManagement;
 
 public class ButtonControl : MonoBehaviour
 {
-    // attached to a button to change scene when winning
-    public void WinGame()
+    public const string MainMenuScene = "MainMenu";
+    public const string GameBoardScene = "GameBoard";
+
+    [SerializeField] private LevelCatalog catalog;
+
+    // Aynı bölümü baştan başlatır (seçili level değişmez).
+    public void TryAgain()
     {
-        SceneManager.LoadScene(0);
+        SceneManager.LoadScene(GameBoardScene);
     }
 
-    // attached to a button to change scene when losing
-    public void LoseGame()
+    // Katalogdan sıradaki bölümü yükler; son bölüm bittiyse menüye döner.
+    public void NextLevel()
     {
-        SceneManager.LoadScene(0);
+        LevelData next = catalog.GetNext(GameManager.Instance.ActiveLevel);
+
+        if (next != null)
+        {
+            LevelLoader.selectedLevel = next;
+            SceneManager.LoadScene(GameBoardScene);
+        }
+        else
+        {
+            SceneManager.LoadScene(MainMenuScene);
+        }
+    }
+
+    public void BackToMenu()
+    {
+        SceneManager.LoadScene(MainMenuScene);
     }
 }

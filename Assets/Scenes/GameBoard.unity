@@ -3577,11 +3577,7 @@ MonoBehaviour:
   backgroundPanel: {fileID: 516126082}
   victoryPanel: {fileID: 1530944413}
   losePanel: {fileID: 1945671538}
-  goal: 80
-  moves: 4
-  points: 0
-  goalPotionType: 0
-  goalPotionTypeCount: 13
+  levelData: {fileID: 11400000, guid: 7050801670cd44c3294568518d5b44d7, type: 2}
   isGameEnded: 0
   pointsTXT: {fileID: 363502408}
   movesTXT: {fileID: 1727687719}

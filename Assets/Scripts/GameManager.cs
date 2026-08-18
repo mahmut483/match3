@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -12,13 +13,19 @@ public class GameManager : MonoBehaviour
     public GameObject victoryPanel;
     public GameObject losePanel;
 
-    public int goal; // the amount of points you need to get to to win.
-    public int moves; // the number of turns you can take
-    public int points; // the current points you have earned.
+    // Menüden gelinmediyse (editörde GameBoard direkt açıldıysa) oynanacak test leveli.
+    [SerializeField] private LevelData levelData;
 
-    // Renk toplama hedefi: hangi tipten kaç adet patlatılacak.
-    public PotionType goalPotionType;
-    public int goalPotionTypeCount;
+    // Şu an gerçekten oynanan level (LevelLoader'dan ya da levelData'dan çözülür).
+    public LevelData ActiveLevel { get; private set; }
+
+    private int goal; // the amount of points you need to get to to win.
+    private int moves; // the number of turns you can take
+    private int points; // the current points you have earned.
+
+    // Toplama hedefleri: level başlarken LevelData'dan KOPYALANIR.
+    // Kalan adetler oyun sırasında bu listede azaltılır (asset'e dokunulmaz).
+    private readonly List<PotionGoal> potionGoals = new();
 
     public bool isGameEnded;
     private bool isPlayedlast3MovesClip = false;
@@ -42,10 +49,41 @@ public class GameManager : MonoBehaviour
         Instance = this;
     }
 
-    public void Initialize(int _moves, int _goal)
+    private void Start()
     {
-        moves = _moves;
-        goal = _goal;
+        // Menü/NextLevel bir level seçtiyse onu oyna; yoksa Inspector'daki test levelini.
+        ActiveLevel = LevelLoader.selectedLevel != null ? LevelLoader.selectedLevel : levelData;
+
+        if (ActiveLevel == null)
+        {
+            Debug.LogError("GameManager: Level Data atanmamış! Inspector'dan bir LevelData asset'i sürükleyin.");
+            return;
+        }
+
+        Initialize(ActiveLevel);
+    }
+
+    // Bölüm değerlerini LevelData asset'inden okur.
+    // potionGoals eleman eleman KOPYALANIR — referans atansaydı oyun sırasında
+    // düşen sayaçlar doğrudan asset'in içine yazılır ve kalıcı olurdu.
+    public void Initialize(LevelData level)
+    {
+        moves = level.moves;
+        goal = level.goal;
+        points = 0;
+        isGameEnded = false;
+        isPlayedlast3MovesClip = false;
+
+        potionGoals.Clear();
+
+        foreach (PotionGoal sourceGoal in level.potionGoals)
+        {
+            potionGoals.Add(new PotionGoal
+            {
+                potionType = sourceGoal.potionType,
+                amount = sourceGoal.amount
+            });
+        }
     }
 
     // Update is called once per frame
@@ -54,17 +92,46 @@ public class GameManager : MonoBehaviour
         pointsTXT.text = points.ToString() + " /";
         movesTXT.text = moves.ToString();
         goalTXT.text = goal.ToString();
-        potionTypeGoalTXT.text = goalPotionTypeCount.ToString();
+        potionTypeGoalTXT.text = BuildPotionGoalText();
     }
 
     // PotionBoard.ReturnPotionToPool temizlenen her taşı buraya bildirir.
-    // Hedef tipe uyan taşlar sayaçtan düşülür.
+    // Tipi eşleşen tüm hedeflerin kalan adedi düşülür.
     public void RegisterClearedPotion(PotionType type)
     {
-        if (type == goalPotionType && goalPotionTypeCount > 0)
+        foreach (PotionGoal potionGoal in potionGoals)
         {
-            goalPotionTypeCount--;
+            if (potionGoal.potionType == type && potionGoal.amount > 0)
+            {
+                potionGoal.amount--;
+            }
         }
+    }
+
+    // HUD için "Red: 12  Bomb: 3" tarzı özet metin üretir.
+    private string BuildPotionGoalText()
+    {
+        string text = "";
+
+        foreach (PotionGoal potionGoal in potionGoals)
+        {
+            text += potionGoal.potionType + ": " + potionGoal.amount + "  ";
+        }
+
+        return text;
+    }
+
+    private bool AreAllPotionGoalsComplete()
+    {
+        foreach (PotionGoal potionGoal in potionGoals)
+        {
+            if (potionGoal.amount > 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // Cascade sırasında her eşleşme/patlama anında puan ekler.
@@ -83,8 +150,8 @@ public class GameManager : MonoBehaviour
             moves--;
         }
 
-        // Kazanmak için hem puan hedefi hem renk toplama hedefi tamamlanmalı.
-        if (points >= goal && goalPotionTypeCount <= 0)
+        // Kazanmak için puan hedefi ve TÜM toplama hedefleri tamamlanmalı.
+        if (points >= goal && AreAllPotionGoalsComplete())
         {
             //you've won the game
             isGameEnded = true;

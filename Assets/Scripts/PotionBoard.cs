@@ -630,11 +630,18 @@ public class PotionBoard : MonoBehaviour
 
     private void ReturnPotionToPool(Potion item)
     {
+        // Bomb(false) tipi orijinaline döndürmeden önce bomba olup olmadığını kaydet.
+        bool wasBomb = item.potionType == PotionType.Bomb;
+
         item.Bomb(false);
 
-        // Temizlenen taşı hedef sayacına bildir. Bomb(false) tipi orijinaline
-        // döndürdüğü için patlayan bomba orijinal rengine sayılır.
+        // Temizlenen taş orijinal rengine sayılır; bombaysa ayrıca Bomb hedefine de sayılır.
         GameManager.Instance.RegisterClearedPotion(item.potionType);
+
+        if (wasBomb)
+        {
+            GameManager.Instance.RegisterClearedPotion(PotionType.Bomb);
+        }
 
         item.isMatched = false;
         item.isMoving = false;
