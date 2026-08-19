@@ -6,6 +6,15 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    // Sahnedeki hazır hedef göstergesi: her potion tipi için bir obje
+    // (ikonu ve TMP'si içinde hazır duruyor).
+    [Serializable]
+    public class GoalDisplay
+    {
+        public PotionType potionType;
+        public GameObject root; // Red / Green / Blue ... objesi
+    }
+
 
     public static GameManager Instance; // static reference
 
@@ -33,7 +42,13 @@ public class GameManager : MonoBehaviour
     public TMP_Text pointsTXT;
     public TMP_Text movesTXT;
     public TMP_Text goalTXT;
-    public TMP_Text potionTypeGoalTXT;
+
+    [Header("Hedef göstergeleri")]
+    // Sahnedeki tüm hedef objeleri. Level'da hedef olanlar açılır, diğerleri kapatılır.
+    [SerializeField] private List<GoalDisplay> goalDisplays = new();
+
+    // Açık hedeflerin TMP'leri — potionGoals ile aynı sırada.
+    private readonly List<TMP_Text> goalCountTexts = new();
 
     [SerializeField] private GameObject outOfMovesPanel;
     [SerializeField] private Animator charAnimCtrl;
@@ -83,6 +98,34 @@ public class GameManager : MonoBehaviour
                 amount = sourceGoal.amount
             });
         }
+
+        SetupGoalSlots();
+    }
+
+    // Level'da hedef olan tipleri açar, diğerlerini kapatır.
+    private void SetupGoalSlots()
+    {
+        goalCountTexts.Clear();
+
+        foreach (GoalDisplay display in goalDisplays)
+        {
+            display.root.SetActive(false);
+        }
+
+        foreach (PotionGoal potionGoal in potionGoals)
+        {
+            GoalDisplay display = goalDisplays.Find(d => d.potionType == potionGoal.potionType);
+
+            if (display == null)
+            {
+                // Bu tip için sahnede gösterge yok — sıralama bozulmasın diye yine de ekle.
+                goalCountTexts.Add(null);
+                continue;
+            }
+
+            display.root.SetActive(true);
+            goalCountTexts.Add(display.root.GetComponentInChildren<TMP_Text>());
+        }
     }
 
     // Update is called once per frame
@@ -91,7 +134,14 @@ public class GameManager : MonoBehaviour
         pointsTXT.text = points.ToString() + " /";
         movesTXT.text = moves.ToString();
         goalTXT.text = goal.ToString();
-        potionTypeGoalTXT.text = BuildPotionGoalText();
+
+        for (int i = 0; i < goalCountTexts.Count; i++)
+        {
+            if (goalCountTexts[i] != null)
+            {
+                goalCountTexts[i].text = potionGoals[i].amount.ToString();
+            }
+        }
     }
 
     // PotionBoard.ReturnPotionToPool temizlenen her taşı buraya bildirir.
@@ -107,18 +157,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // HUD için "Red: 12  Bomb: 3" tarzı özet metin üretir.
-    private string BuildPotionGoalText()
-    {
-        string text = "";
-
-        foreach (PotionGoal potionGoal in potionGoals)
-        {
-            text += potionGoal.potionType + ": " + potionGoal.amount + "  ";
-        }
-
-        return text;
-    }
 
     private bool AreAllPotionGoalsComplete()
     {
