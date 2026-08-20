@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -9,6 +10,10 @@ public class PageSnap : MonoBehaviour,
 {
     [SerializeField] private ScrollRect scrollRect;
     [SerializeField] private float snapSpeed = 12f;
+
+    // Menü açıldığında gösterilecek sayfa. Objeyi sürükleyin — sırası
+    // otomatik bulunur, sayfa ekleyip çıkarınca bozulmaz.
+    [SerializeField] private RectTransform startPage;
 
     private int pageCount;
     private int currentPage;
@@ -24,14 +29,41 @@ public class PageSnap : MonoBehaviour,
             scrollRect = GetComponent<ScrollRect>();
     }
 
-    private void Start()
+    // ScrollView'un içerik boyutu ilk karede henüz hesaplanmamış olabiliyor;
+    // konum ataması o an işe yaramaz ve sayfa 0'da kalır. Layout oturduktan
+    // sonra bir kez daha uygulanır.
+    private IEnumerator Start()
     {
         pageCount = scrollRect.content.childCount;
 
-        currentPage = 0;
-        targetPosition = 0f;
+        int startIndex = 0;
 
-        scrollRect.horizontalNormalizedPosition = 0.5f;
+        if (startPage != null)
+        {
+            if (startPage.parent != scrollRect.content)
+            {
+                Debug.LogWarning($"PageSnap: {startPage.name} Content'in altında değil.");
+            }
+
+            startIndex = startPage.GetSiblingIndex();
+        }
+
+        ApplyStartPage(startIndex);
+
+        // Layout group'lar bir kare sonra kesinleşiyor; konumu tekrar uygula.
+        yield return null;
+
+        ApplyStartPage(startIndex);
+    }
+
+    // Kaydırma konumu ancak Content'in genişliği hesaplandıktan sonra anlam kazanır.
+    // ForceUpdateCanvases tek başına LayoutGroup'ları yeniden kurmuyor.
+    private void ApplyStartPage(int startIndex)
+    {
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
+
+        GoToPage(startIndex, true);
     }
 
     private void Update()
@@ -81,6 +113,11 @@ public class PageSnap : MonoBehaviour,
 
     public void GoToPage(int pageIndex)
     {
+        GoToPage(pageIndex, false);
+    }
+
+    public void GoToPage(int pageIndex, bool instant)
+    {
         pageIndex = Mathf.Clamp(
             pageIndex,
             0,
@@ -98,6 +135,15 @@ public class PageSnap : MonoBehaviour,
         scrollRect.StopMovement();
 
         isDragging = false;
-        isSnapping = true;
+
+        if (instant)
+        {
+            scrollRect.horizontalNormalizedPosition = targetPosition;
+            isSnapping = false;
+        }
+        else
+        {
+            isSnapping = true;
+        }
     }
 }
