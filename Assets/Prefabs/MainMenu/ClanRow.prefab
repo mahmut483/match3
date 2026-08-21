@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 936569633211343621}
   - component: {fileID: 8189353573102887503}
   - component: {fileID: 1336033192272849121}
+  - component: {fileID: 2080536411391754770}
   m_Layer: 5
   m_Name: ClanRow
   m_TagString: Untagged
@@ -101,6 +102,24 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &2080536411391754770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 447692980750028980}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fb9993f4ab5040a0aef2edaf53807f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClanRowUI
+  emblem: {fileID: 2004972797863046832}
+  nameText: {fileID: 8221558189639757579}
+  capacityText: {fileID: 3290921487229427135}
+  minLevelText: {fileID: 0}
+  actionButton: {fileID: 7964968553625942424}
+  emblemCatalog: {fileID: 11400000, guid: 0703d37da45a44974a1ff85bb879e6cd, type: 2}
 --- !u!1 &2524093833505275630
 GameObject:
   m_ObjectHideFlags: 0

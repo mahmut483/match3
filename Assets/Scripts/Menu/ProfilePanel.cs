@@ -13,6 +13,9 @@ public class ProfilePanel : MonoBehaviour
     // Sıra önemli: dizideki index = kullanıcının avatarIndex değeri.
     [SerializeField] private Button[] avatarButtons;
 
+    // Butonların görselleri buradan doldurulur — sıra kaymasını engeller.
+    [SerializeField] private AvatarCatalog catalog;
+
     [Header("Seçim görünümü")]
     [SerializeField] private float normalScale = 1f;
     [SerializeField] private float selectedScale = 1.2f;
@@ -29,9 +32,16 @@ public class ProfilePanel : MonoBehaviour
         {
             int index = i;
 
-            if (avatarButtons[i] != null)
+            if (avatarButtons[i] == null) continue;
+
+            avatarButtons[i].onClick.AddListener(() => SelectAvatar(index));
+
+            // Görseli katalogdan al: index ile sprite her zaman eşleşir.
+            if (catalog != null && avatarButtons[i].image != null)
             {
-                avatarButtons[i].onClick.AddListener(() => SelectAvatar(index));
+                Sprite sprite = catalog.Get(index);
+
+                if (sprite != null) avatarButtons[i].image.sprite = sprite;
             }
         }
 
