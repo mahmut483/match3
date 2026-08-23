@@ -24,21 +24,38 @@ public class Potion : MonoBehaviour
     [SerializeField] private GameObject selectedVisual;
     [SerializeField] private GameObject bomb;
 
+    // Taşın kendi görseli. Bombaya dönüşünce gizlenir — bombanın saydam
+    // kenarlarından alttaki renk sızmasın diye.
+    [SerializeField] private SpriteRenderer potionVisual;
+
+    // Bombadayken kullanılacak seçim çerçevesi. Atanmazsa bomba seçiliyken
+    // hiç çerçeve gösterilmez (taşın çerçevesi bombayı örtmediği için).
+    [SerializeField] private GameObject bombSelectedVisual;
+
     private void Awake()
     {
         originalPotionType = potionType;
+
+        if (potionVisual == null) potionVisual = GetComponent<SpriteRenderer>();
     }
 
     public void setSelectedVisual(bool isPressing)
     {
-        if (isPressing)
+        bool isBomb = potionType == PotionType.Bomb;
+
+        // Bombanın kendi çerçevesi varsa onu, yoksa taşınkini kullan.
+        if (isBomb)
         {
-            selectedVisual.SetActive(true);
+            if (selectedVisual != null) selectedVisual.SetActive(false);
+
+            if (bombSelectedVisual != null) bombSelectedVisual.SetActive(isPressing);
+
+            return;
         }
-        else
-        {
-            selectedVisual.SetActive(false);
-        }
+
+        if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
+
+        if (selectedVisual != null) selectedVisual.SetActive(isPressing);
     }
 
 
@@ -66,6 +83,13 @@ public class Potion : MonoBehaviour
             potionType = originalPotionType;
             bomb.SetActive(false);
         }
+
+        // Bomba açıkken taşın görseli kapalı, kapalıyken geri açılır.
+        if (potionVisual != null) potionVisual.enabled = !setActive;
+
+        // Durum değişirken açık kalmış seçim çerçevesi kalmasın.
+        if (selectedVisual != null) selectedVisual.SetActive(false);
+        if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
     }
 
     public void MoveToDown(Vector2 _targetPos, float startDelay = 0f)

@@ -91,6 +91,23 @@ public class OptionSelector : MonoBehaviour
         Changed?.Invoke();
     }
 
+    // Kayıtlı bir değere karşılık gelen seçeneği seçer (düzenleme ekranı için).
+    public void SetValue(int value)
+    {
+        if (values != null)
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (values[i] != value) continue;
+
+                SetIndex(i);
+                return;
+            }
+        }
+
+        SetIndex(value);
+    }
+
     public void SetIndex(int newIndex)
     {
         if (labels == null || labels.Length == 0) return;

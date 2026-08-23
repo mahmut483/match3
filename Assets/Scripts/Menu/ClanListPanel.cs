@@ -10,11 +10,24 @@ public class ClanListPanel : MonoBehaviour
     [SerializeField] private int loadLimit = 30;
     [SerializeField] private TMP_Text emptyText;       // opsiyonel: "Clan bulunamadı"
 
+    [Tooltip("Sayfa açılınca tüm clanları yükle. Arama sonuç listesinde KAPALI olmalı — " +
+             "yoksa arama yapmadan bütün clanlar listelenir.")]
+    [SerializeField] private bool loadOnEnable = true;
+
     private readonly List<ClanRowUI> rows = new();
 
     private void OnEnable()
     {
-        Reload();
+        if (loadOnEnable)
+        {
+            Reload();
+            return;
+        }
+
+        // Arama listesi: henüz arama yapılmadı, "sonuç yok" yazısı görünmesin.
+        Clear();
+
+        if (emptyText != null) emptyText.gameObject.SetActive(false);
     }
 
     public void Reload()
@@ -50,6 +63,14 @@ public class ClanListPanel : MonoBehaviour
             // Katıldıktan sonra liste tazelenir; üye sayısı güncel görünür.
             Reload();
         });
+    }
+
+    // Listeyi boşaltır ama "sonuç yok" yazısını göstermez (arama iptal edildiğinde).
+    public void ClearResults()
+    {
+        Clear();
+
+        if (emptyText != null) emptyText.gameObject.SetActive(false);
     }
 
     private void Clear()

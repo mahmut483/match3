@@ -10,6 +10,9 @@ public static class ClanChatService
     // Bir can isteğine en fazla kaç kişi katkı verebilir.
     public const int LivesPerRequest = 5;
 
+    // İki can isteği arasında beklenmesi gereken süre (saniye).
+    public const int RequestCooldownSeconds = 1800;
+
     // Mesajlar bu süre sonunda Firestore TTL politikasıyla silinir.
     private const int MessageLifetimeDays = 7;
 
@@ -57,9 +60,45 @@ public static class ClanChatService
         Send(ClanMessageType.Chat, trimmed, onDone);
     }
 
+    // Bekleme süresinden kalan saniye. 0 ise istek atılabilir.
+    public static double RemainingRequestCooldown()
+    {
+        FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
+
+        if (bootstrap == null || !bootstrap.IsReady) return 0;
+
+        double elapsed = (DateTime.UtcNow - bootstrap.User.lastLifeRequestAt.ToDateTime()).TotalSeconds;
+
+        return Math.Max(0, RequestCooldownSeconds - elapsed);
+    }
+
     public static void SendLifeRequest(Action<bool> onDone = null)
     {
-        Send(ClanMessageType.LifeRequest, "asking for free lives!", onDone);
+        // UI'a güvenmiyoruz; kontrol burada da var.
+        if (RemainingRequestCooldown() > 0)
+        {
+            onDone?.Invoke(false);
+            return;
+        }
+
+        Send(ClanMessageType.LifeRequest, "asking for free lives!", success =>
+        {
+            if (success) StampRequestTime();
+
+            onDone?.Invoke(success);
+        });
+    }
+
+    // İstek zamanını hem yerel kopyaya hem sunucuya yazar.
+    private static void StampRequestTime()
+    {
+        FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
+
+        Timestamp now = Timestamp.FromDateTime(DateTime.UtcNow);
+
+        bootstrap.User.lastLifeRequestAt = now;
+
+        Db.Collection("users").Document(bootstrap.Uid).UpdateAsync("lastLifeRequestAt", now);
     }
 
     private static void Send(ClanMessageType type, string text, Action<bool> onDone)

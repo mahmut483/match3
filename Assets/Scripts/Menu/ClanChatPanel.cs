@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Firebase.Firestore;
 using TMPro;
@@ -28,10 +29,13 @@ public class ClanChatPanel : MonoBehaviour
 
     [Header("Can isteği")]
     [SerializeField] private Button requestButton;
+    [SerializeField] private GameObject requestTimeoutPanel;
+    [SerializeField] private TMP_Text requestTimerText;
 
     private readonly List<GameObject> spawned = new();
     private ListenerRegistration listener;
     private TouchScreenKeyboard keyboard;
+    private Coroutine cooldownRoutine;
 
     private void Awake()
     {
@@ -49,11 +53,13 @@ public class ClanChatPanel : MonoBehaviour
     private void OnEnable()
     {
         StartListening();
+        RefreshRequestState();
     }
 
     private void OnDisable()
     {
         StopListening();
+        StopCooldown();
     }
 
     private void OnDestroy()
@@ -233,11 +239,96 @@ public class ClanChatPanel : MonoBehaviour
 
     private void RequestLives()
     {
+        // Sunucuya gitmeden önce butonu kilitle; çift dokunuş iki istek atmasın.
+        if (requestButton != null) requestButton.interactable = false;
+
         ClanChatService.SendLifeRequest(success =>
         {
-            if (!success) Debug.LogWarning("Can isteği gönderilemedi. Clanda mısın, kurallar yayınlandı mı?");
+            if (requestButton != null) requestButton.interactable = true;
+
+            if (!success)
+            {
+                Debug.LogWarning("Can isteği gönderilemedi. Clanda mısın, süre doldu mu?");
+                return;
+            }
+
+            RefreshRequestState();
         });
     }
+
+    #region Bekleme süresi
+
+    // Kalan süre varsa butonu gizleyip sayacı başlatır, yoksa butonu gösterir.
+    private void RefreshRequestState()
+    {
+        double remaining = ClanChatService.RemainingRequestCooldown();
+
+        if (remaining <= 0)
+        {
+            ShowRequestButton();
+            return;
+        }
+
+        StopCooldown();
+        cooldownRoutine = StartCoroutine(CooldownLoop());
+    }
+
+    private void ShowRequestButton()
+    {
+        StopCooldown();
+
+        if (requestButton != null) requestButton.gameObject.SetActive(true);
+        if (requestTimeoutPanel != null) requestTimeoutPanel.SetActive(false);
+    }
+
+    // Saniyede bir çalışır — Update ile her kare string üretmekten çok daha ucuz.
+    private IEnumerator CooldownLoop()
+    {
+        if (requestButton != null) requestButton.gameObject.SetActive(false);
+        if (requestTimeoutPanel != null) requestTimeoutPanel.SetActive(true);
+
+        WaitForSeconds tick = new WaitForSeconds(1f);
+        int lastShown = -1;
+
+        while (true)
+        {
+            int remaining = Mathf.CeilToInt((float)ClanChatService.RemainingRequestCooldown());
+
+            if (remaining <= 0) break;
+
+            // Yazıyı yalnızca gösterilen saniye değiştiğinde güncelle.
+            if (remaining != lastShown)
+            {
+                lastShown = remaining;
+
+                if (requestTimerText != null) requestTimerText.text = Format(remaining);
+            }
+
+            yield return tick;
+        }
+
+        cooldownRoutine = null;
+        ShowRequestButton();
+    }
+
+    private void StopCooldown()
+    {
+        if (cooldownRoutine == null) return;
+
+        StopCoroutine(cooldownRoutine);
+        cooldownRoutine = null;
+    }
+
+    // 90 -> "01:30"
+    private static string Format(int totalSeconds)
+    {
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+
+        return minutes.ToString("00") + ":" + seconds.ToString("00");
+    }
+
+    #endregion
 
     private void ScrollToBottom()
     {

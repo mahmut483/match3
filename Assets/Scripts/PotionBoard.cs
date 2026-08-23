@@ -40,7 +40,6 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private ParticleSystem explodingPaticles;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip matchClip, superMatchClip, explodingClip;
-    [SerializeField] private Animator superBombAnim;
 
 
     [SerializeField, Min(0f)] private float dropStaggerDelay = 0.2f;
@@ -576,6 +575,17 @@ public class PotionBoard : MonoBehaviour
         Animator bombAnimator = _targetPotion.GetComponentInChildren<Animator>(true);
 
         bombAnimator.Play("SuperBomb", 0, 0f);
+
+        // Partikülü animasyona bırakmıyoruz: obje zaten aktifse OnEnable tetiklenmez
+        // ve Play On Awake çalışmaz. Baştan başlatmak için elle tetikliyoruz.
+        ParticleSystem sparks = _targetPotion.GetComponentInChildren<ParticleSystem>(true);
+
+        if (sparks != null)
+        {
+            sparks.gameObject.SetActive(true);
+            sparks.Clear(true);
+            sparks.Play(true);
+        }
 
         yield return new WaitForSeconds(0.5f);
 

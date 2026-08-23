@@ -6,6 +6,9 @@ using Firebase.Firestore;
 [FirestoreData]
 public class UserData
 {
+    // Döküman kimliği — Firestore'da alan olarak tutulmaz, okurken elle atanır.
+    [System.NonSerialized] public string uid;
+
     [FirestoreProperty] public string displayName { get; set; }
     [FirestoreProperty] public int avatarIndex { get; set; }
     [FirestoreProperty] public bool isLinked { get; set; }   // Google/Apple'a bağlandı mı
@@ -22,4 +25,8 @@ public class UserData
     [FirestoreProperty] public int gold { get; set; }
 
     [FirestoreProperty] public string clanId { get; set; }
+
+    // Son can isteği zamanı — bekleme süresi bundan hesaplanır.
+    // Sunucuda tutulur ki oyuncu uygulamayı kapatıp açarak süreyi atlatamasın.
+    [FirestoreProperty] public Timestamp lastLifeRequestAt { get; set; }
 }

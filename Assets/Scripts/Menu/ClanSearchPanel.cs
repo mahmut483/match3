@@ -17,6 +17,9 @@ public class ClanSearchPanel : MonoBehaviour
     [SerializeField] private Button viewClansButton;
     [SerializeField] private ClanTabButtons tabButtons;
 
+    [Tooltip("Arama yapılmadan önce görünen öneri bloğu. Sonuç gelince gizlenir.")]
+    [SerializeField] private GameObject suggestionBody;
+
     [SerializeField] private int searchLimit = 30;
 
     private void Awake()
@@ -41,12 +44,37 @@ public class ClanSearchPanel : MonoBehaviour
     {
         if (searchInput == null || resultList == null) return;
 
+        // Boş aramada öneri bloğuna geri dön.
+        if (string.IsNullOrWhiteSpace(searchInput.text))
+        {
+            ShowSuggestion(true);
+            resultList.ClearResults();
+            return;
+        }
+
+        ShowSuggestion(false);
+
         ClanService.SearchClans(searchInput.text, searchLimit, resultList.Show);
     }
 
     public void Clear()
     {
         if (searchInput != null) searchInput.text = "";
+
+        ShowSuggestion(true);
+
+        if (resultList != null) resultList.ClearResults();
+    }
+
+    // Öneri bloğu ile sonuç listesi aynı anda görünmez.
+    private void ShowSuggestion(bool show)
+    {
+        if (suggestionBody != null) suggestionBody.SetActive(show);
+    }
+
+    private void OnEnable()
+    {
+        ShowSuggestion(true);
     }
 
     private void ShowJoinPage()
