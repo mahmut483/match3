@@ -51,7 +51,7 @@ public class GameManager : MonoBehaviour
     private readonly List<TMP_Text> goalCountTexts = new();
 
     [SerializeField] private GameObject outOfMovesPanel;
-    [SerializeField] private Animator charAnimCtrl;
+    [SerializeField] private CharacterAnimator charAnim;
     [SerializeField] private GameObject confetti;
 
     [SerializeField] private AudioSource audioSource;
@@ -192,7 +192,7 @@ public class GameManager : MonoBehaviour
         {
             //you've won the game
             isGameEnded = true;
-            charAnimCtrl.SetTrigger("Win");
+            charAnim.PlayWin();
             backgroundPanel.SetActive(true);
             confetti.SetActive(true);
             StartCoroutine(WaitForConfetti());
@@ -202,7 +202,6 @@ public class GameManager : MonoBehaviour
         }
         if (moves <= 3 && moves != 0 && !isPlayedlast3MovesClip)
         {
-            charAnimCtrl.SetTrigger("LowMove");
             audioSource.clip = last3MoveClip;
             audioSource.Play();
             isPlayedlast3MovesClip = true;
@@ -210,7 +209,7 @@ public class GameManager : MonoBehaviour
         else if (moves == 0)
         {
             // lose the game
-            charAnimCtrl.SetTrigger("Lose");
+            charAnim.PlayLose();
             isGameEnded = true;
             backgroundPanel.SetActive(true);
             outOfMovesPanel.SetActive(true);

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Level_001
   m_EditorClassIdentifier: Assembly-CSharp::LevelData
   level: 1
-  moves: 274
-  goal: 908
+  moves: 826
+  goal: 1797
   potionGoals:
   - potionType: 0
     amount: 3

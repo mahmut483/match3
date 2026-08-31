@@ -1,0 +1,17 @@
+{ "skeleton": { "images": "C:/Users/salih/Desktop/images/" },
+"PhotoshopToSpine": { "scale": 1, "padding": 1, "trim": true },
+"bones": [
+	{ "name": "root" }
+],
+"slots": [
+	{ "name": "Gozkapagi", "bone": "root", "attachment": "Gozkapagi" }
+],
+"skins": {
+	"default": {
+		"Gozkapagi": {
+			"Gozkapagi": { "x": 82.5, "y": -58, "width": 167, "height": 118 }
+		}
+	}
+},
+"animations": { "animation": {} }
+}

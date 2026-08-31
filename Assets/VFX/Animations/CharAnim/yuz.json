@@ -1,0 +1,21 @@
+{ "skeleton": { "images": "C:/Users/salih/Desktop/images/" },
+"PhotoshopToSpine": { "scale": 1, "padding": 1, "trim": true },
+"bones": [
+	{ "name": "root" }
+],
+"slots": [
+	{ "name": "yuz", "bone": "root", "attachment": "yuz" },
+	{ "name": "biyik", "bone": "root", "attachment": "biyik" }
+],
+"skins": {
+	"default": {
+		"yuz": {
+			"yuz": { "x": 508.5, "y": -561, "width": 1017, "height": 1124 }
+		},
+		"biyik": {
+			"biyik": { "x": 534, "y": -775.5, "width": 538, "height": 153 }
+		}
+	}
+},
+"animations": { "animation": {} }
+}

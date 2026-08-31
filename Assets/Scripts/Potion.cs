@@ -131,6 +131,5 @@ public enum PotionType
     Blue,
     Yellow,
     Green,
-    White,
     Bomb
 }

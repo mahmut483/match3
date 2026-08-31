@@ -576,6 +576,11 @@ public class PotionBoard : MonoBehaviour
 
         bombAnimator.Play("SuperBomb", 0, 0f);
 
+        // Patlayan bomba diğer bombaların ve taşların önünde çizilsin.
+        BombMaskBinder maskBinder = _targetPotion.GetComponentInChildren<BombMaskBinder>(true);
+
+        if (maskBinder != null) maskBinder.LockToFront();
+
         // Partikülü animasyona bırakmıyoruz: obje zaten aktifse OnEnable tetiklenmez
         // ve Play On Awake çalışmaz. Baştan başlatmak için elle tetikliyoruz.
         ParticleSystem sparks = _targetPotion.GetComponentInChildren<ParticleSystem>(true);
@@ -587,7 +592,7 @@ public class PotionBoard : MonoBehaviour
             sparks.Play(true);
         }
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1.82f);
 
 
         Vector2 explosionPosition = new Vector2((bombPosition.x - spacingX) * cellSize, (bombPosition.y - spacingY) * cellSize);

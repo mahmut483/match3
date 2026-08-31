@@ -1,0 +1,34 @@
+
+PiratesV_0.png
+size: 1130,896
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Goz
+  rotate: true
+  xy: 992, 740
+  size: 154, 136
+  orig: 165, 146
+  offset: 6, 7
+  index: -1
+Gozbebegi
+  rotate: false
+  xy: 992, 511
+  size: 55, 58
+  orig: 55, 58
+  offset: 0, 0
+  index: -1
+Gozkapagi
+  rotate: true
+  xy: 992, 571
+  size: 167, 118
+  orig: 167, 118
+  offset: 0, 0
+  index: -1
+Kafa
+  rotate: true
+  xy: 2, 2
+  size: 892, 988
+  orig: 892, 988
+  offset: 0, 0
+  index: -1
