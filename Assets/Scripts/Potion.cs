@@ -32,6 +32,9 @@ public class Potion : MonoBehaviour
     // hiç çerçeve gösterilmez (taşın çerçevesi bombayı örtmediği için).
     [SerializeField] private GameObject bombSelectedVisual;
 
+    // Çalışan hareket coroutine'i. Yeni hedef verilmeden önce durdurulur.
+    private Coroutine moveRoutine;
+
     private void Awake()
     {
         originalPotionType = potionType;
@@ -68,7 +71,7 @@ public class Potion : MonoBehaviour
     //MoveToTarget
     public void MoveToTarget(Vector2 _targetPos)
     {
-        StartCoroutine(MoveCoroutine(_targetPos, swapSpeed));
+        StartMove(_targetPos, swapSpeed, 0f);
     }
 
     public void Bomb(bool setActive)
@@ -94,7 +97,26 @@ public class Potion : MonoBehaviour
 
     public void MoveToDown(Vector2 _targetPos, float startDelay = 0f)
     {
-        StartCoroutine(MoveCoroutine(_targetPos, downSpeed, startDelay));
+        StartMove(_targetPos, downSpeed, startDelay);
+    }
+
+    // Taş hareket hâlindeyken yeni bir hedef alabiliyor (cascade sürerken yapılan
+    // takas gibi). İki MoveCoroutine aynı anda transform'a yazar ve hangisi önce
+    // biterse isMoving'i temizler — bekleyen kod yanlış anda devam eder.
+    // Bu yüzden yeni hareket başlamadan önce eskisi kesilir.
+    private void StartMove(Vector2 _targetPos, float duration, float startDelay)
+    {
+        if (moveRoutine != null) StopCoroutine(moveRoutine);
+
+        moveRoutine = StartCoroutine(MoveCoroutine(_targetPos, duration, startDelay));
+    }
+
+    // Havuza dönerken obje kapanır ve coroutine'ler durur; elde kalan referans
+    // temizlenmezse taş yeniden kullanıldığında geçersiz bir handle taşır.
+    private void OnDisable()
+    {
+        moveRoutine = null;
+        isMoving = false;
     }
 
     private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration, float startDelay = 0f)
@@ -121,6 +143,7 @@ public class Potion : MonoBehaviour
         }
         transform.position = _targetPos;
         isMoving = false;
+        moveRoutine = null;
     }
 }
 

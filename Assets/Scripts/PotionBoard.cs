@@ -72,7 +72,6 @@ public class PotionBoard : MonoBehaviour
     private void Update()
     {
         if (GameManager.Instance.isGameEnded) return;
-        if (currentState == BoardState.Swapping) return;
 
         if (waitForPointerRelease)
         {
@@ -318,6 +317,9 @@ public class PotionBoard : MonoBehaviour
                 if (potionBoard[x, y].isUsable)
                 {
                     Potion potion = potionBoard[x, y].potion;
+
+                    // Doldurma sırasında hücre açık ama boş olabilir.
+                    if (potion == null) continue;
 
                     if (!potion.isMatched)
                     {
@@ -994,6 +996,9 @@ public class PotionBoard : MonoBehaviour
             {
                 Potion neighbourPotion = potionBoard[x, y].potion;
 
+                // Refill sürerken hücre açık ama boş olabilir.
+                if (neighbourPotion == null) break;
+
                 if (!neighbourPotion.isMatched && neighbourPotion.potionType == potionType)
                 {
                     connectedPotions.Add(neighbourPotion);
@@ -1097,9 +1102,11 @@ public class PotionBoard : MonoBehaviour
         }
 
         currentState = BoardState.Checking;
-        bool hasMatched = CheckBoard(true, _currentPotion);
 
-        if (!hasMatched)
+        // Takasın geçerliliğine YALNIZCA takas edilen iki taş karar verir.
+        // CheckBoard board'un tamamına bakıyor; refill cascade'i sürerken
+        // başka bir yerdeki eşleşme, hiçbir şey yapmayan takası geçerli gösteriyordu.
+        if (!SwapCreatesMatch(_currentPotion, _targetPotion))
         {
             currentState = BoardState.Swapping;
             DoSwap(_currentPotion, _targetPotion);
@@ -1109,14 +1116,11 @@ public class PotionBoard : MonoBehaviour
                 !_targetPotion.isMoving
             );
 
-            if (_currentPotion.potionType == PotionType.Bomb)
-            {
-
-            }
-
             currentState = BoardState.Idle;
             yield break;
         }
+
+        bool hasMatched = CheckBoard(true, _currentPotion);
 
         while (hasMatched)
         {
@@ -1132,6 +1136,27 @@ public class PotionBoard : MonoBehaviour
 
         GameManager.Instance.ProcessTurn(10, true);
         currentState = BoardState.Idle;
+    }
+
+    // Takas edilen taşlardan biri 3'lü bir diziye girdi mi?
+    // Board'un geri kalanı bilerek yok sayılır.
+    private bool SwapCreatesMatch(Potion _currentPotion, Potion _targetPotion)
+    {
+        // IsConnected komşuları tararken isMatched'a bakıyor;
+        // önceki turdan kalmış bayraklar taramayı erken kesmesin.
+        foreach (Node node in potionBoard)
+        {
+            if (node.potion != null) node.potion.isMatched = false;
+        }
+
+        return IsPartOfMatch(_currentPotion) || IsPartOfMatch(_targetPotion);
+    }
+
+    private bool IsPartOfMatch(Potion potion)
+    {
+        if (potion == null) return false;
+
+        return IsConnected(potion).connectedPotions.Count >= 3;
     }
 
     //IsAdjacent

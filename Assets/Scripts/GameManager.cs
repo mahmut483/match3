@@ -180,6 +180,11 @@ public class GameManager : MonoBehaviour
 
     public void ProcessTurn(int _pointsToGain, bool _subtractMoves)
     {
+        // Cascade bittikten sonra biriken hamleler arka arkaya düşülüyor.
+        // Oyun bir önceki hamlede bittiyse kalanlar işlenmemeli — yoksa
+        // kazanma panelinin üstüne kaybetme paneli de açılabilir.
+        if (isGameEnded) return;
+
         points += _pointsToGain;
 
         if (_subtractMoves)
@@ -192,7 +197,7 @@ public class GameManager : MonoBehaviour
         {
             //you've won the game
             isGameEnded = true;
-            charAnim.PlayWin();
+            if (charAnim != null) charAnim.PlayWin();
             backgroundPanel.SetActive(true);
             confetti.SetActive(true);
             StartCoroutine(WaitForConfetti());
@@ -209,7 +214,7 @@ public class GameManager : MonoBehaviour
         else if (moves == 0)
         {
             // lose the game
-            charAnim.PlayLose();
+            if (charAnim != null) charAnim.PlayLose();
             isGameEnded = true;
             backgroundPanel.SetActive(true);
             outOfMovesPanel.SetActive(true);

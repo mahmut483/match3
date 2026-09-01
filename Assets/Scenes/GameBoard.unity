@@ -2951,6 +2951,7 @@ GameObject:
   - component: {fileID: 1066963351}
   - component: {fileID: 1066963350}
   - component: {fileID: 1066963349}
+  - component: {fileID: 1066963353}
   m_Layer: 0
   m_Name: Spine GameObject (PiratesV_0)
   m_TagString: Untagged
@@ -3067,6 +3068,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1066963353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1066963348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d39a4b72f22a45d8886298b010e94f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterAnimator
+  skeleton: {fileID: 1066963349}
+  idleAnimation: IdleAnim
+  winAnimation: WinAnim
+  loseAnimation: LoseAnim
 --- !u!1 &1076215348
 GameObject:
   m_ObjectHideFlags: 0
@@ -3132,7 +3149,7 @@ MonoBehaviour:
   - potionType: 5
     root: {fileID: 1525371259}
   outOfMovesPanel: {fileID: 1265628479}
-  charAnimCtrl: {fileID: 0}
+  charAnim: {fileID: 1066963353}
   confetti: {fileID: 658823543}
   audioSource: {fileID: 1076215352}
   last3MoveClip: {fileID: 8300000, guid: c5e2a73ad4706440f93bf05df0b465fe, type: 3}
