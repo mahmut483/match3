@@ -38,11 +38,22 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private ParticleSystem destroyParticlesGreen;
     [SerializeField] private ParticleSystem destroyParticlesPurple;
     [SerializeField] private ParticleSystem explodingPaticles;
+
+    // Süper bombanın kendi patlama efekti. Atanmazsa explodingPaticles kullanılır.
+    [SerializeField] private ParticleSystem superExplodingParticles;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip matchClip, superMatchClip, explodingClip;
 
 
     [SerializeField, Min(0f)] private float dropStaggerDelay = 0.2f;
+
+    // İki bomba birleşirken ikincisinin kaybolması için takas başladıktan sonra
+    // beklenen süre. Takas hareketi 0.12 sn sürüyor; bunun altında tutulmalı.
+    [SerializeField, Min(0f)] private float mergedBombHideDelay = 0.05f;
+
+    // Süper bomba patlayıp taşları temizledikten sonra, üstteki taşlar düşmeye
+    // başlamadan önce beklenen süre.
+    [SerializeField, Min(0f)] private float explosionSettleDelay = 0.25f;
 
     // Puanlama: her eşleşme/patlama olayı anında puan verir (cascade dahil).
     [SerializeField] private int matchPoints = 10;
@@ -598,7 +609,12 @@ public class PotionBoard : MonoBehaviour
 
 
         Vector2 explosionPosition = new Vector2((bombPosition.x - spacingX) * cellSize, (bombPosition.y - spacingY) * cellSize);
-        Instantiate(explodingPaticles, explosionPosition, Quaternion.identity);
+
+        ParticleSystem explosionEffect = superExplodingParticles != null
+            ? superExplodingParticles
+            : explodingPaticles;
+
+        Instantiate(explosionEffect, explosionPosition, Quaternion.identity);
         audioSource.clip = explodingClip;
         audioSource.Play();
 
@@ -623,6 +639,9 @@ public class PotionBoard : MonoBehaviour
             }
         }
 
+        // Patlama görülsün: taşlar temizlendikten sonra tahta bir an boş kalır,
+        // düşüş hemen başlamaz.
+        yield return new WaitForSeconds(explosionSettleDelay);
 
         // Bütün bomba zinciri tamamlandıktan sonra
         // mevcut refill kodun burada yalnızca bir kez çalışmalı.
@@ -1064,6 +1083,18 @@ public class PotionBoard : MonoBehaviour
     // IEnumerator ProcessMatches:
     private IEnumerator ProcessMatches(Potion _currentPotion, Potion _targetPotion)
     {
+        // İki bomba birleşiyor: ikincisi süper bombayı besler ama kendisi patlamaz.
+        // Takas hareketi başlar başlamaz ekrandan kalkar, süper bombanın yanında
+        // durup duruyor gibi görünmesin. Board'da kaldığı için 7x7 taraması onu
+        // diğer taşlarla aynı anda havuza yollar.
+        if (_currentPotion.potionType == PotionType.Bomb &&
+            _targetPotion.potionType == PotionType.Bomb)
+        {
+            yield return new WaitForSeconds(mergedBombHideDelay);
+
+            _targetPotion.gameObject.SetActive(false);
+        }
+
         yield return new WaitUntil(() =>
             !_currentPotion.isMoving &&
             !_targetPotion.isMoving
