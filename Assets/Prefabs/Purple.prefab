@@ -287,6 +287,9 @@ MonoBehaviour:
   bombShadow: {fileID: 7822841257962943088}
   potionVisual: {fileID: 0}
   bombSelectedVisual: {fileID: 0}
+  fallStretch: 1.08
+  landSquash: 1.08
+  landRecover: 0.24
 --- !u!61 &1371946217468060339
 BoxCollider2D:
   m_ObjectHideFlags: 0

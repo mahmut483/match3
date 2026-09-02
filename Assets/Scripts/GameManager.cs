@@ -59,6 +59,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AudioClip winClip;
     [SerializeField] private AudioClip lostClip;
 
+    [Header("Ses seviyeleri")]
+    [SerializeField, Range(0f, 1f)] private float last3MoveVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float winVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float loseVolume = 1f;
+
     // PotionBoard tahtayı Start'ta kuruyor ve ActiveLevel'a ihtiyaç duyuyor.
     // Tüm Awake'ler tüm Start'lardan önce çalıştığı için level çözümü burada yapılır.
     private void Awake()
@@ -201,14 +206,12 @@ public class GameManager : MonoBehaviour
             backgroundPanel.SetActive(true);
             confetti.SetActive(true);
             StartCoroutine(WaitForConfetti());
-            audioSource.clip = winClip;
-            audioSource.Play();
+            audioSource.PlayOneShot(winClip, winVolume);
             return;
         }
         if (moves <= 3 && moves != 0 && !isPlayedlast3MovesClip)
         {
-            audioSource.clip = last3MoveClip;
-            audioSource.Play();
+            audioSource.PlayOneShot(last3MoveClip, last3MoveVolume);
             isPlayedlast3MovesClip = true;
         }
         else if (moves == 0)
@@ -218,8 +221,7 @@ public class GameManager : MonoBehaviour
             isGameEnded = true;
             backgroundPanel.SetActive(true);
             outOfMovesPanel.SetActive(true);
-            audioSource.clip = lostClip;
-            audioSource.Play();
+            audioSource.PlayOneShot(lostClip, loseVolume);
 
             return;
         }

@@ -41,8 +41,19 @@ public class PotionBoard : MonoBehaviour
 
     // Süper bombanın kendi patlama efekti. Atanmazsa explodingPaticles kullanılır.
     [SerializeField] private ParticleSystem superExplodingParticles;
-    [SerializeField] private AudioSource audioSource;
+    // Mikser grubu AudioSource'un özelliği, klibin değil — bu yüzden her sesin
+    // kendi kaynağı var. Hepsi Potion Board üzerinde durur, tek farkları
+    // Inspector'daki Output alanına atanan mikser grubu.
+    [SerializeField] private AudioSource matchSource;
+    [SerializeField] private AudioSource superMatchSource;
+    [SerializeField] private AudioSource explodingSource;
+
     [SerializeField] private AudioClip matchClip, superMatchClip, explodingClip;
+
+    [Header("Ses seviyeleri")]
+    [SerializeField, Range(0f, 1f)] private float matchVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float superMatchVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float explodingVolume = 1f;
 
 
     [SerializeField, Min(0f)] private float dropStaggerDelay = 0.2f;
@@ -404,12 +415,12 @@ public class PotionBoard : MonoBehaviour
         {
             if (matchGroup.IsSuperMatch)
             {
-                audioSource.PlayOneShot(superMatchClip);
+                superMatchSource.PlayOneShot(superMatchClip, superMatchVolume);
                 GameManager.Instance.AddPoints(superMatchPoints);
             }
             else
             {
-                audioSource.PlayOneShot(matchClip);
+                matchSource.PlayOneShot(matchClip, matchVolume);
                 GameManager.Instance.AddPoints(matchPoints);
             }
 
@@ -439,8 +450,7 @@ public class PotionBoard : MonoBehaviour
                 }
                 else
                 {
-                    SpawnDestroyParticle(item);
-                    ReturnPotionToPool(item);
+                    StartCoroutine(ShrinkThenBreak(item));
                 }
             }
         }
@@ -494,8 +504,9 @@ public class PotionBoard : MonoBehaviour
             Vector2 explosionPosition = new Vector2((bombPosition.x - spacingX) * cellSize, (bombPosition.y - spacingY) * cellSize);
 
             Instantiate(explodingPaticles, explosionPosition, Quaternion.identity);
-            audioSource.clip = explodingClip;
-            audioSource.Play();
+            // PlayOneShot: zincirdeki her patlama üst üste binsin.
+            // clip + Play() olsaydı her yeni patlama öncekini baştan başlatırdı.
+            explodingSource.PlayOneShot(explodingClip, explodingVolume);
 
             // Her bomba patlaması puan verir (zincirdeki her bomba ayrı sayılır).
             GameManager.Instance.AddPoints(bombPoints);
@@ -526,6 +537,10 @@ public class PotionBoard : MonoBehaviour
 
                     // Önce board'dan kaldır.
                     potionBoard[xIndex, yIndex] = new Node(true, null);
+
+                    // Taşın kendi kırılma efekti — normal eşleşmedekiyle aynı.
+                    // Havuza dönmeden ÖNCE, tipi hâlâ doğruyken çağrılmalı.
+                    SpawnDestroyParticle(potion);
 
                     ReturnPotionToPool(potion);
 
@@ -626,8 +641,7 @@ public class PotionBoard : MonoBehaviour
             : explodingPaticles;
 
         Instantiate(explosionEffect, explosionPosition, Quaternion.identity);
-        audioSource.clip = explodingClip;
-        audioSource.Play();
+        explodingSource.PlayOneShot(explodingClip, explodingVolume);
 
         GameManager.Instance.AddPoints(bombPoints);
 
@@ -720,6 +734,16 @@ public class PotionBoard : MonoBehaviour
         }
 
         currentState = BoardState.Idle;
+    }
+
+    // Normal eşleşmede taş anında kaybolmaz: önce hızlıca küçülür, sonra kırılır.
+    // RemoveAndRefill zaten taşların kapanmasını beklediği için ayrı zamanlama gerekmez.
+    private IEnumerator ShrinkThenBreak(Potion item)
+    {
+        yield return item.ShrinkOut();
+
+        SpawnDestroyParticle(item);
+        ReturnPotionToPool(item);
     }
 
     private IEnumerator SuperMatchDestroy(Potion item)
@@ -1040,6 +1064,10 @@ public class PotionBoard : MonoBehaviour
     private void CheckDirection(Potion pot, Vector2Int direction, List<Potion> connectedPotions)
     {
         PotionType potionType = pot.potionType;
+
+        // Bombalar eşleşmeye katılmaz: yan yana gelen üç bomba patlamasın.
+        // Buradan dönünce IsConnected listesi tek elemanda kalır, 3'e ulaşamaz.
+        if (potionType == PotionType.Bomb) return;
 
         int x = pot.xIndex + direction.x;
         int y = pot.yIndex + direction.y;
