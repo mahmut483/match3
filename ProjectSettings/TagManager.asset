@@ -47,6 +47,9 @@ TagManager:
   - name: Gems
     uniqueID: 1890678711
     locked: 0
+  - name: BombShadow
+    uniqueID: 1349991117
+    locked: 0
   - name: Bomb
     uniqueID: 3687714119
     locked: 0

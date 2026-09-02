@@ -24,6 +24,12 @@ public class Potion : MonoBehaviour
     [SerializeField] private GameObject selectedVisual;
     [SerializeField] private GameObject bomb;
 
+    // Bombanın yere düşen gölgesi. bomb'un child'ı DEĞİL (onun animasyonlu
+    // transformunu miras almasın diye), o yüzden aç/kapa işi elle yapılır.
+    // Yalnızca süper bomba patlarken görünür; onu PotionBoard açar, burası
+    // her durum değişiminde kapatarak temiz bir başlangıç garantiler.
+    [SerializeField] private GameObject bombShadow;
+
     // Taşın kendi görseli. Bombaya dönüşünce gizlenir — bombanın saydam
     // kenarlarından alttaki renk sızmasın diye.
     [SerializeField] private SpriteRenderer potionVisual;
@@ -86,6 +92,8 @@ public class Potion : MonoBehaviour
             potionType = originalPotionType;
             bomb.SetActive(false);
         }
+
+        if (bombShadow != null) bombShadow.SetActive(false);
 
         // Bomba açıkken taşın görseli kapalı, kapalıyken geri açılır.
         if (potionVisual != null) potionVisual.enabled = !setActive;

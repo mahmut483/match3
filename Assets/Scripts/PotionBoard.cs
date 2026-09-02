@@ -55,6 +55,10 @@ public class PotionBoard : MonoBehaviour
     // başlamadan önce beklenen süre.
     [SerializeField, Min(0f)] private float explosionSettleDelay = 0.25f;
 
+    // Süper bomba patlaması merkezden dışa doğru halka halka ilerler;
+    // iki halka arasında beklenen süre.
+    [SerializeField, Min(0f)] private float superBombRingDelay = 0.06f;
+
     // Puanlama: her eşleşme/patlama olayı anında puan verir (cascade dahil).
     [SerializeField] private int matchPoints = 10;
     [SerializeField] private int superMatchPoints = 15;
@@ -585,9 +589,16 @@ public class PotionBoard : MonoBehaviour
 
         Vector2Int bombPosition = new Vector2Int(_targetPotion.xIndex, _targetPotion.yIndex);
 
-        Animator bombAnimator = _targetPotion.GetComponentInChildren<Animator>(true);
+        // Bomba ve gölgesi ayrı Animator'lerde duruyor; ikisi de aynı karede
+        // başlamalı. Taşın altındaki her Animator'de aynı state adı aranır,
+        // böylece ileride animasyonlu bir parça daha eklenirse kendiliğinden dahil olur.
+        foreach (Animator animator in _targetPotion.GetComponentsInChildren<Animator>(true))
+        {
+            // Gölge yalnızca burada görünür; kapalı duran parça açılmadan Play işlemez.
+            animator.gameObject.SetActive(true);
 
-        bombAnimator.Play("SuperBomb", 0, 0f);
+            animator.Play("SuperBomb", 0, 0f);
+        }
 
         // Patlayan bomba diğer bombaların ve taşların önünde çizilsin.
         BombMaskBinder maskBinder = _targetPotion.GetComponentInChildren<BombMaskBinder>(true);
@@ -620,22 +631,46 @@ public class PotionBoard : MonoBehaviour
 
         GameManager.Instance.AddPoints(bombPoints);
 
-        for (int xIndex = bombPosition.x - 3; xIndex <= bombPosition.x + 3; xIndex++)
+        // Patlama merkezden dışa doğru halka halka ilerler: önce merkez hücre,
+        // sonra onu saran kare çerçeve, sonra bir sonraki... Halkalar arasındaki
+        // kısa bekleme şok dalgası hissini verir.
+        // Yarıçap tek yerde: ring'in üst sınırı. 3 = 7x7.
+        for (int ring = 0; ring <= 3; ring++)
         {
-            for (int yIndex = bombPosition.y - 3; yIndex <= bombPosition.y + 3; yIndex++)
+            // Bekleme halkalar ARASINDA; son halkadan sonra fazladan duraklama olmasın.
+            if (ring > 0) yield return new WaitForSeconds(superBombRingDelay);
+
+            for (int xIndex = bombPosition.x - ring; xIndex <= bombPosition.x + ring; xIndex++)
             {
-                if (xIndex < 0 || xIndex >= width || yIndex < 0 || yIndex >= 8)
+                for (int yIndex = bombPosition.y - ring; yIndex <= bombPosition.y + ring; yIndex++)
                 {
-                    continue;
+                    // Yalnızca bu halkanın çerçevesi; içi önceki turlarda temizlendi.
+                    int distance = Mathf.Max(Mathf.Abs(xIndex - bombPosition.x),
+                                             Mathf.Abs(yIndex - bombPosition.y));
+
+                    if (distance != ring)
+                    {
+                        continue;
+                    }
+
+                    if (xIndex < 0 || xIndex >= width || yIndex < 0 || yIndex >= 8)
+                    {
+                        continue;
+                    }
+                    Node node = potionBoard[xIndex, yIndex];
+                    if (node == null || !node.isUsable || node.potion == null)
+                    {
+                        continue;
+                    }
+                    Potion potion = node.potion;
+                    potionBoard[xIndex, yIndex] = new Node(true, null);
+
+                    // Taşın kendi kırılma efekti — normal eşleşmedekiyle aynı.
+                    // Havuza dönmeden ÖNCE, tipi hâlâ doğruyken çağrılmalı.
+                    SpawnDestroyParticle(potion);
+
+                    ReturnPotionToPool(potion);
                 }
-                Node node = potionBoard[xIndex, yIndex];
-                if (node == null || !node.isUsable || node.potion == null)
-                {
-                    continue;
-                }
-                Potion potion = node.potion;
-                potionBoard[xIndex, yIndex] = new Node(true, null);
-                ReturnPotionToPool(potion);
             }
         }
 

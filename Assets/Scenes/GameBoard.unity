@@ -2544,8 +2544,8 @@ SpriteMask:
   m_MaskAlphaCutoff: 0.2
   m_FrontSortingLayerID: 666422525
   m_BackSortingLayerID: 666422525
-  m_FrontSortingLayer: 4
-  m_BackSortingLayer: 4
+  m_FrontSortingLayer: 5
+  m_BackSortingLayer: 5
   m_FrontSortingOrder: 10
   m_BackSortingOrder: -10
   m_IsCustomRangeActive: 1
@@ -2841,6 +2841,7 @@ MonoBehaviour:
   dropStaggerDelay: 0.04
   mergedBombHideDelay: 0.05
   explosionSettleDelay: 0.25
+  superBombRingDelay: 0.06
   matchPoints: 10
   superMatchPoints: 15
   bombPoints: 10
@@ -3737,7 +3738,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 666422525
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 6ec7e294cb0fc4aafb5b2a8f68dd2f6b, type: 3}
@@ -5625,7 +5626,7 @@ PrefabInstance:
     - target: {fileID: 639541320545012678, guid: ac8d6d7401a54430487756795565e515, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 61d77d80fa7e347ae8ccc139908c86f8, type: 2}
+      objectReference: {fileID: 2100000, guid: 6151a8d2cd94e458bb030e9f43eeadfe, type: 2}
     - target: {fileID: 5328749313079454409, guid: ac8d6d7401a54430487756795565e515, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

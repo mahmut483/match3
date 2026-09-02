@@ -1,9 +1,9 @@
 ﻿<Solution>
   <Project Path="spine-unity-editor.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="CFXRRuntime.csproj" />
   <Project Path="spine-unity.csproj" />
   <Project Path="spine-unity-examples.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="CFXREditor.csproj" />
   <Project Path="spine-unity-examples-editor.csproj" />
   <Project Path="CFXRDemo.csproj" />
