@@ -30,6 +30,18 @@ public class Potion : MonoBehaviour
     // her durum değişiminde kapatarak temiz bir başlangıç garantiler.
     [SerializeField] private GameObject bombShadow;
 
+    // Roket: gövde ile sağa/sola uçan iki parça. Parçalar taşın çocuğu olduğu
+    // için taş, süpürme bitene kadar havuza yollanmaz.
+    [SerializeField] private GameObject rocket;
+    [SerializeField] private GameObject rocketRight;
+    [SerializeField] private GameObject rocketLeft;
+
+    // Parçaların prefabdaki yeri. Süpürme sırasında dünya konumları değiştiği
+    // için havuza dönerken buraya geri konur; yoksa taş yeniden kullanıldığında
+    // parçalar tahtanın ortasında bir yerde kalır.
+    private Vector3 rocketRightHome;
+    private Vector3 rocketLeftHome;
+
     // Taşın kendi görseli. Bombaya dönüşünce gizlenir — bombanın saydam
     // kenarlarından alttaki renk sızmasın diye.
     [SerializeField] private SpriteRenderer potionVisual;
@@ -63,15 +75,20 @@ public class Potion : MonoBehaviour
         originalPotionType = potionType;
         baseScale = transform.localScale;
 
+        if (rocketRight != null) rocketRightHome = rocketRight.transform.localPosition;
+        if (rocketLeft != null) rocketLeftHome = rocketLeft.transform.localPosition;
+
         if (potionVisual == null) potionVisual = GetComponent<SpriteRenderer>();
     }
 
     public void setSelectedVisual(bool isPressing)
     {
-        bool isBomb = potionType == PotionType.Bomb;
+        // Özel taşlar (bomba, roket) taşın kendi çerçevesini kullanamaz:
+        // çerçeve mücevher boyutunda, özel görselin arkasından taşıyor.
+        bool isSpecial = potionType == PotionType.Bomb || potionType == PotionType.Rocket;
 
-        // Bombanın kendi çerçevesi varsa onu, yoksa taşınkini kullan.
-        if (isBomb)
+        // Özel taşın kendi çerçevesi varsa onu, yoksa hiç çerçeve gösterme.
+        if (isSpecial)
         {
             if (selectedVisual != null) selectedVisual.SetActive(false);
 
@@ -117,6 +134,59 @@ public class Potion : MonoBehaviour
         if (potionVisual != null) potionVisual.enabled = !setActive;
 
         // Durum değişirken açık kalmış seçim çerçevesi kalmasın.
+        if (selectedVisual != null) selectedVisual.SetActive(false);
+        if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
+    }
+
+    // Bomb(bool)'un roket karşılığı. Uzun yatay eşleşmede korunan taş buraya girer.
+    public void Rocket(bool setActive)
+    {
+        potionType = setActive ? PotionType.Rocket : originalPotionType;
+
+        if (rocket != null) rocket.SetActive(setActive);
+        if (rocketRight != null) rocketRight.SetActive(false);
+        if (rocketLeft != null) rocketLeft.SetActive(false);
+
+        if (potionVisual != null) potionVisual.enabled = !setActive;
+        if (selectedVisual != null) selectedVisual.SetActive(false);
+        if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
+    }
+
+    // Roket ateşlenir: gövde kapanır, iki parça açılır.
+    // Parçaları satır boyunca PotionBoard sürükler.
+    public void SplitRocket()
+    {
+        if (rocket != null) rocket.SetActive(false);
+        if (rocketRight != null) rocketRight.SetActive(true);
+        if (rocketLeft != null) rocketLeft.SetActive(true);
+    }
+
+    public Transform RocketRight => rocketRight != null ? rocketRight.transform : null;
+    public Transform RocketLeft => rocketLeft != null ? rocketLeft.transform : null;
+
+    // Havuza dönerken çağrılır. Taş hangi özel tipteyse yalnızca onu kapatmak
+    // yetmez — diğerinin görseli açık kalıp bir sonraki kullanımda ortaya çıkar.
+    public void ClearSpecial()
+    {
+        potionType = originalPotionType;
+
+        if (bomb != null) bomb.SetActive(false);
+        if (bombShadow != null) bombShadow.SetActive(false);
+        if (rocket != null) rocket.SetActive(false);
+
+        if (rocketRight != null)
+        {
+            rocketRight.SetActive(false);
+            rocketRight.transform.localPosition = rocketRightHome;
+        }
+
+        if (rocketLeft != null)
+        {
+            rocketLeft.SetActive(false);
+            rocketLeft.transform.localPosition = rocketLeftHome;
+        }
+
+        if (potionVisual != null) potionVisual.enabled = true;
         if (selectedVisual != null) selectedVisual.SetActive(false);
         if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
     }
@@ -248,5 +318,9 @@ public enum PotionType
     Blue,
     Yellow,
     Green,
-    Bomb
+    Bomb,
+
+    // Sona eklendi: prefablar ve sahne potionType'ı sayı olarak saklıyor,
+    // araya eklemek tüm taşların rengini kaydırırdı.
+    Rocket
 }

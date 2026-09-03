@@ -70,6 +70,10 @@ public class PotionBoard : MonoBehaviour
     // iki halka arasında beklenen süre.
     [SerializeField, Min(0f)] private float superBombRingDelay = 0.06f;
 
+    // Roket parçalarının satır boyunca ilerleme hızı (birim/sn).
+    // 0 olamaz: parçalar ilerlemezse süpürme döngüsü hiç bitmez.
+    [SerializeField, Min(0.1f)] private float rocketSpeed = 12f;
+
     // Puanlama: her eşleşme/patlama olayı anında puan verir (cascade dahil).
     [SerializeField] private int matchPoints = 10;
     [SerializeField] private int superMatchPoints = 15;
@@ -432,7 +436,16 @@ public class PotionBoard : MonoBehaviour
                 }
                 if (item == matchGroup.protectedPotion)
                 {
-                    item.Bomb(true);
+                    // Uzun YATAY eşleşme roket verir; diğer süper eşleşmeler bomba.
+                    if (matchGroup.direction == MatchDirection.LongHorizontal)
+                    {
+                        item.Rocket(true);
+                    }
+                    else
+                    {
+                        item.Bomb(true);
+                    }
+
                     continue;
                 }
 
@@ -478,84 +491,173 @@ public class PotionBoard : MonoBehaviour
     }
 
 
-    private IEnumerator BombExploding(Potion firstBomb)
+    // Zincirdeki bir halka: hangi hücre, hangi tür ve (roketse) hangi taş.
+    // Roketin uçan parçaları taşın çocuğu olduğu için taş referansı taşınır;
+    // bombada null yeterli, patlama yalnızca konumu kullanır.
+    private readonly struct SpecialTrigger
+    {
+        public readonly Vector2Int position;
+        public readonly PotionType type;
+        public readonly Potion potion;
+
+        public SpecialTrigger(Vector2Int position, PotionType type, Potion potion)
+        {
+            this.position = position;
+            this.type = type;
+            this.potion = potion;
+        }
+    }
+
+    // Bomba ve roket aynı zincirden geçer, biri diğerini tetikleyebilir.
+    // Kuyruk boşalınca tahta YALNIZCA BİR KEZ doldurulur ve cascade başlar.
+    private IEnumerator ExplodeChain(Potion first)
     {
         currentState = BoardState.Clearing;
 
+        Queue<SpecialTrigger> pending = new();
+        HashSet<Vector2Int> triggered = new();
 
+        pending.Enqueue(new SpecialTrigger(
+            new Vector2Int(first.xIndex, first.yIndex), first.potionType, first));
 
-        Queue<Vector2Int> bombQueue = new();
-        HashSet<Vector2Int> explodedBombs = new();
-
-        bombQueue.Enqueue(
-            new Vector2Int(firstBomb.xIndex, firstBomb.yIndex)
-        );
-
-        while (bombQueue.Count > 0)
+        while (pending.Count > 0)
         {
-            Vector2Int bombPosition = bombQueue.Dequeue();
+            SpecialTrigger trigger = pending.Dequeue();
 
-            // Aynı bomba merkezi ikinci kez çalışmasın.
-            if (!explodedBombs.Add(bombPosition))
+            // Aynı hücre ikinci kez tetiklenmesin.
+            if (!triggered.Add(trigger.position)) continue;
+
+            if (trigger.type == PotionType.Rocket)
             {
-                continue;
+                yield return SweepRow(trigger, pending, triggered);
             }
-
-            Vector2 explosionPosition = new Vector2((bombPosition.x - spacingX) * cellSize, (bombPosition.y - spacingY) * cellSize);
-
-            Instantiate(explodingPaticles, explosionPosition, Quaternion.identity);
-            // PlayOneShot: zincirdeki her patlama üst üste binsin.
-            // clip + Play() olsaydı her yeni patlama öncekini baştan başlatırdı.
-            explodingSource.PlayOneShot(explodingClip, explodingVolume);
-
-            // Her bomba patlaması puan verir (zincirdeki her bomba ayrı sayılır).
-            GameManager.Instance.AddPoints(bombPoints);
-
-            for (int xIndex = bombPosition.x - 1; xIndex <= bombPosition.x + 1; xIndex++)
+            else
             {
-                for (int yIndex = bombPosition.y - 1; yIndex <= bombPosition.y + 1; yIndex++)
-                {
-                    if (xIndex < 0 || xIndex >= width || yIndex < 0 || yIndex >= 8)
-                    {
-                        continue;
-                    }
-
-                    Node node = potionBoard[xIndex, yIndex];
-
-                    if (node == null || !node.isUsable || node.potion == null)
-                    {
-                        continue;
-                    }
-
-                    Potion potion = node.potion;
-
-                    // Pool metodu potionType'ı eski haline
-                    // getireceği için bunu önce kaydet.
-                    bool isAnotherBomb = potion.potionType == PotionType.Bomb;
-
-                    Vector2Int potionPosition = new Vector2Int(potion.xIndex, potion.yIndex);
-
-                    // Önce board'dan kaldır.
-                    potionBoard[xIndex, yIndex] = new Node(true, null);
-
-                    // Taşın kendi kırılma efekti — normal eşleşmedekiyle aynı.
-                    // Havuza dönmeden ÖNCE, tipi hâlâ doğruyken çağrılmalı.
-                    SpawnDestroyParticle(potion);
-
-                    ReturnPotionToPool(potion);
-
-                    // Başka bombaysa daha sonra patlatılmak
-                    // üzere kuyruğa ekle.
-                    if (isAnotherBomb && !explodedBombs.Contains(potionPosition))
-                    {
-                        bombQueue.Enqueue(potionPosition);
-                    }
-                }
+                BlastAround(trigger.position, pending, triggered);
             }
         }
 
-        // Bütün bomba zinciri tamamlandıktan sonra
-        // mevcut refill kodun burada yalnızca bir kez çalışmalı.
+        yield return RefillAndCascade();
+    }
+
+    // Bomba: merkez dahil 3x3 alanı temizler.
+    private void BlastAround(Vector2Int center, Queue<SpecialTrigger> pending, HashSet<Vector2Int> triggered)
+    {
+        Instantiate(explodingPaticles, CellToWorld(center), Quaternion.identity);
+        explodingSource.PlayOneShot(explodingClip, explodingVolume);
+
+        // Zincirdeki her patlama ayrı puan verir.
+        GameManager.Instance.AddPoints(bombPoints);
+
+        for (int xIndex = center.x - 1; xIndex <= center.x + 1; xIndex++)
+        {
+            for (int yIndex = center.y - 1; yIndex <= center.y + 1; yIndex++)
+            {
+                ClearCell(new Vector2Int(xIndex, yIndex), pending, triggered);
+            }
+        }
+    }
+
+    // Roket: iki parça merkezden dışa sabit hızla uçar, üzerinden geçtikleri
+    // hücreyi temizler. Parçalar taşın çocuğu olduğu için taşın hücresi hemen
+    // boşaltılır ama taş, süpürme bitene kadar havuza yollanmaz.
+    private IEnumerator SweepRow(SpecialTrigger trigger, Queue<SpecialTrigger> pending, HashSet<Vector2Int> triggered)
+    {
+        Potion rocket = trigger.potion;
+        int row = trigger.position.y;
+
+        explodingSource.PlayOneShot(explodingClip, explodingVolume);
+        GameManager.Instance.AddPoints(bombPoints);
+
+        potionBoard[trigger.position.x, row] = new Node(true, null);
+
+        Transform right = rocket != null ? rocket.RocketRight : null;
+        Transform left = rocket != null ? rocket.RocketLeft : null;
+
+        if (rocket != null) rocket.SplitRocket();
+
+        Vector3 rightStart = right != null ? right.position : Vector3.zero;
+        Vector3 leftStart = left != null ? left.position : Vector3.zero;
+
+        int nextRight = trigger.position.x + 1;
+        int nextLeft = trigger.position.x - 1;
+        float travelled = 0f;
+
+        while (nextRight < width || nextLeft >= 0)
+        {
+            travelled += rocketSpeed * Time.deltaTime;
+
+            if (right != null) right.position = rightStart + Vector3.right * travelled;
+            if (left != null) left.position = leftStart + Vector3.left * travelled;
+
+            // Parçalar kaç hücre ilerledi? Geçilen her hücre temizlenir.
+            int reached = Mathf.FloorToInt(travelled / cellSize);
+
+            while (nextRight < width && nextRight <= trigger.position.x + reached)
+            {
+                ClearCell(new Vector2Int(nextRight, row), pending, triggered);
+                nextRight++;
+            }
+
+            while (nextLeft >= 0 && nextLeft >= trigger.position.x - reached)
+            {
+                ClearCell(new Vector2Int(nextLeft, row), pending, triggered);
+                nextLeft--;
+            }
+
+            yield return null;
+        }
+
+        if (rocket != null)
+        {
+            SpawnDestroyParticle(rocket);
+            ReturnPotionToPool(rocket);
+        }
+    }
+
+    // Tek hücre temizler; özel taş bulursa zincire ekler.
+    // Roket havuza YOLLANMAZ — uçan parçaları için taşın yaşaması gerekiyor,
+    // onu kuyruktan çıkınca SweepRow havuza döndürür.
+    private void ClearCell(Vector2Int cell, Queue<SpecialTrigger> pending, HashSet<Vector2Int> triggered)
+    {
+        if (cell.x < 0 || cell.x >= width || cell.y < 0 || cell.y >= 8) return;
+
+        Node node = potionBoard[cell.x, cell.y];
+
+        if (node == null || !node.isUsable || node.potion == null) return;
+
+        Potion potion = node.potion;
+
+        // Havuz metodu tipi orijinaline döndüreceği için önce kaydedilir.
+        PotionType type = potion.potionType;
+
+        potionBoard[cell.x, cell.y] = new Node(true, null);
+
+        if (type == PotionType.Rocket && !triggered.Contains(cell))
+        {
+            pending.Enqueue(new SpecialTrigger(cell, type, potion));
+            return;
+        }
+
+        SpawnDestroyParticle(potion);
+        ReturnPotionToPool(potion);
+
+        if (type == PotionType.Bomb && !triggered.Contains(cell))
+        {
+            pending.Enqueue(new SpecialTrigger(cell, type, null));
+        }
+    }
+
+    private Vector2 CellToWorld(Vector2Int cell)
+    {
+        return new Vector2((cell.x - spacingX) * cellSize, (cell.y - spacingY) * cellSize);
+    }
+
+    // Patlama bittikten sonraki ortak kuyruk: boşalan hücreleri doldur,
+    // yeni oluşan eşleşmeleri cascade et, tahtayı Idle'a bırak.
+    // Hem zincir hem süper bomba buraya iner — eskiden ikisinde kopyalanmıştı.
+    private IEnumerator RefillAndCascade()
+    {
         currentState = BoardState.Refilling;
 
         for (int x = 0; x < width; x++)
@@ -566,19 +668,14 @@ public class PotionBoard : MonoBehaviour
             {
                 if (potionBoard[x, y].isUsable && potionBoard[x, y].potion == null)
                 {
-                    float startDelay = dropOrder * dropStaggerDelay;
-
-                    RefillPotion(x, y, startDelay);
+                    RefillPotion(x, y, dropOrder * dropStaggerDelay);
                     dropOrder++;
                 }
             }
         }
 
-        yield return new WaitUntil(
-            () => !IsAnyPotionMoving()
-        );
+        yield return new WaitUntil(() => !IsAnyPotionMoving());
 
-        // Buradan sonra cascade kontrol kodun çalışabilir.
         currentState = BoardState.Checking;
 
         bool hasMatched = CheckBoard(true);
@@ -692,48 +789,7 @@ public class PotionBoard : MonoBehaviour
         // düşüş hemen başlamaz.
         yield return new WaitForSeconds(explosionSettleDelay);
 
-        // Bütün bomba zinciri tamamlandıktan sonra
-        // mevcut refill kodun burada yalnızca bir kez çalışmalı.
-        currentState = BoardState.Refilling;
-
-        for (int x = 0; x < width; x++)
-        {
-            int dropOrder = 0;
-
-            for (int y = 0; y < height; y++)
-            {
-                if (potionBoard[x, y].isUsable && potionBoard[x, y].potion == null)
-                {
-                    float startDelay = dropOrder * dropStaggerDelay;
-
-                    RefillPotion(x, y, startDelay);
-                    dropOrder++;
-                }
-            }
-        }
-
-        yield return new WaitUntil(
-            () => !IsAnyPotionMoving()
-        );
-
-        // Buradan sonra cascade kontrol kodun çalışabilir.
-        currentState = BoardState.Checking;
-
-        bool hasMatched = CheckBoard(true);
-
-        while (hasMatched)
-        {
-            currentState = BoardState.Clearing;
-
-            List<MatchResult> matchGroups = new List<MatchResult>(currentMatchGroups);
-
-            yield return RemoveAndRefill(matchGroups);
-
-            currentState = BoardState.Checking;
-            hasMatched = CheckBoard(true);
-        }
-
-        currentState = BoardState.Idle;
+        yield return RefillAndCascade();
     }
 
     // Normal eşleşmede taş anında kaybolmaz: önce hızlıca küçülür, sonra kırılır.
@@ -756,10 +812,10 @@ public class PotionBoard : MonoBehaviour
 
     private void ReturnPotionToPool(Potion item)
     {
-        // Bomb(false) tipi orijinaline döndürmeden önce bomba olup olmadığını kaydet.
+        // ClearSpecial tipi orijinaline döndürmeden önce bomba olup olmadığını kaydet.
         bool wasBomb = item.potionType == PotionType.Bomb;
 
-        item.Bomb(false);
+        item.ClearSpecial();
 
         // Temizlenen taş orijinal rengine sayılır; bombaysa ayrıca Bomb hedefine de sayılır.
         GameManager.Instance.RegisterClearedPotion(item.potionType);
@@ -1065,9 +1121,9 @@ public class PotionBoard : MonoBehaviour
     {
         PotionType potionType = pot.potionType;
 
-        // Bombalar eşleşmeye katılmaz: yan yana gelen üç bomba patlamasın.
-        // Buradan dönünce IsConnected listesi tek elemanda kalır, 3'e ulaşamaz.
-        if (potionType == PotionType.Bomb) return;
+        // Özel taşlar eşleşmeye katılmaz: yan yana gelen üç bomba ya da üç roket
+        // patlamasın. Buradan dönünce IsConnected listesi tek elemanda kalır.
+        if (potionType == PotionType.Bomb || potionType == PotionType.Rocket) return;
 
         int x = pot.xIndex + direction.x;
         int y = pot.yIndex + direction.y;
@@ -1163,16 +1219,15 @@ public class PotionBoard : MonoBehaviour
             !_targetPotion.isMoving
         );
 
-        Potion bombToExplode = null;
+        // Takas edilen taşlardan biri özel mi? Roket önceliklidir: bombayla
+        // takas edilirse roket süpürür, yoldaki bombayı zaten zincire alır.
+        Potion specialToTrigger = null;
 
-        if (_currentPotion.potionType == PotionType.Bomb)
-        {
-            bombToExplode = _currentPotion;
-        }
-        if (_targetPotion.potionType == PotionType.Bomb)
-        {
-            bombToExplode = _targetPotion;
-        }
+        if (IsSpecial(_currentPotion)) specialToTrigger = _currentPotion;
+        if (IsSpecial(_targetPotion)) specialToTrigger = _targetPotion;
+
+        if (_currentPotion.potionType == PotionType.Rocket) specialToTrigger = _currentPotion;
+        if (_targetPotion.potionType == PotionType.Rocket) specialToTrigger = _targetPotion;
 
         if (_currentPotion.potionType == PotionType.Bomb && _targetPotion.potionType == PotionType.Bomb)
         {
@@ -1184,10 +1239,10 @@ public class PotionBoard : MonoBehaviour
             // Normal CheckBoard ve geri swap çalışmasın.
             yield break;
         }
-        else if (bombToExplode != null)
+        else if (specialToTrigger != null)
         {
-            // Bomba patlaması, refill ve cascade tamamen bitsin.
-            yield return BombExploding(bombToExplode);
+            // Patlama/süpürme zinciri, refill ve cascade tamamen bitsin.
+            yield return ExplodeChain(specialToTrigger);
 
             GameManager.Instance.ProcessTurn(0, true);
 
@@ -1251,6 +1306,11 @@ public class PotionBoard : MonoBehaviour
         if (potion == null) return false;
 
         return IsConnected(potion).connectedPotions.Count >= 3;
+    }
+
+    private static bool IsSpecial(Potion potion)
+    {
+        return potion.potionType == PotionType.Bomb || potion.potionType == PotionType.Rocket;
     }
 
     //IsAdjacent

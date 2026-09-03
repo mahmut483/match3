@@ -1,13 +1,13 @@
 ﻿<Solution>
   <Project Path="spine-unity-editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
-  <Project Path="CFXRRuntime.csproj" />
   <Project Path="spine-unity.csproj" />
   <Project Path="spine-unity-examples.csproj" />
-  <Project Path="CFXREditor.csproj" />
-  <Project Path="spine-unity-examples-editor.csproj" />
-  <Project Path="CFXRDemo.csproj" />
-  <Project Path="ToonyColorsPro.Demo.Editor.csproj" />
-  <Project Path="Firebase.App.Internal.csproj" />
   <Project Path="KinoBloom.Runtime.csproj" />
+  <Project Path="ToonyColorsPro.Demo.Editor.csproj" />
+  <Project Path="spine-unity-examples-editor.csproj" />
+  <Project Path="CFXRRuntime.csproj" />
+  <Project Path="CFXREditor.csproj" />
+  <Project Path="CFXRDemo.csproj" />
+  <Project Path="Firebase.App.Internal.csproj" />
 </Solution>
