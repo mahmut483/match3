@@ -1,10 +1,16 @@
 fileFormatVersion: 2
-guid: 6b953e684dee2438cbe71eac550976eb
+guid: b2a81b165b64b4d858cfbdfd0f04706d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6711257252158638106
-    second: Rocket_0
+      213: -8064665895171209181
+    second: SwapSmoke_0
+  - first:
+      213: -4326894748184903495
+    second: SwapSmoke_1
+  - first:
+      213: -3101932663967199951
+    second: SwapSmoke_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +119,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Rocket_0
+      name: SwapSmoke_0
       rect:
         serializedVersion: 2
-        x: 17
-        y: 42
-        width: 280
-        height: 239
+        x: 7
+        y: 2
+        width: 318
+        height: 295
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +134,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a180e2fb9ec232d50800000000000000
-      internalID: 6711257252158638106
+      spriteID: 328cc16c81d841090800000000000000
+      internalID: -8064665895171209181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SwapSmoke_1
+      rect:
+        serializedVersion: 2
+        x: 135
+        y: 292
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b08fe1c628c3f3c0800000000000000
+      internalID: -4326894748184903495
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SwapSmoke_2
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 16
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13dcd074da8b3f4d0800000000000000
+      internalID: -3101932663967199951
       vertices: []
       indices: 
       edges: []
@@ -148,7 +198,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Rocket_0: 6711257252158638106
+      SwapSmoke_0: -8064665895171209181
+      SwapSmoke_1: -4326894748184903495
+      SwapSmoke_2: -3101932663967199951
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

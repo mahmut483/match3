@@ -1,5 +1,6 @@
 
 using System.Collections;
+using CartoonFX;
 using UnityEngine;
 
 public class Potion : MonoBehaviour
@@ -19,6 +20,7 @@ public class Potion : MonoBehaviour
     public Vector2 targetPos;
 
     private float swapSpeed = .12f;
+
     private float downSpeed = .24f;
 
     [SerializeField] private GameObject selectedVisual;
@@ -42,6 +44,15 @@ public class Potion : MonoBehaviour
     private Vector3 rocketRightHome;
     private Vector3 rocketLeftHome;
 
+    // Prefabdaki rotasyonlar. Dikey roket bunların üstüne 90° ekler; Left'in
+    // prefabdaki 180°'si (aynalama) korunmalı, o yüzden üstüne yazılmaz.
+    private Quaternion rocketHomeRot;
+    private Quaternion rocketRightHomeRot;
+    private Quaternion rocketLeftHomeRot;
+
+    // Dikey roket sütun temizler; PotionBoard ateşlerken buna bakar.
+    public bool IsVerticalRocket { get; private set; }
+
     // Taşın kendi görseli. Bombaya dönüşünce gizlenir — bombanın saydam
     // kenarlarından alttaki renk sızmasın diye.
     [SerializeField] private SpriteRenderer potionVisual;
@@ -49,6 +60,27 @@ public class Potion : MonoBehaviour
     // Bombadayken kullanılacak seçim çerçevesi. Atanmazsa bomba seçiliyken
     // hiç çerçeve gösterilmez (taşın çerçevesi bombayı örtmediği için).
     [SerializeField] private GameObject bombSelectedVisual;
+
+    [Header("Takas dumanı")]
+    [SerializeField] private GameObject swapSmoke;
+
+    [Tooltip("Dumanın taşı yakalama hızı. Düşük değer = taş daha çok öne geçer.")]
+    [SerializeField, Min(0.1f)] private float smokeFollow = 14f;
+
+    [Tooltip("Duman hareket YÖNÜNDE bu kadar uzar, dik eksende aynı oranda incelir.")]
+    [SerializeField, Min(1f)] private float smokeGrow = 1.6f;
+
+    [Tooltip("Dumanın taşın arkasında kalma mesafesi (taşın local birimi).")]
+    [SerializeField, Min(0f)] private float smokeTrail = 1f;
+
+    // Prefabdaki duruş. Takasta dünya konumu elle sürüldüğü için
+    // bitişte buraya geri konur.
+    private Vector3 swapSmokeHome;
+    private Vector3 swapSmokeHomeScale;
+    private Quaternion swapSmokeHomeRot;
+
+    // Takas yönüne göre hesaplanan dönüş; duman hareketin tersinde kalır.
+    private Quaternion swapSmokeRot = Quaternion.identity;
 
     [Header("Düşüş esnemesi")]
     [Tooltip("Düşerken Y çarpanı. X ters oranda incelir, hacim korunmuş görünür.")]
@@ -78,7 +110,26 @@ public class Potion : MonoBehaviour
         if (rocketRight != null) rocketRightHome = rocketRight.transform.localPosition;
         if (rocketLeft != null) rocketLeftHome = rocketLeft.transform.localPosition;
 
+        if (swapSmoke != null)
+        {
+            swapSmokeHome = swapSmoke.transform.localPosition;
+            swapSmokeHomeScale = swapSmoke.transform.localScale;
+            swapSmokeHomeRot = swapSmoke.transform.localRotation;
+        }
+
+        if (rocket != null) rocketHomeRot = rocket.transform.localRotation;
+        if (rocketRight != null) rocketRightHomeRot = rocketRight.transform.localRotation;
+        if (rocketLeft != null) rocketLeftHomeRot = rocketLeft.transform.localRotation;
+
         if (potionVisual == null) potionVisual = GetComponent<SpriteRenderer>();
+
+        // Potion kökü havuzdan tekrar kullanılıyor. Cartoon FX'in varsayılan
+        // Destroy davranışı, roket izi durunca child efekt objesini kalıcı olarak
+        // siliyor; sonraki kullanımda hem eksik referans hem de yarım roket kalıyor.
+        foreach (CFXR_Effect effect in GetComponentsInChildren<CFXR_Effect>(true))
+        {
+            effect.clearBehavior = CFXR_Effect.ClearBehavior.None;
+        }
     }
 
     public void setSelectedVisual(bool isPressing)
@@ -110,9 +161,11 @@ public class Potion : MonoBehaviour
     }
 
     //MoveToTarget
-    public void MoveToTarget(Vector2 _targetPos)
+    // showSmoke yalnızca TAKASTA true; süper eşleşmede taşlar bombaya uçarken
+    // aynı metot kullanılıyor ama orada iz istemiyoruz.
+    public void MoveToTarget(Vector2 _targetPos, bool showSmoke = false)
     {
-        StartMove(_targetPos, swapSpeed, 0f);
+        StartMove(_targetPos, swapSpeed, 0f, false, showSmoke);
     }
 
     public void Bomb(bool setActive)
@@ -138,14 +191,34 @@ public class Potion : MonoBehaviour
         if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
     }
 
-    // Bomb(bool)'un roket karşılığı. Uzun yatay eşleşmede korunan taş buraya girer.
-    public void Rocket(bool setActive)
+    // Bomb(bool)'un roket karşılığı. Uzun eşleşmede korunan taş buraya girer:
+    // yatay eşleşme yatay roket (satır), dikey eşleşme dikey roket (sütun).
+    // Dikey roket ayrı bir görsel değil, aynı üç obje 90° döndürülmüş hali —
+    // üçü de taşın merkezinde ve pivot'ları ortada, dönüş yerinde kalır.
+    public void Rocket(bool setActive, bool vertical = false)
     {
         potionType = setActive ? PotionType.Rocket : originalPotionType;
+        IsVerticalRocket = setActive && vertical;
 
-        if (rocket != null) rocket.SetActive(setActive);
-        if (rocketRight != null) rocketRight.SetActive(false);
-        if (rocketLeft != null) rocketLeft.SetActive(false);
+        Quaternion turn = IsVerticalRocket ? Quaternion.Euler(0f, 0f, 90f) : Quaternion.identity;
+
+        if (rocket != null)
+        {
+            rocket.SetActive(setActive);
+            rocket.transform.localRotation = turn * rocketHomeRot;
+        }
+
+        if (rocketRight != null)
+        {
+            rocketRight.SetActive(false);
+            rocketRight.transform.localRotation = turn * rocketRightHomeRot;
+        }
+
+        if (rocketLeft != null)
+        {
+            rocketLeft.SetActive(false);
+            rocketLeft.transform.localRotation = turn * rocketLeftHomeRot;
+        }
 
         if (potionVisual != null) potionVisual.enabled = !setActive;
         if (selectedVisual != null) selectedVisual.SetActive(false);
@@ -172,18 +245,28 @@ public class Potion : MonoBehaviour
 
         if (bomb != null) bomb.SetActive(false);
         if (bombShadow != null) bombShadow.SetActive(false);
-        if (rocket != null) rocket.SetActive(false);
+        IsVerticalRocket = false;
+
+        StopSwapSmoke();
+
+        if (rocket != null)
+        {
+            rocket.SetActive(false);
+            rocket.transform.localRotation = rocketHomeRot;
+        }
 
         if (rocketRight != null)
         {
             rocketRight.SetActive(false);
             rocketRight.transform.localPosition = rocketRightHome;
+            rocketRight.transform.localRotation = rocketRightHomeRot;
         }
 
         if (rocketLeft != null)
         {
             rocketLeft.SetActive(false);
             rocketLeft.transform.localPosition = rocketLeftHome;
+            rocketLeft.transform.localRotation = rocketLeftHomeRot;
         }
 
         if (potionVisual != null) potionVisual.enabled = true;
@@ -200,11 +283,11 @@ public class Potion : MonoBehaviour
     // takas gibi). İki MoveCoroutine aynı anda transform'a yazar ve hangisi önce
     // biterse isMoving'i temizler — bekleyen kod yanlış anda devam eder.
     // Bu yüzden yeni hareket başlamadan önce eskisi kesilir.
-    private void StartMove(Vector2 _targetPos, float duration, float startDelay, bool stretch = false)
+    private void StartMove(Vector2 _targetPos, float duration, float startDelay, bool stretch = false, bool showSmoke = false)
     {
         if (moveRoutine != null) StopCoroutine(moveRoutine);
 
-        moveRoutine = StartCoroutine(MoveCoroutine(_targetPos, duration, startDelay, stretch));
+        moveRoutine = StartCoroutine(MoveCoroutine(_targetPos, duration, startDelay, stretch, showSmoke));
     }
 
     // Havuza dönerken obje kapanır ve coroutine'ler durur; elde kalan referans
@@ -218,7 +301,7 @@ public class Potion : MonoBehaviour
         transform.localScale = baseScale;
     }
 
-    private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration, float startDelay = 0f, bool stretch = false)
+    private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration, float startDelay = 0f, bool stretch = false, bool showSmoke = false)
     {
         isMoving = true;
 
@@ -233,6 +316,8 @@ public class Potion : MonoBehaviour
         float elaspeed = 0f;
         Vector2 startPos = transform.position;
 
+        if (showSmoke) StartSwapSmoke(_targetPos - startPos);
+
         while (elaspeed < duration)
         {
             elaspeed += Time.deltaTime;
@@ -241,14 +326,24 @@ public class Potion : MonoBehaviour
 
             transform.position = Vector2.Lerp(startPos, _targetPos, t);
 
+            if (showSmoke) DriveSwapSmoke(t);
+
             yield return null;
         }
         transform.position = _targetPos;
 
+        if (showSmoke) StopSwapSmoke();
+
+        // Taş hücresine vardı: tahta mantığı buradan itibaren serbest.
+        // Squash tamamen görsel; isMoving'i onun bitişine bağlamak cascade
+        // kontrolünü her taşta landRecover kadar geciktiriyordu.
+        isMoving = false;
+
         // Yere değdi: X büyür, Y basılır; sonra normale yaylanır.
+        // moveRoutine hâlâ bu coroutine'i gösterir ki squash sırasında gelen
+        // yeni bir hareket ya da ShrinkOut onu kesebilsin.
         if (stretch) yield return LandSquash();
 
-        isMoving = false;
         moveRoutine = null;
     }
 
@@ -303,6 +398,66 @@ public class Potion : MonoBehaviour
         transform.localScale = Vector3.zero;
     }
 
+    // Duman taşın ÇOCUĞU olduğu için normalde ona yapışık gider. Gecikme
+    // hissi vermek adına dünya konumu her karede elle sürülüyor: hedefe
+    // Lerp ile yaklaşır, yani taş hızlandıkça geride kalır.
+    private void StartSwapSmoke(Vector2 direction)
+    {
+        if (swapSmoke == null) return;
+
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        swapSmokeRot = Quaternion.Euler(0f, 0f, angle);
+
+        Transform smoke = swapSmoke.transform;
+
+        smoke.localRotation = swapSmokeRot;
+        smoke.localScale = swapSmokeHomeScale;
+        smoke.position = SwapSmokeAnchor();
+
+        swapSmoke.SetActive(true);
+    }
+
+    // Dumanın peşinden koştuğu nokta: taşın GİDİŞ YÖNÜNÜN TERSİNDE,
+    // smokeTrail kadar geride. swapSmokeRot +x'i hareket yönüne çevirdiği
+    // için "geri" yönü basitçe Vector3.left oluyor.
+    private Vector3 SwapSmokeAnchor()
+    {
+        Vector3 behind = swapSmokeRot * (Vector3.left * smokeTrail);
+
+        return transform.TransformPoint(swapSmokeHome + behind);
+    }
+
+    private void DriveSwapSmoke(float t)
+    {
+        if (swapSmoke == null) return;
+
+        Transform smoke = swapSmoke.transform;
+
+        smoke.position = Vector3.Lerp(smoke.position, SwapSmokeAnchor(), smokeFollow * Time.deltaTime);
+
+        // Duman hareket yönüne döndürülmüş durumda, yani LOCAL x = gidiş ekseni.
+        // x uzar, y aynı oranda incelir: yatay takasta dünyada x büyür/y küçülür,
+        // dikey takasta obje 90° dönük olduğu için tam tersi olur.
+        Vector3 stretched = new Vector3(swapSmokeHomeScale.x * smokeGrow,
+                                        swapSmokeHomeScale.y / smokeGrow,
+                                        swapSmokeHomeScale.z);
+
+        smoke.localScale = Vector3.Lerp(swapSmokeHomeScale, stretched, t);
+    }
+
+    private void StopSwapSmoke()
+    {
+        if (swapSmoke == null) return;
+
+        swapSmoke.SetActive(false);
+
+        Transform smoke = swapSmoke.transform;
+
+        smoke.localPosition = swapSmokeHome;
+        smoke.localRotation = swapSmokeHomeRot;
+        smoke.localScale = swapSmokeHomeScale;
+    }
+
     private void SetScale(float xFactor, float yFactor)
     {
         transform.localScale = new Vector3(baseScale.x * xFactor,
@@ -319,8 +474,5 @@ public enum PotionType
     Yellow,
     Green,
     Bomb,
-
-    // Sona eklendi: prefablar ve sahne potionType'ı sayı olarak saklıyor,
-    // araya eklemek tüm taşların rengini kaydırırdı.
     Rocket
 }
