@@ -49,6 +49,11 @@ public class PotionBoard : MonoBehaviour
 
     // Süper bombanın kendi patlama efekti. Atanmazsa explodingPaticles kullanılır.
     [SerializeField] private ParticleSystem superExplodingParticles;
+
+    // Roket oluşurken bir kez çalışan efekt. Taşın ÇOCUĞU değil, bağımsız
+    // doğurulur: çocuk olsaydı roketin oluşma animasyonu onu da sürükler,
+    // efekt roketle birlikte kayardı.
+    [SerializeField] private ParticleSystem rocketSpawnParticles;
     // Mikser grubu AudioSource'un özelliği, klibin değil — bu yüzden her sesin
     // kendi kaynağı var. Hepsi Potion Board üzerinde durur, tek farkları
     // Inspector'daki Output alanına atanan mikser grubu.
@@ -457,13 +462,12 @@ public class PotionBoard : MonoBehaviour
                 {
                     // Uzun yatay eşleşme yatay roket (satır), uzun dikey eşleşme dikey
                     // roket (sütun) verir. L/T biçimli süper eşleşme bomba olarak kalır.
-                    if (matchGroup.direction == MatchDirection.LongHorizontal)
+                    if (matchGroup.direction == MatchDirection.LongHorizontal ||
+                        matchGroup.direction == MatchDirection.LongVertical)
                     {
-                        item.Rocket(true, vertical: false);
-                    }
-                    else if (matchGroup.direction == MatchDirection.LongVertical)
-                    {
-                        item.Rocket(true, vertical: true);
+                        item.Rocket(true, vertical: matchGroup.direction == MatchDirection.LongVertical);
+
+                        SpawnRocketParticle(item);
                     }
                     else
                     {
@@ -936,6 +940,14 @@ public class PotionBoard : MonoBehaviour
         {
             deactivePotionPool.Add(item.gameObject);
         }
+    }
+
+    // Roket oluşma efekti: roketin bulunduğu hücrede, taştan bağımsız doğar.
+    private void SpawnRocketParticle(Potion item)
+    {
+        if (rocketSpawnParticles == null) return;
+
+        Instantiate(rocketSpawnParticles, item.transform.position, Quaternion.identity);
     }
 
     private void SpawnDestroyParticle(Potion item)

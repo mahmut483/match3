@@ -2928,6 +2928,7 @@ MonoBehaviour:
   destroyParticlesYellow: {fileID: 7114066461626933240, guid: 212ffb3bb0fcc48f2b4709a825a6c3cc, type: 3}
   explodingPaticles: {fileID: 725748389856807712, guid: 4bda94453d2ca7444a0fff05b2d425f5, type: 3}
   superExplodingParticles: {fileID: 725748389856807712, guid: 6c2e93fefd4c548069a3bd343de74641, type: 3}
+  rocketSpawnParticles: {fileID: 6856126483460176776, guid: 299ff16e538a14cd7afdff06eae1cb0d, type: 3}
   matchSource: {fileID: 1016066662}
   superMatchSource: {fileID: 1016066664}
   explodingSource: {fileID: 1016066663}
