@@ -54,6 +54,10 @@ public class PotionBoard : MonoBehaviour
     // doğurulur: çocuk olsaydı roketin oluşma animasyonu onu da sürükler,
     // efekt roketle birlikte kayardı.
     [SerializeField] private ParticleSystem rocketSpawnParticles;
+
+    // Roket ateşlenince bir kez çalışan efekt. Prefab yatay roket için
+    // tasarlandı; dikey roket için Z ekseninde -90 döndürülür.
+    [SerializeField] private ParticleSystem rocketFireParticles;
     // Mikser grubu AudioSource'un özelliği, klibin değil — bu yüzden her sesin
     // kendi kaynağı var. Hepsi Potion Board üzerinde durur, tek farkları
     // Inspector'daki Output alanına atanan mikser grubu.
@@ -82,6 +86,10 @@ public class PotionBoard : MonoBehaviour
     // Süper bomba patlaması merkezden dışa doğru halka halka ilerler;
     // iki halka arasında beklenen süre.
     [SerializeField, Min(0f)] private float superBombRingDelay = 0.06f;
+
+    // İki roket birleşince oynayan DuableRocket animasyonunun süresi;
+    // patlama bu süre dolunca başlar.
+    [SerializeField, Min(0f)] private float doubleRocketDelay = 1f;
 
     // Roket parçalarının satır boyunca ilerleme hızı (birim/sn).
     // 0 olamaz: parçalar ilerlemezse süpürme döngüsü hiç bitmez.
@@ -547,6 +555,102 @@ public class PotionBoard : MonoBehaviour
     // Her halka KENDİ coroutine'inde ve TEMAS ANINDA başlar — sıralı beklense
     // yoldaki bomba, süpürme tahtayı baştan sona geçene kadar patlamazdı.
     // Hepsi bitince tahta yalnızca bir kez doldurulur.
+    // İki roket takas edilince artı roket olur. Birleşme animasyonundan sonra
+    // İKİ roket de merkezden süpürür: biri satırı, diğeri sütunu. Dört uçan
+    // parça buradan çıkıyor, her rokette ikişer tane var. İkinci roketi yok
+    // etmek yerine ayakta tutmamızın sebebi bu.
+    private IEnumerator DoubleRocketExplode(Potion horizontal, Potion vertical)
+    {
+        currentState = BoardState.Clearing;
+
+        Vector2Int center = new Vector2Int(horizontal.xIndex, horizontal.yIndex);
+
+        // DuableRocket yalnızca Rocket parçasının Animator'ünde tanımlı;
+        // taşın diğer Animator'lerinde bu state yok, HasState onları eler.
+        int mergeState = Animator.StringToHash("DuableRocket");
+
+        Animator[] animators = horizontal.GetComponentsInChildren<Animator>(true);
+
+        foreach (Animator animator in animators)
+        {
+            if (!animator.HasState(0, mergeState)) continue;
+
+            animator.gameObject.SetActive(true);
+            animator.Play(mergeState, 0, 0f);
+        }
+
+        // Bombadan farklı olarak ikinci roket animasyonla AYNI karede gizlenir:
+        // DuableRocket klibi ikizi kendisi çiziyor, ikisi birden dursa üç roket
+        // görünürdü.
+        vertical.gameObject.SetActive(false);
+
+        yield return new WaitForSeconds(doubleRocketDelay);
+
+        // Tek efekt yeter: artının iki kolu da aynı merkezden çıkıyor.
+        if (rocketFireParticles != null)
+        {
+            Vector3 firePosition = CellToWorld(center);
+            firePosition.z = -0.1f;
+
+            Instantiate(rocketFireParticles, firePosition, Quaternion.identity);
+        }
+
+        // İkinci roket takas sonrası komşu hücrede duruyor. Hücresi elle
+        // boşaltılmazsa artı oradan geçerken onu bağımsız bir roket sanıp
+        // tetikliyor ve fazladan bir süpürme başlıyor.
+        potionBoard[vertical.xIndex, vertical.yIndex] = new Node(true, null);
+
+        // Merkeze taşınır ve dikey eksene çevrilir. Hayatta kalan roket de
+        // yataya sabitlenir, çünkü oyuncu iki dikey roketi de birleştirebilir.
+        Vector2 centerWorld = CellToWorld(center);
+
+        vertical.transform.position =
+            new Vector3(centerWorld.x, centerWorld.y, vertical.transform.position.z);
+
+        vertical.xIndex = center.x;
+        vertical.yIndex = center.y;
+
+        vertical.gameObject.SetActive(true);
+        vertical.Rocket(true, vertical: true);
+
+        horizontal.Rocket(true, vertical: false);
+
+        // Birleşme klibi döngüde; Animator varsayılan state'e döndürülmezse
+        // taş havuzdan yeniden roket olarak çıktığında animasyon kendiliğinden
+        // oynar. Split aynı karede olduğu için görsel bir sıçrama olmuyor.
+        foreach (Animator animator in animators)
+        {
+            if (animator.HasState(0, mergeState)) animator.Rebind();
+        }
+
+        // İki süpürme aynı anda. Ortak triggered seti sayesinde kesişimdeki
+        // bir bomba iki kez tetiklenmez.
+        HashSet<Vector2Int> triggered = new() { center };
+        ChainCounter counter = new();
+
+        counter.running += 2;
+
+        StartCoroutine(RunSweep(
+            new SpecialTrigger(center, PotionType.Rocket, horizontal), triggered, counter));
+
+        StartCoroutine(RunSweep(
+            new SpecialTrigger(center, PotionType.Rocket, vertical), triggered, counter));
+
+        // Zincire giren bomba ve roketler de bitsin.
+        yield return new WaitUntil(() => counter.running == 0);
+
+        yield return RefillAndCascade();
+    }
+
+    // Birleşen ikinci taşı gecikmeli gizler. Ayrı coroutine, çünkü çağıran
+    // rutinin akışını bekletmemeli.
+    private IEnumerator HideAfter(Potion potion, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (potion != null) potion.gameObject.SetActive(false);
+    }
+
     private IEnumerator ExplodeChain(Potion first)
     {
         currentState = BoardState.Clearing;
@@ -625,6 +729,17 @@ public class PotionBoard : MonoBehaviour
 
         explodingSource.PlayOneShot(explodingClip, explodingVolume);
         GameManager.Instance.AddPoints(bombPoints);
+
+        if (rocketFireParticles != null)
+        {
+            // CellToWorld Vector2 döner, z sıfır kalır. Efekt taşların önünde
+            // dursun diye kameraya doğru 0.1 çekiliyor.
+            Vector3 firePosition = CellToWorld(trigger.position);
+            firePosition.z = -0.1f;
+
+            Instantiate(rocketFireParticles, firePosition,
+                vertical ? Quaternion.Euler(0f, 0f, -90f) : Quaternion.identity);
+        }
 
         potionBoard[trigger.position.x, trigger.position.y] = new Node(true, null);
 
@@ -802,21 +917,46 @@ public class PotionBoard : MonoBehaviour
         currentState = BoardState.Idle;
     }
 
-    private IEnumerator SuperBombExplod(Potion _targetPotion)
+    private IEnumerator SuperBombExplod(Potion _targetPotion, Potion _mergedPotion)
     {
         currentState = BoardState.Clearing;
 
         Vector2Int bombPosition = new Vector2Int(_targetPotion.xIndex, _targetPotion.yIndex);
 
-        // Bomba ve gölgesi ayrı Animator'lerde duruyor; ikisi de aynı karede
-        // başlamalı. Taşın altındaki her Animator'de aynı state adı aranır,
-        // böylece ileride animasyonlu bir parça daha eklenirse kendiliğinden dahil olur.
+        // İki bomba birbirine doğru geldi; birleşme iki hücrenin ORTASINDA
+        // görünmeli, hayatta kalan bombanın hücresinde değil. Patlama hâlâ
+        // hücreye çakılı, yalnızca görsel merkez kayıyor.
+        Vector2 mergePoint = _mergedPotion != null
+            ? (CellToWorld(bombPosition) +
+               CellToWorld(new Vector2Int(_mergedPotion.xIndex, _mergedPotion.yIndex))) * 0.5f
+            : CellToWorld(bombPosition);
+
+        _targetPotion.transform.position =
+            new Vector3(mergePoint.x, mergePoint.y, _targetPotion.transform.position.z);
+
+        // Gölge yalnızca burada görünür ve prefabda KAPALI durur. Kapalı bir
+        // GameObject'te Animator başlatılmadığı için HasState hep false döner;
+        // bu yüzden gölgeyi döngüden önce, adıyla açıyoruz.
+        if (_targetPotion.BombShadow != null) _targetPotion.BombShadow.SetActive(true);
+
+        // Bomba ve gölgesi ayrı Animator'lerde duruyor, ikisi de aynı karede
+        // başlamalı. SuperBomb state'i yalnızca bomba ve gölge controller'larında
+        // var; HasState olmadan bu döngü roketin Animator'lerini de açıyordu ve
+        // bombanın altında roket beliriyordu.
+        int superState = Animator.StringToHash("SuperBomb");
+
         foreach (Animator animator in _targetPotion.GetComponentsInChildren<Animator>(true))
         {
-            // Gölge yalnızca burada görünür; kapalı duran parça açılmadan Play işlemez.
-            animator.gameObject.SetActive(true);
+            if (!animator.HasState(0, superState)) continue;
 
-            animator.Play("SuperBomb", 0, 0f);
+            animator.Play(superState, 0, 0f);
+        }
+
+        // İkinci bomba animasyon BAŞLADIKTAN kısa süre sonra kaybolur; iki
+        // bombanın üst üste gelip birleştiği an görünsün diye.
+        if (_mergedPotion != null)
+        {
+            StartCoroutine(HideAfter(_mergedPotion, mergedBombHideDelay));
         }
 
         // Patlayan bomba diğer bombaların ve taşların önünde çizilsin.
@@ -826,19 +966,26 @@ public class PotionBoard : MonoBehaviour
 
         // Partikülü animasyona bırakmıyoruz: obje zaten aktifse OnEnable tetiklenmez
         // ve Play On Awake çalışmaz. Baştan başlatmak için elle tetikliyoruz.
-        ParticleSystem sparks = _targetPotion.GetComponentInChildren<ParticleSystem>(true);
+        //
+        // Arama BOMBANIN altında: taşın tamamında arasak hiyerarşide daha önce
+        // gelen roket alevini bulup onu açardı.
+        GameObject bombObject = _targetPotion.BombObject;
 
-        if (sparks != null)
+        if (bombObject != null)
         {
-            sparks.gameObject.SetActive(true);
-            sparks.Clear(true);
-            sparks.Play(true);
+            // Kıvılcımın kendi çocukları da olabiliyor; hepsi baştan başlasın.
+            foreach (ParticleSystem sparks in bombObject.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                sparks.gameObject.SetActive(true);
+                sparks.Clear(true);
+                sparks.Play(true);
+            }
         }
 
         yield return new WaitForSeconds(1.82f);
 
 
-        Vector2 explosionPosition = new Vector2((bombPosition.x - spacingX) * cellSize, (bombPosition.y - spacingY) * cellSize);
+        Vector2 explosionPosition = mergePoint;
 
         ParticleSystem explosionEffect = superExplodingParticles != null
             ? superExplodingParticles
@@ -942,12 +1089,20 @@ public class PotionBoard : MonoBehaviour
         }
     }
 
-    // Roket oluşma efekti: roketin bulunduğu hücrede, taştan bağımsız doğar.
+    // Roket oluşma efekti. Taşın KÖKÜNE bağlanır çünkü roket oluştuktan sonra
+    // cascade taşı aşağı indirebiliyor (dikey eşleşmede temizlenen hücreler
+    // roketin altında kalır) — efekt onunla birlikte inmeli.
+    //
+    // Kökte olması güvenli: oluşma animasyonu RocketArt'ta, yani efekti
+    // sürüklemez. worldPositionStays sayesinde taşın 0.18'lik ölçeği efekte
+    // uygulanmaz, prefabdaki boyutunda kalır.
     private void SpawnRocketParticle(Potion item)
     {
         if (rocketSpawnParticles == null) return;
 
-        Instantiate(rocketSpawnParticles, item.transform.position, Quaternion.identity);
+        ParticleSystem effect = Instantiate(rocketSpawnParticles, item.transform.position, Quaternion.identity);
+
+        effect.transform.SetParent(item.transform, worldPositionStays: true);
     }
 
     private void SpawnDestroyParticle(Potion item)
@@ -1371,6 +1526,18 @@ public class PotionBoard : MonoBehaviour
         Vector2 currentCellCenter = CellToWorld(new Vector2Int(_currentPotion.xIndex, _currentPotion.yIndex));
         Vector2 targetCellCenter = CellToWorld(new Vector2Int(_targetPotion.xIndex, _targetPotion.yIndex));
 
+        // İki bomba birleşiyorsa hedef kendi hücreleri değil, ikisinin ORTASI.
+        // Yoksa bomba önce hedef hücreye kayıyor, süper bomba animasyonu
+        // başlarken ortaya zıplıyordu.
+        if (_currentPotion.potionType == PotionType.Bomb &&
+            _targetPotion.potionType == PotionType.Bomb)
+        {
+            Vector2 meetPoint = (currentCellCenter + targetCellCenter) * 0.5f;
+
+            currentCellCenter = meetPoint;
+            targetCellCenter = meetPoint;
+        }
+
         Vector3 currentTarget = new Vector3(currentCellCenter.x, currentCellCenter.y, _currentPotion.transform.position.z);
         Vector3 targetTarget = new Vector3(targetCellCenter.x, targetCellCenter.y, _targetPotion.transform.position.z);
 
@@ -1389,14 +1556,9 @@ public class PotionBoard : MonoBehaviour
         // Takas hareketi başlar başlamaz ekrandan kalkar, süper bombanın yanında
         // durup duruyor gibi görünmesin. Board'da kaldığı için 7x7 taraması onu
         // diğer taşlarla aynı anda havuza yollar.
-        if (_currentPotion.potionType == PotionType.Bomb &&
-            _targetPotion.potionType == PotionType.Bomb)
-        {
-            yield return new WaitForSeconds(mergedBombHideDelay);
-
-            _targetPotion.gameObject.SetActive(false);
-        }
-
+        // İkinci özel taşı burada GİZLEMİYORUZ. Erken gizlenirse oyuncu iki
+        // taşın buluştuğunu göremiyor; gizleme birleşme animasyonunu başlatan
+        // rutinlere taşındı (SuperBombExplod, DoubleRocketExplode).
         yield return new WaitUntil(() =>
             !_currentPotion.isMoving &&
             !_targetPotion.isMoving
@@ -1415,7 +1577,18 @@ public class PotionBoard : MonoBehaviour
         if (_currentPotion.potionType == PotionType.Bomb && _targetPotion.potionType == PotionType.Bomb)
         {
             // Bomba patlaması, refill ve cascade tamamen bitsin.
-            yield return SuperBombExplod(_currentPotion);
+            yield return SuperBombExplod(_currentPotion, _targetPotion);
+
+            GameManager.Instance.ProcessTurn(0, true);
+
+            // Normal CheckBoard ve geri swap çalışmasın.
+            yield break;
+        }
+        else if (_currentPotion.potionType == PotionType.Rocket &&
+                 _targetPotion.potionType == PotionType.Rocket)
+        {
+            // Artı roket: birleşme animasyonu, patlama, refill ve cascade bitsin.
+            yield return DoubleRocketExplode(_currentPotion, _targetPotion);
 
             GameManager.Instance.ProcessTurn(0, true);
 

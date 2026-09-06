@@ -26,11 +26,19 @@ public class Potion : MonoBehaviour
     [SerializeField] private GameObject selectedVisual;
     [SerializeField] private GameObject bomb;
 
+    // Bombanın kıvılcımlarını PotionBoard elle yeniden başlatıyor; aramanın
+    // taşın tamamında değil, YALNIZCA bombanın altında yapılması gerekiyor.
+    public GameObject BombObject => bomb;
+
     // Bombanın yere düşen gölgesi. bomb'un child'ı DEĞİL (onun animasyonlu
     // transformunu miras almasın diye), o yüzden aç/kapa işi elle yapılır.
     // Yalnızca süper bomba patlarken görünür; onu PotionBoard açar, burası
     // her durum değişiminde kapatarak temiz bir başlangıç garantiler.
     [SerializeField] private GameObject bombShadow;
+
+    // Süper bomba patlarken PotionBoard açar. Kapalı bir Animator'de
+    // HasState çalışmadığı için gölgenin adıyla açılması gerekiyor.
+    public GameObject BombShadow => bombShadow;
 
     // Roket: gövde ile sağa/sola uçan iki parça. Parçalar taşın çocuğu olduğu
     // için taş, süpürme bitene kadar havuza yollanmaz.

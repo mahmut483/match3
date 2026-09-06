@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6856126483450201954}
   - component: {fileID: 6856126483450201952}
   - component: {fileID: 6856126483450201955}
+  - component: {fileID: 8091124114777862638}
   m_Layer: 0
   m_Name: Shadow
   m_TagString: Untagged
@@ -4874,7 +4875,7 @@ ParticleSystemRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_MaskInteraction: 0
+  m_MaskInteraction: 2
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -4906,6 +4907,19 @@ ParticleSystemRenderer:
   m_MeshWeighting1: 1
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
+--- !u!210 &8091124114777862638
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6856126483450201957}
+  m_Enabled: 1
+  m_SortingLayerID: 1890678711
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &6856126483460176781
 GameObject:
   m_ObjectHideFlags: 0
@@ -4953,7 +4967,7 @@ ParticleSystem:
   serializedVersion: 8
   lengthInSec: 1
   simulationSpeed: 1
-  stopAction: 0
+  stopAction: 2
   cullingMode: 3
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
@@ -9793,7 +9807,7 @@ ParticleSystemRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 3
-  m_MaskInteraction: 0
+  m_MaskInteraction: 2
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -9833,8 +9847,8 @@ SortingGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6856126483460176781}
   m_Enabled: 1
-  m_SortingLayerID: 666422525
-  m_SortingLayer: 5
+  m_SortingLayerID: 1890678711
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
@@ -9849,6 +9863,7 @@ GameObject:
   - component: {fileID: 6856126483805961191}
   - component: {fileID: 6856126483805961189}
   - component: {fileID: 6856126483805961188}
+  - component: {fileID: 6302572570250027336}
   m_Layer: 0
   m_Name: Sparks
   m_TagString: Untagged
@@ -14757,7 +14772,7 @@ ParticleSystemRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_MaskInteraction: 0
+  m_MaskInteraction: 2
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -14789,6 +14804,19 @@ ParticleSystemRenderer:
   m_MeshWeighting1: 1
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
+--- !u!210 &6302572570250027336
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6856126483805961190}
+  m_Enabled: 1
+  m_SortingLayerID: 1890678711
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &6856126484967319606
 GameObject:
   m_ObjectHideFlags: 0
@@ -14800,6 +14828,7 @@ GameObject:
   - component: {fileID: 6856126484967319607}
   - component: {fileID: 6856126484967319605}
   - component: {fileID: 6856126484967319604}
+  - component: {fileID: 7775260224686554166}
   m_Layer: 0
   m_Name: Shockwave
   m_TagString: Untagged
@@ -19663,7 +19692,7 @@ ParticleSystemRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_MaskInteraction: 0
+  m_MaskInteraction: 2
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -19695,3 +19724,16 @@ ParticleSystemRenderer:
   m_MeshWeighting1: 1
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
+--- !u!210 &7775260224686554166
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6856126484967319606}
+  m_Enabled: 1
+  m_SortingLayerID: 1890678711
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
