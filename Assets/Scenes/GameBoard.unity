@@ -1763,7 +1763,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
-  m_RenderShadows: 1
+  m_RenderShadows: 0
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
@@ -3293,6 +3293,7 @@ MonoBehaviour:
   superExplodingParticles: {fileID: 725748389856807712, guid: 6c2e93fefd4c548069a3bd343de74641, type: 3}
   rocketSpawnParticles: {fileID: 6856126483460176776, guid: 299ff16e538a14cd7afdff06eae1cb0d, type: 3}
   rocketFireParticles: {fileID: 3787576505771008625, guid: 6ebd41b6ce0d94d44b58845f26321776, type: 3}
+  doubleRocketParticles: {fileID: 6442537486272230216, guid: d169104dca4044bb486745b8ae51b405, type: 3}
   matchSource: {fileID: 1016066662}
   superMatchSource: {fileID: 1016066664}
   explodingSource: {fileID: 1016066663}

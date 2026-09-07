@@ -26,13 +26,15 @@ public class PotionBoard : MonoBehaviour
     private List<GameObject> deactivePotionPool = new();
     private bool waitForPointerRelease = false;
 
-    // Input her BoardState'te okunur; ancak board dizisini aynı anda yalnızca
-    // bir swap çözümleyicisi değiştirebilir. Çözüm sürerken gelen son geçerli
-    // komut hücre koordinatlarıyla saklanır ve mevcut cascade bitince çalışır.
-    private bool isResolvingSwap;
-    private bool hasBufferedSwap;
-    private Vector2Int bufferedSwapFirstCell;
-    private Vector2Int bufferedSwapSecondCell;
+    // Takas KUYRUĞA ALINMAZ: gelen her geçerli komut kendi çözümlemesini hemen
+    // başlatır, refill veya cascade sürerken bile. Dokunarak patlatma da aynı
+    // şekilde çalışıyor.
+    //
+    // Eşzamanlı iki çözümleme birbirini bozmuyor, çünkü tahtayı değiştiren
+    // bölümlerin hepsi ilk yield'den ÖNCE bitiyor: CheckBoard, eşleşme listesinin
+    // kopyalanması ve hücrelerin boşaltılması tek bir kesintisiz blok. Sonradan
+    // tarayan hat o hücreleri boş görüp atlıyor. Refill döngüsü de aynı şekilde
+    // yield'siz.
 
 
 
@@ -58,6 +60,9 @@ public class PotionBoard : MonoBehaviour
     // Roket ateşlenince bir kez çalışan efekt. Prefab yatay roket için
     // tasarlandı; dikey roket için Z ekseninde -90 döndürülür.
     [SerializeField] private ParticleSystem rocketFireParticles;
+
+    // İki roket birleşirken, DuableRocket animasyonuyla aynı karede doğar.
+    [SerializeField] private ParticleSystem doubleRocketParticles;
     // Mikser grubu AudioSource'un özelliği, klibin değil — bu yüzden her sesin
     // kendi kaynağı var. Hepsi Potion Board üzerinde durur, tek farkları
     // Inspector'daki Output alanına atanan mikser grubu.
@@ -573,9 +578,10 @@ public class PotionBoard : MonoBehaviour
 
         foreach (Animator animator in animators)
         {
+            if (!animator.isActiveAndEnabled) continue;
+
             if (!animator.HasState(0, mergeState)) continue;
 
-            animator.gameObject.SetActive(true);
             animator.Play(mergeState, 0, 0f);
         }
 
@@ -584,7 +590,23 @@ public class PotionBoard : MonoBehaviour
         // görünürdü.
         vertical.gameObject.SetActive(false);
 
+        // Birleşme efekti de aynı karede, roketlerin buluştuğu hücrede.
+        // Referans saklanıyor: roket ateşlenince kapatılması gerekiyor,
+        // prefab döngüde olduğu için kendi kendine durmuyor.
+        ParticleSystem mergeEffect = null;
+
+        if (doubleRocketParticles != null)
+        {
+            Vector3 mergePosition = CellToWorld(center);
+            mergePosition.z = -0.1f;
+
+            mergeEffect = Instantiate(doubleRocketParticles, mergePosition, Quaternion.identity);
+        }
+
         yield return new WaitForSeconds(doubleRocketDelay);
+
+        // Birleşme bitti, roket ateşleniyor: birleşme efekti kapanır.
+        if (mergeEffect != null) mergeEffect.gameObject.SetActive(false);
 
         // Tek efekt yeter: artının iki kolu da aynı merkezden çıkıyor.
         if (rocketFireParticles != null)
@@ -613,6 +635,13 @@ public class PotionBoard : MonoBehaviour
         vertical.gameObject.SetActive(true);
         vertical.Rocket(true, vertical: true);
 
+        // Hayatta kalan roket takasta iki hücrenin ortasında durdu; uçan
+        // parçalar hücre merkezinden çıkmalı, yoksa temizlenen hücrelerle
+        // yarım hücre kayık giderler.
+        horizontal.transform.position =
+            new Vector3(centerWorld.x, centerWorld.y, horizontal.transform.position.z);
+
+        // Yataya sabitlenir, çünkü oyuncu iki dikey roketi de birleştirebilir.
         horizontal.Rocket(true, vertical: false);
 
         // Birleşme klibi döngüde; Animator varsayılan state'e döndürülmezse
@@ -620,6 +649,8 @@ public class PotionBoard : MonoBehaviour
         // oynar. Split aynı karede olduğu için görsel bir sıçrama olmuyor.
         foreach (Animator animator in animators)
         {
+            if (!animator.isActiveAndEnabled) continue;
+
             if (animator.HasState(0, mergeState)) animator.Rebind();
         }
 
@@ -947,6 +978,11 @@ public class PotionBoard : MonoBehaviour
 
         foreach (Animator animator in _targetPotion.GetComponentsInChildren<Animator>(true))
         {
+            // HasState kapalı bir Animator'de "not playing an AnimatorController"
+            // uyarısı basıyor ve hep false dönüyor. Gölgeyi zaten yukarıda açtık,
+            // geriye kalan kapalılar (roket parçaları) sessizce eleniyor.
+            if (!animator.isActiveAndEnabled) continue;
+
             if (!animator.HasState(0, superState)) continue;
 
             animator.Play(superState, 0, 0f);
@@ -1436,62 +1472,32 @@ public class PotionBoard : MonoBehaviour
     private void SwapPotion(Potion _currentPotion, Potion _targetPotion)
     {
         if (!IsAdjacent(_currentPotion, _targetPotion)) return;
-        if (_targetPotion.transform.position.y >= 2) return;
+        if (!CanSwapNow(_currentPotion, _targetPotion)) return;
 
         _currentPotion.setSelectedVisual(false);
-
-        if (isResolvingSwap)
-        {
-            bufferedSwapFirstCell = new Vector2Int(_currentPotion.xIndex, _currentPotion.yIndex);
-            bufferedSwapSecondCell = new Vector2Int(_targetPotion.xIndex, _targetPotion.yIndex);
-            hasBufferedSwap = true;
-
-            FinishPointerSwap();
-            return;
-        }
 
         BeginSwap(_currentPotion, _targetPotion);
         FinishPointerSwap();
     }
 
+    // Takas yalnızca iki taş da DURUYORSA ve ikisi de hâlâ kendi hücresindeyse
+    // kabul edilir. Düşen ya da temizlenmekte olan bir taşa takas yapılamaz;
+    // öyle bir girdi kuyruğa alınmaz, sessizce yok sayılır.
+    private bool CanSwapNow(Potion currentPotion, Potion targetPotion)
+    {
+        if (currentPotion == null || targetPotion == null) return false;
+        if (currentPotion.isMoving || targetPotion.isMoving) return false;
+
+        return PotionAt(new Vector2Int(currentPotion.xIndex, currentPotion.yIndex)) == currentPotion
+            && PotionAt(new Vector2Int(targetPotion.xIndex, targetPotion.yIndex)) == targetPotion;
+    }
+
     private void BeginSwap(Potion currentPotion, Potion targetPotion)
     {
-        isResolvingSwap = true;
         currentState = BoardState.Swapping;
         DoSwap(currentPotion, targetPotion);
 
-        StartCoroutine(ResolveSwap(currentPotion, targetPotion));
-    }
-
-    private IEnumerator ResolveSwap(Potion currentPotion, Potion targetPotion)
-    {
-        yield return ProcessMatches(currentPotion, targetPotion);
-
-        CompleteSwapResolution();
-    }
-
-    private void CompleteSwapResolution()
-    {
-        isResolvingSwap = false;
-        TryStartBufferedSwap();
-    }
-
-    private void TryStartBufferedSwap()
-    {
-        if (!hasBufferedSwap) return;
-
-        Vector2Int firstCell = bufferedSwapFirstCell;
-        Vector2Int secondCell = bufferedSwapSecondCell;
-        hasBufferedSwap = false;
-
-        Potion first = PotionAt(firstCell);
-        Potion second = PotionAt(secondCell);
-
-        // Cascade iki hücrenin içeriğini değiştirmiş olabilir. Komut, dokunulan
-        // hücrelerde hâlâ takas edilebilir iki potion varsa uygulanır.
-        if (first == null || second == null) return;
-
-        SwapPotion(first, second);
+        StartCoroutine(ProcessMatches(currentPotion, targetPotion));
     }
 
     private Potion PotionAt(Vector2Int cell)
@@ -1526,13 +1532,20 @@ public class PotionBoard : MonoBehaviour
         Vector2 currentCellCenter = CellToWorld(new Vector2Int(_currentPotion.xIndex, _currentPotion.yIndex));
         Vector2 targetCellCenter = CellToWorld(new Vector2Int(_targetPotion.xIndex, _targetPotion.yIndex));
 
-        // İki bomba birleşiyorsa hedef kendi hücreleri değil, ikisinin ORTASI.
-        // Yoksa bomba önce hedef hücreye kayıyor, süper bomba animasyonu
-        // başlarken ortaya zıplıyordu.
-        if (_currentPotion.potionType == PotionType.Bomb &&
-            _targetPotion.potionType == PotionType.Bomb)
+        // Aynı türden iki özel taş birleşiyorsa ikisi de AYNI noktaya gider ve
+        // orada tam üst üste biner; ikincisi gizlenince tek taş kalmış gibi
+        // görünür. Kendi hücrelerine gitselerdi hiç örtüşmezlerdi.
+        //
+        // Buluşma noktası türe göre değişiyor. Bomba iki hücrenin ORTASINDA
+        // patlıyor. Roket ise hayatta kalan roketin HÜCRESİNDE birleşiyor,
+        // çünkü uçan parçalar hücre merkezinden çıkmak zorunda; ortada
+        // buluşsalardı animasyon biter bitmez yarım hücre zıplarlardı.
+        if (_currentPotion.potionType == _targetPotion.potionType &&
+            IsSpecial(_currentPotion))
         {
-            Vector2 meetPoint = (currentCellCenter + targetCellCenter) * 0.5f;
+            Vector2 meetPoint = _currentPotion.potionType == PotionType.Bomb
+                ? (currentCellCenter + targetCellCenter) * 0.5f
+                : currentCellCenter;
 
             currentCellCenter = meetPoint;
             targetCellCenter = meetPoint;

@@ -28,8 +28,8 @@ Transform:
   m_GameObject: {fileID: 2116383205928921134}
   serializedVersion: 2
   m_LocalRotation: {x: 3.6947174e-11, y: -9.305895e-10, z: 0.046702836, w: 0.9989089}
-  m_LocalPosition: {x: 10.9, y: 4.95, z: 0}
-  m_LocalScale: {x: 6.486755, y: 1.8371463, z: 4.5605145}
+  m_LocalPosition: {x: 1.91, y: 1.48, z: 0.0000000043493}
+  m_LocalScale: {x: 0.8774212, y: 0.4360241, z: 1.0823821}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5928005388876564652}
@@ -165,7 +165,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c189ee1c305ac496dabc0d4c3c08c887, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombMaskBinder
-  targetRenderer: {fileID: 1287470064548866226}
+  targetRenderer: {fileID: 0}
   frontRenderers: []
 --- !u!1 &2123654656983264650
 GameObject:
@@ -10489,6 +10489,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 581135079977641016}
+  - {fileID: 5928005388876564652}
   m_Father: {fileID: 7927807542344970776}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4677961466036844937
@@ -11172,11 +11173,11 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.0076110917, w: 0.9999711}
   m_LocalPosition: {x: 3.4047055, y: 0.09388741, z: 0.1692295}
-  m_LocalScale: {x: 0.17675033, y: 0.30695197, z: 0.2109533}
+  m_LocalScale: {x: 0.17675035, y: 0.30695197, z: 0.2109533}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4812234814689874248}
-  m_Father: {fileID: 7927807542344970776}
+  m_Father: {fileID: 1260489845783755378}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 5.125}
 --- !u!212 &5249938103692047846
 SpriteRenderer:
@@ -11228,11 +11229,11 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 2
   m_Sprite: {fileID: 21300000, guid: c236593f7f1314e07b8c68ff77ce2dbe, type: 3}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 0.1254902, g: 0.1254902, b: 0.1254902, a: 0.5803922}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 13.12, y: 11.99}
+  m_Size: {x: 3.14, y: 3.14}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -21112,7 +21113,6 @@ Transform:
   - {fileID: 3560310442795307160}
   - {fileID: 2660774959454475839}
   - {fileID: 1260489845783755378}
-  - {fileID: 5928005388876564652}
   - {fileID: 3169143639952307284}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
