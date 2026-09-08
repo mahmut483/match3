@@ -20,6 +20,9 @@ MonoBehaviour:
     amount: 3
   - potionType: 3
     amount: 6
+  hammerCount: 5
+  cannonCount: 5
+  bombCount: 5
   arrayLayout:
     rows:
     - row: 0101010000010101

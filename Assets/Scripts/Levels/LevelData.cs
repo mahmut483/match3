@@ -23,6 +23,11 @@ public class LevelData : ScriptableObject
   // Toplama hedefleri: birden fazla eklenebilir (örn. 24 Red + 3 Bomb).
   public List<PotionGoal> potionGoals = new();
 
+  // Özel vuruş hakları. Seviye başına verilir, seviye bitince sıfırlanır.
+  public int hammerCount;
+  public int cannonCount;
+  public int bombCount;
+
   public ArrayLayout arrayLayout;
 
   // Tahtanın şeklini tanımlayan boyalı Tilemap prefab'ı.

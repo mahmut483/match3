@@ -17,11 +17,17 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private GameObject[] potionPrefabs;
     [SerializeField] private Node[,] potionBoard;
     [SerializeField] private GameObject potionParent;
-    [SerializeField] private GameObject potionParentGO;
     private List<GameObject> potionToDestroy = new();
     private readonly List<MatchResult> currentMatchGroups = new();
 
     [SerializeField] private BoardState currentState = BoardState.Initializing;
+
+    // Tab bar'daki özel vuruşlar. Seçim ve desen hesabı orada; burası yalnızca
+    // verilen hücreleri temizliyor.
+    [SerializeField] private SpecialStrikes specialStrikes;
+
+    // SpecialStrikes satır desenini kurarken tahtanın genişliğini bilmeli.
+    public int Width => width;
 
     private List<GameObject> deactivePotionPool = new();
     private bool waitForPointerRelease = false;
@@ -179,9 +185,14 @@ public class PotionBoard : MonoBehaviour
             firstSelectedPotion = null;
             secondSelectedPotion = null;
 
+            // Özel vuruş seçiliyse dokunuş ona gider, taş özel olsun olmasın.
+            bool usedStrike = tapped != null
+                && specialStrikes != null
+                && specialStrikes.TryUseOn(tapped);
+
             // Özel taşa dokunup bırakınca patlar. Tahta durumuna bakılmaz:
             // refill/cascade sürerken de dokunulabilir — takasta da böyle.
-            if (tapped != null && IsSpecial(tapped))
+            if (!usedStrike && tapped != null && IsSpecial(tapped))
             {
                 StartCoroutine(TapDetonate(tapped));
             }
@@ -680,6 +691,31 @@ public class PotionBoard : MonoBehaviour
         yield return new WaitForSeconds(delay);
 
         if (potion != null) potion.gameObject.SetActive(false);
+    }
+
+    // Özel vuruş: SpecialStrikes'ın verdiği hücreleri temizler. Hangi hücreler
+    // olduğu oraya ait, burası yalnızca zincirden geçirip tahtayı dolduruyor.
+    // Alandaki bomba ve roketler ClearCell üzerinden kendiliğinden zincirlenir.
+    public void RunStrike(IEnumerable<Vector2Int> cells)
+    {
+        StartCoroutine(StrikeRoutine(cells));
+    }
+
+    private IEnumerator StrikeRoutine(IEnumerable<Vector2Int> cells)
+    {
+        currentState = BoardState.Clearing;
+
+        HashSet<Vector2Int> triggered = new();
+        ChainCounter counter = new();
+
+        foreach (Vector2Int cell in cells)
+        {
+            ClearCell(cell, triggered, counter);
+        }
+
+        yield return new WaitUntil(() => counter.running == 0);
+
+        yield return RefillAndCascade();
     }
 
     private IEnumerator ExplodeChain(Potion first)
@@ -1472,6 +1508,10 @@ public class PotionBoard : MonoBehaviour
     private void SwapPotion(Potion _currentPotion, Potion _targetPotion)
     {
         if (!IsAdjacent(_currentPotion, _targetPotion)) return;
+
+        // Özel vuruş seçiliyken takas yok; dokunuş vuruşa ayrılmış durumda.
+        if (specialStrikes != null && specialStrikes.IsArmed) return;
+
         if (!CanSwapNow(_currentPotion, _targetPotion)) return;
 
         _currentPotion.setSelectedVisual(false);

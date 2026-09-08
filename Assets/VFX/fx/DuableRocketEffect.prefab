@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5675466970880767077}
   - component: {fileID: 2156364566144232488}
   - component: {fileID: 3850524735654154314}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Ring
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4918,7 +4918,7 @@ GameObject:
   - component: {fileID: 6442537486272230216}
   - component: {fileID: 6442537486272230223}
   - component: {fileID: 2322918479282740260}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: DuableRocketEffect
   m_TagString: Untagged
   m_Icon: {fileID: 0}

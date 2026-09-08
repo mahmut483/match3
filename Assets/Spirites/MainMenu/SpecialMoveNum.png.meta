@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 5cfa3ef7fcf14414ca02d696f7ed56e6
+guid: f34f702bbc39a4eb3b992c41af5ef6a2
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2828420990682441110
-    second: gameBoard 1_0
+      213: 6112734763363956528
+    second: SpecialMoveNum_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -109,30 +109,17 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: iOS
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: gameBoard 1_0
+      name: SpecialMoveNum_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1284
-        height: 2778
+        x: 3
+        y: 6
+        width: 308
+        height: 304
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a6a5d17381e6fb8d0800000000000000
-      internalID: -2828420990682441110
+      spriteID: 0377d7071ebc4d450800000000000000
+      internalID: 6112734763363956528
       vertices: []
       indices: 
       edges: []
@@ -161,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      gameBoard 1_0: -2828420990682441110
+      SpecialMoveNum_0: 6112734763363956528
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
