@@ -115,6 +115,45 @@ public class PotionBoard : MonoBehaviour
     // Tahtanın görsel tilemap'inin yükleneceği Grid objesi.
     [SerializeField] private Transform boardGrid;
 
+    [Header("Cannon Strike Presentation")]
+    [Tooltip("Grid ve Potions'un ortak root'u. Yalnızca Cannon sinematiğinde hareket eder.")]
+    [SerializeField] private Transform boardPresentation;
+
+    [Tooltip("Board'a bağlı kırılma/patlama efektlerinin root'u. Boş bırakılırsa BoardPresentation altında çalışma anında oluşturulur.")]
+    [SerializeField] private Transform boardVfxRoot;
+
+    [Tooltip("Cannon'ın ekrana girdiği sol nokta. Y değeri seçilen satırdan gelir.")]
+    [SerializeField] private Transform cannonLeftAnchor;
+
+    [Tooltip("Giriş/ateş animasyonunu içeren Cannon prefabı. Muzzle referansı CannonEntryView'da atanmalıdır.")]
+    [SerializeField] private CannonEntryView cannonEntryPrefab;
+
+    [Tooltip("RocketSingleRight görselinden türetilmiş, bağımsız sağa giden top prefabı.")]
+    [SerializeField] private GameObject cannonballProjectilePrefab;
+    [Tooltip("Cannon hedefleme süresince kapanacak iki sağ board maskesi.")]
+    [SerializeField] private GameObject cannonMaskRight;
+    [SerializeField] private GameObject cannonMaskRightDuplicate;
+
+    [SerializeField, Min(0f)] private float boardSlideDuration = 0.22f;
+    [SerializeField, Min(0f)] private float boardReturnDuration = 0.18f;
+    [Tooltip("Cannon için board'un sağa kayacağı tile sayısı. 1 = tam bir hücre genişliği.")]
+    [SerializeField, Min(0f)] private float cannonBoardSlideCells = 1f;
+    [SerializeField, Min(0f)] private float cannonFireDelay = 0.45f;
+    [SerializeField, Min(0.1f)] private float cannonballSpeed = 12f;
+    [SerializeField, Min(0f)] private float cannonballExitPadding = 0.75f;
+
+    // Bu bir BoardState kapısı değildir. Yalnızca parent transform hareket
+    // ederken yeni bir input'un dünya konumlarını bozmasını önleyen dar kapsamlı
+    // Cannon sinematiği kilididir.
+    private bool isCannonCinematic;
+    private bool isCannonAwaitingTarget;
+    private bool isCannonFiring;
+    private Coroutine cannonAimRoutine;
+    private Vector3 boardPresentationHomePosition;
+
+    public bool IsCannonPresentationActive => isCannonCinematic;
+    public event System.Action CannonStrikeFinished;
+
     //public static of potionboard
     public static PotionBoard Instance;
 
@@ -122,6 +161,11 @@ public class PotionBoard : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+
+        if (boardPresentation != null)
+        {
+            boardPresentationHomePosition = boardPresentation.position;
+        }
     }
 
     private void Start()
@@ -134,6 +178,12 @@ public class PotionBoard : MonoBehaviour
     private void Update()
     {
         if (GameManager.Instance.isGameEnded) return;
+
+        if (isCannonCinematic && !isCannonAwaitingTarget)
+        {
+            ClearPointerSelection();
+            return;
+        }
 
         if (waitForPointerRelease)
         {
@@ -164,7 +214,7 @@ public class PotionBoard : MonoBehaviour
                     secondSelectedPotion = potion;
                 }
 
-                if (firstSelectedPotion != null && secondSelectedPotion != null)
+                if (!isCannonAwaitingTarget && firstSelectedPotion != null && secondSelectedPotion != null)
                 {
                     SwapPotion(firstSelectedPotion, secondSelectedPotion);
                 }
@@ -197,6 +247,18 @@ public class PotionBoard : MonoBehaviour
                 StartCoroutine(TapDetonate(tapped));
             }
         }
+    }
+
+    private void ClearPointerSelection()
+    {
+        if (firstSelectedPotion != null)
+        {
+            firstSelectedPotion.setSelectedVisual(false);
+        }
+
+        firstSelectedPotion = null;
+        secondSelectedPotion = null;
+        waitForPointerRelease = Pointer.current != null && Pointer.current.press.isPressed;
     }
 
     // Dokunarak patlatma. Takasla aynı akış: zincir, refill ve cascade tamamen
@@ -611,7 +673,7 @@ public class PotionBoard : MonoBehaviour
             Vector3 mergePosition = CellToWorld(center);
             mergePosition.z = -0.1f;
 
-            mergeEffect = Instantiate(doubleRocketParticles, mergePosition, Quaternion.identity);
+            mergeEffect = SpawnBoardVfx(doubleRocketParticles, mergePosition, Quaternion.identity);
         }
 
         yield return new WaitForSeconds(doubleRocketDelay);
@@ -625,7 +687,7 @@ public class PotionBoard : MonoBehaviour
             Vector3 firePosition = CellToWorld(center);
             firePosition.z = -0.1f;
 
-            Instantiate(rocketFireParticles, firePosition, Quaternion.identity);
+            SpawnBoardVfx(rocketFireParticles, firePosition, Quaternion.identity);
         }
 
         // İkinci roket takas sonrası komşu hücrede duruyor. Hücresi elle
@@ -693,12 +755,268 @@ public class PotionBoard : MonoBehaviour
         if (potion != null) potion.gameObject.SetActive(false);
     }
 
-    // Özel vuruş: SpecialStrikes'ın verdiği hücreleri temizler. Hangi hücreler
-    // olduğu oraya ait, burası yalnızca zincirden geçirip tahtayı dolduruyor.
-    // Alandaki bomba ve roketler ClearCell üzerinden kendiliğinden zincirlenir.
-    public void RunStrike(IEnumerable<Vector2Int> cells)
+    // Özel vuruş: Hammer/Bomb hücreleri anında temizler; Cannon ise aynı satırı
+    // top geçerken temizleyen ayrı bir sunum akışına girer. false dönmesi, UI'ın
+    // hakkı düşürmemesi ve seçimin açık kalması gerektiği anlamına gelir.
+    public bool TryRunStrike(StrikeKind kind, Vector2Int origin, IEnumerable<Vector2Int> cells)
     {
+        if (kind != StrikeKind.Cannon && isCannonCinematic) return false;
+
+        if (kind == StrikeKind.Cannon)
+        {
+            if (!isCannonCinematic || !isCannonAwaitingTarget) return false;
+
+            isCannonAwaitingTarget = false;
+            isCannonFiring = true;
+            StartCoroutine(CannonStrikeRoutine(origin));
+            return true;
+        }
+
+        if (cells == null) return false;
+
         StartCoroutine(StrikeRoutine(cells));
+        return true;
+    }
+
+    // Cannon butonuna basıldığı anda çağrılır: board hemen sinematik duruşuna
+    // geçer, fakat hedef satır henüz seçilmediği için yalnızca tek dokunuş bekler.
+    public bool TryBeginCannonAim()
+    {
+        if (isCannonCinematic || !HasCannonPresentation()) return false;
+
+        isCannonCinematic = true;
+        isCannonFiring = false;
+        SetCannonMasks(false);
+        cannonAimRoutine = StartCoroutine(CannonAimRoutine());
+        return true;
+    }
+
+    // Hedef henüz seçilmemişse Cannon butonuna ikinci kez basmak bu özel
+    // vuruşu iptal eder. Atış başladıktan sonra iptal edilmez; o aşamada
+    // görsel, zincir ve board mantığı tek bir atomik akıştır.
+    public bool TryCancelCannonAim()
+    {
+        if (!isCannonCinematic || isCannonFiring) return false;
+
+        if (cannonAimRoutine != null)
+        {
+            StopCoroutine(cannonAimRoutine);
+            cannonAimRoutine = null;
+        }
+
+        isCannonAwaitingTarget = false;
+        StartCoroutine(CancelCannonAimRoutine());
+        return true;
+    }
+
+    private IEnumerator CancelCannonAimRoutine()
+    {
+        // Başlangıç konumu negatif olsa dahi transform'u tek karede atamak
+        // yerine, Cannon seçilirken kullanılan geçişin tersiyle geri dön.
+        yield return MovePresentationTo(boardPresentationHomePosition, boardSlideDuration);
+
+        SetCannonMasks(true);
+        isCannonCinematic = false;
+    }
+
+    private IEnumerator CannonAimRoutine()
+    {
+        yield return new WaitUntil(() => !IsAnyPotionMoving());
+
+        Vector3 slideTarget = boardPresentationHomePosition;
+        slideTarget.x += cellSize * cannonBoardSlideCells;
+        yield return MovePresentationTo(slideTarget, boardSlideDuration);
+
+        isCannonAwaitingTarget = true;
+        cannonAimRoutine = null;
+    }
+
+    private void SetCannonMasks(bool active)
+    {
+        if (cannonMaskRight != null) cannonMaskRight.SetActive(active);
+        if (cannonMaskRightDuplicate != null) cannonMaskRightDuplicate.SetActive(active);
+    }
+
+    // Potion kırılma efektleri board'un bir parçasıdır. BoardPresentation
+    // hareket ederken world-space'de asılı kalmamaları için ortak root altında
+    // doğar ve bütün Particle System'leri local simulation kullanır.
+    private ParticleSystem SpawnBoardVfx(ParticleSystem prefab, Vector3 worldPosition, Quaternion rotation)
+    {
+        if (prefab == null) return null;
+
+        Transform parent = GetBoardVfxRoot();
+        ParticleSystem effect = parent != null
+            ? Instantiate(prefab, worldPosition, rotation, parent)
+            : Instantiate(prefab, worldPosition, rotation);
+
+        SetBoardParticleSimulationLocal(effect.gameObject);
+        return effect;
+    }
+
+    private Transform GetBoardVfxRoot()
+    {
+        if (boardVfxRoot != null) return boardVfxRoot;
+        if (boardPresentation == null) return null;
+
+        Transform existingRoot = boardPresentation.Find("BoardVFX");
+        if (existingRoot != null)
+        {
+            boardVfxRoot = existingRoot;
+            return boardVfxRoot;
+        }
+
+        GameObject root = new("BoardVFX");
+        boardVfxRoot = root.transform;
+        boardVfxRoot.SetParent(boardPresentation, worldPositionStays: false);
+        return boardVfxRoot;
+    }
+
+    private static void SetBoardParticleSimulationLocal(GameObject effectRoot)
+    {
+        foreach (ParticleSystem system in effectRoot.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            ParticleSystem.MainModule main = system.main;
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+        }
+    }
+
+    private bool HasCannonPresentation()
+    {
+        if (boardPresentation == null || cannonLeftAnchor == null ||
+            cannonEntryPrefab == null || cannonEntryPrefab.Muzzle == null ||
+            cannonballProjectilePrefab == null)
+        {
+            Debug.LogWarning("Cannon strike başlatılamadı: BoardPresentation, CannonLeftAnchor, CannonEntry/Muzzle veya Cannonball Projectile referansı eksik.", this);
+            return false;
+        }
+
+        return true;
+    }
+
+    private IEnumerator CannonStrikeRoutine(Vector2Int origin)
+    {
+        GameObject cannonInstance = null;
+        GameObject cannonballInstance = null;
+        Vector3 homePosition = boardPresentationHomePosition;
+        bool presentationFinished = false;
+
+        try
+        {
+            Vector3 cannonPosition = cannonLeftAnchor.position;
+            cannonPosition.y = CellToWorld(origin).y;
+
+            CannonEntryView cannonView = Instantiate(cannonEntryPrefab, cannonPosition, Quaternion.identity);
+            cannonInstance = cannonView.gameObject;
+
+            yield return new WaitForSeconds(cannonFireDelay);
+
+            Transform muzzle = cannonView != null ? cannonView.Muzzle : null;
+            if (muzzle == null)
+            {
+                Debug.LogWarning("Cannon instance Muzzle referansını kaybetti; vuruş güvenli biçimde iptal edildi.", this);
+                yield break;
+            }
+
+            cannonballInstance = Instantiate(cannonballProjectilePrefab, muzzle.position, Quaternion.identity);
+            yield return CannonballSweep(origin.y, cannonballInstance.transform);
+
+            // Mermi geçtiyse zincirlenmiş bomba/roketlerin de bitmesini bekleriz.
+            yield return new WaitUntil(() => cannonCounter.running == 0);
+
+            yield return MovePresentationTo(homePosition, boardReturnDuration);
+
+            // Panel sadece top, zincir ve board dönüşünü kapsar. Refill/cascade
+            // normal board akışı olarak arka planda sürer; Cannon kilidi ise
+            // overlap oluşmaması için coroutine sonuna kadar korunur.
+            if (cannonballInstance != null)
+            {
+                Destroy(cannonballInstance);
+                cannonballInstance = null;
+            }
+
+            if (cannonInstance != null)
+            {
+                Destroy(cannonInstance);
+                cannonInstance = null;
+            }
+
+            SetCannonMasks(true);
+            presentationFinished = true;
+            CannonStrikeFinished?.Invoke();
+
+            yield return RefillAndCascade();
+        }
+        finally
+        {
+            if (cannonballInstance != null) Destroy(cannonballInstance);
+            if (cannonInstance != null) Destroy(cannonInstance);
+
+            if (boardPresentation != null)
+            {
+                boardPresentation.position = homePosition;
+            }
+
+            if (!presentationFinished)
+            {
+                SetCannonMasks(true);
+                CannonStrikeFinished?.Invoke();
+            }
+
+            isCannonAwaitingTarget = false;
+            isCannonFiring = false;
+            isCannonCinematic = false;
+        }
+    }
+
+    // CannonballSweep tarafından kullanılmak üzere rutin ömrünce paylaşılan
+    // zincir verisi. ClearCell zincirdeki özel taşları mevcut sistemle tetikler.
+    private readonly HashSet<Vector2Int> cannonTriggered = new();
+    private readonly ChainCounter cannonCounter = new();
+
+    private IEnumerator CannonballSweep(int row, Transform cannonball)
+    {
+        cannonTriggered.Clear();
+        cannonCounter.running = 0;
+
+        int nextColumn = 0;
+        float endX = CellToWorld(new Vector2Int(width - 1, row)).x + cellSize + cannonballExitPadding;
+
+        while (cannonball != null && cannonball.position.x < endX)
+        {
+            cannonball.position += Vector3.right * (cannonballSpeed * Time.deltaTime);
+
+            while (nextColumn < width &&
+                   cannonball.position.x >= CellToWorld(new Vector2Int(nextColumn, row)).x)
+            {
+                ClearCell(new Vector2Int(nextColumn, row), cannonTriggered, cannonCounter);
+                nextColumn++;
+            }
+
+            yield return null;
+        }
+    }
+
+    private IEnumerator MovePresentationTo(Vector3 target, float duration)
+    {
+        if (boardPresentation == null) yield break;
+
+        Vector3 start = boardPresentation.position;
+
+        if (duration <= 0f)
+        {
+            boardPresentation.position = target;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            boardPresentation.position = Vector3.Lerp(start, target, Mathf.Clamp01(elapsed / duration));
+            yield return null;
+        }
+
+        boardPresentation.position = target;
     }
 
     private IEnumerator StrikeRoutine(IEnumerable<Vector2Int> cells)
@@ -762,7 +1080,7 @@ public class PotionBoard : MonoBehaviour
     // Bomba: merkez dahil 3x3 alanı temizler.
     private void BlastAround(Vector2Int center, HashSet<Vector2Int> triggered, ChainCounter counter)
     {
-        Instantiate(explodingPaticles, CellToWorld(center), Quaternion.identity);
+        SpawnBoardVfx(explodingPaticles, CellToWorld(center), Quaternion.identity);
         explodingSource.PlayOneShot(explodingClip, explodingVolume);
 
         // Zincirdeki her patlama ayrı puan verir.
@@ -804,7 +1122,7 @@ public class PotionBoard : MonoBehaviour
             Vector3 firePosition = CellToWorld(trigger.position);
             firePosition.z = -0.1f;
 
-            Instantiate(rocketFireParticles, firePosition,
+            SpawnBoardVfx(rocketFireParticles, firePosition,
                 vertical ? Quaternion.Euler(0f, 0f, -90f) : Quaternion.identity);
         }
 
@@ -814,7 +1132,13 @@ public class PotionBoard : MonoBehaviour
         Transform plus = rocket != null ? rocket.RocketRight : null;
         Transform minus = rocket != null ? rocket.RocketLeft : null;
 
-        if (rocket != null) rocket.SplitRocket();
+        if (rocket != null)
+        {
+            // Roket gövdesinin kendi child trail'leri de Potion altında
+            // kalır; Cannon dönüşünde çıkmış parçacıkların kopmaması gerekir.
+            SetBoardParticleSimulationLocal(rocket.gameObject);
+            rocket.SplitRocket();
+        }
 
         Vector3 plusStart = plus != null ? plus.position : Vector3.zero;
         Vector3 minusStart = minus != null ? minus.position : Vector3.zero;
@@ -939,7 +1263,17 @@ public class PotionBoard : MonoBehaviour
 
     private Vector2 CellToWorld(Vector2Int cell)
     {
-        return new Vector2((cell.x - spacingX) * cellSize, (cell.y - spacingY) * cellSize);
+        Vector2 world = new((cell.x - spacingX) * cellSize, (cell.y - spacingY) * cellSize);
+
+        // Grid ve potionlar BoardPresentation'ın child'ı olduğunda bu offset
+        // görsel hücre merkezini doğru tutar. Normal oyunda offset sıfırdır.
+        if (boardPresentation != null)
+        {
+            Vector3 offset = boardPresentation.position - boardPresentationHomePosition;
+            world += new Vector2(offset.x, offset.y);
+        }
+
+        return world;
     }
 
     // Patlama bittikten sonraki ortak kuyruk: boşalan hücreleri doldur,
@@ -1045,6 +1379,8 @@ public class PotionBoard : MonoBehaviour
 
         if (bombObject != null)
         {
+            SetBoardParticleSimulationLocal(bombObject);
+
             // Kıvılcımın kendi çocukları da olabiliyor; hepsi baştan başlasın.
             foreach (ParticleSystem sparks in bombObject.GetComponentsInChildren<ParticleSystem>(true))
             {
@@ -1063,7 +1399,7 @@ public class PotionBoard : MonoBehaviour
             ? superExplodingParticles
             : explodingPaticles;
 
-        Instantiate(explosionEffect, explosionPosition, Quaternion.identity);
+        SpawnBoardVfx(explosionEffect, explosionPosition, Quaternion.identity);
         explodingSource.PlayOneShot(explodingClip, explodingVolume);
 
         GameManager.Instance.AddPoints(bombPoints);
@@ -1175,25 +1511,26 @@ public class PotionBoard : MonoBehaviour
         ParticleSystem effect = Instantiate(rocketSpawnParticles, item.transform.position, Quaternion.identity);
 
         effect.transform.SetParent(item.transform, worldPositionStays: true);
+        SetBoardParticleSimulationLocal(effect.gameObject);
     }
 
     private void SpawnDestroyParticle(Potion item)
     {
         if (item.potionType == PotionType.Red)
         {
-            Instantiate(destroyParticlesRed, item.transform.position, Quaternion.identity);
+            SpawnBoardVfx(destroyParticlesRed, item.transform.position, Quaternion.identity);
         }
         else if (item.potionType == PotionType.Blue)
         {
-            Instantiate(destroyParticlesBlue, item.transform.position, Quaternion.identity);
+            SpawnBoardVfx(destroyParticlesBlue, item.transform.position, Quaternion.identity);
         }
         else if (item.potionType == PotionType.Green)
         {
-            Instantiate(destroyParticlesGreen, item.transform.position, Quaternion.identity);
+            SpawnBoardVfx(destroyParticlesGreen, item.transform.position, Quaternion.identity);
         }
         else if (item.potionType == PotionType.Yellow)
         {
-            Instantiate(destroyParticlesYellow, item.transform.position, Quaternion.identity);
+            SpawnBoardVfx(destroyParticlesYellow, item.transform.position, Quaternion.identity);
         }
     }
 

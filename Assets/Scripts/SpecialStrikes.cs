@@ -13,10 +13,10 @@ public enum StrikeKind
 // Tab bar'daki özel vuruşlar. Seçim durumu, kalan haklar, buton görünümleri ve
 // her vuruşun HANGİ hücreleri kapsadığı burada.
 //
-// Hücreleri temizleme işi bilerek burada değil: PotionBoard.RunStrike'a bir
-// Vector2Int listesi veriliyor, tahtanın iç yapısına (Node dizisi, zincir
-// sayacı) bu sınıf hiç dokunmuyor. "Hangi hücreler" oyun tasarımı sorusu ve sık
-// değişir; "nasıl temizlenir" tahta mekaniği ve sabit.
+// Hücreleri temizleme işi bilerek burada değil: PotionBoard'a vuruş türü,
+// başlangıç hücresi ve gerekirse hücre listesi veriliyor. Cannon satırı anında
+// silmez; PotionBoard onu topun geçtiği sırada temizler. Tahtanın iç yapısına
+// (Node dizisi, zincir sayacı) bu sınıf hiç dokunmaz.
 public class SpecialStrikes : MonoBehaviour
 {
     [System.Serializable]
@@ -68,6 +68,7 @@ public class SpecialStrikes : MonoBehaviour
 
     // Seçili vuruş. null ise normal oyun: takas ve dokunarak patlatma çalışır.
     private StrikeKind? armed;
+    private bool cannonFiring;
 
     public bool IsArmed => armed.HasValue;
 
@@ -89,6 +90,13 @@ public class SpecialStrikes : MonoBehaviour
         }
 
         Refresh();
+
+        if (board != null) board.CannonStrikeFinished += CompleteCannonStrike;
+    }
+
+    private void OnDestroy()
+    {
+        if (board != null) board.CannonStrikeFinished -= CompleteCannonStrike;
     }
 
     private static int RemainingFor(LevelData level, StrikeKind kind)
@@ -110,6 +118,28 @@ public class SpecialStrikes : MonoBehaviour
 
         if (slot == null || slot.remaining <= 0) return;
 
+        // Hedef satır beklenirken Cannon'a tekrar basmak gerçek bir toggle'dır:
+        // board ilk konumuna gelir, maskeler açılır ve panel kapanır. Atış
+        // başladıysa iptal etmek yerine aynı paneli vuruş bitene dek koruruz.
+        if (kind == StrikeKind.Cannon && armed == StrikeKind.Cannon)
+        {
+            if (board != null && board.TryCancelCannonAim())
+            {
+                armed = null;
+                Refresh();
+            }
+
+            return;
+        }
+
+        if (kind == StrikeKind.Cannon && armed != StrikeKind.Cannon)
+        {
+            if (board == null || !board.TryBeginCannonAim()) return;
+        }
+
+        // Cannon hedefleme/ateş akışı açıkken paneli kapatmak yerine korunur.
+        if (armed == StrikeKind.Cannon && board != null && board.IsCannonPresentationActive) return;
+
         armed = armed == kind ? (StrikeKind?)null : kind;
 
         Refresh();
@@ -125,21 +155,43 @@ public class SpecialStrikes : MonoBehaviour
 
         if (slot == null || slot.remaining <= 0) return false;
 
-        List<Vector2Int> cells = CellsFor(armed.Value, new Vector2Int(potion.xIndex, potion.yIndex));
+        StrikeKind kind = armed.Value;
+        Vector2Int origin = new(potion.xIndex, potion.yIndex);
+        List<Vector2Int> cells = kind == StrikeKind.Cannon ? null : CellsFor(kind, origin);
 
-        if (cells.Count == 0) return false;
+        if (cells != null && cells.Count == 0) return false;
+
+        // Vuruşun gerçekten başlatılabildiği doğrulanmadan hak düşmez. Cannon
+        // prefabı/anchor'ı eksikse seçim açık kalır ve dokunma özel taşı yanlışlıkla
+        // patlatmaz; true burada "bu dokunuş özel vuruşa aitti" demektir.
+        if (!board.TryRunStrike(kind, origin, cells)) return true;
 
         slot.remaining--;
 
         // Bir seçim, bir vuruş. Seçim açık kalsaydı sonraki dokunuş farkında
         // olmadan ikinci hakkı harcardı.
-        armed = null;
+        if (kind == StrikeKind.Cannon)
+        {
+            // Bilgi paneli ve seçili buton Cannon animasyonu boyunca görünür.
+            cannonFiring = true;
+        }
+        else
+        {
+            armed = null;
+        }
 
         Refresh();
 
-        board.RunStrike(cells);
-
         return true;
+    }
+
+    private void CompleteCannonStrike()
+    {
+        if (!cannonFiring) return;
+
+        cannonFiring = false;
+        armed = null;
+        Refresh();
     }
 
     // Tahta sınırının dışına taşan hücreler ayıklanmıyor: ClearCell zaten sınır
@@ -157,13 +209,6 @@ public class SpecialStrikes : MonoBehaviour
                     cells.Add(origin + Vector2Int.left * step);
                     cells.Add(origin + Vector2Int.up * step);
                     cells.Add(origin + Vector2Int.down * step);
-                }
-                break;
-
-            case StrikeKind.Cannon:
-                for (int x = 0; x < board.Width; x++)
-                {
-                    if (x != origin.x) cells.Add(new Vector2Int(x, origin.y));
                 }
                 break;
 
