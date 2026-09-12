@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: f6b8032d1086f4be38ada518b9801130
+guid: 799e05bb96a2d449c81cbf652596e13c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1380203805528671675
-    second: Barrel_0
+      213: 1940349027492989817
+    second: GreenLight_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Barrel_0
+      name: GreenLight_0
       rect:
         serializedVersion: 2
-        x: 6
-        y: 224
-        width: 621
-        height: 163
+        x: 43
+        y: 16
+        width: 244
+        height: 287
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bb5cd2a6c08772310800000000000000
-      internalID: 1380203805528671675
+      spriteID: 97b8efbf8218dea10800000000000000
+      internalID: 1940349027492989817
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Barrel_0: 1380203805528671675
+      GreenLight_0: 1940349027492989817
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

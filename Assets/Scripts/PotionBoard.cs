@@ -86,6 +86,20 @@ public class PotionBoard : MonoBehaviour
 
     [SerializeField, Min(0f)] private float dropStaggerDelay = 0.2f;
 
+    [Tooltip("Bir sütundaki düşüş başlangıçlarının toplamda bekleyebileceği en uzun süre.")]
+    [SerializeField, Min(0f)] private float maxDropStagger = 0.1f;
+
+    [Tooltip("Normal eşleşme kırıldıktan sonra düşüş başlamadan önceki kısa bekleme.")]
+    [SerializeField, Min(0f)] private float matchSettleDelay = 0.08f;
+
+    // Taşlar korunan taşa doğru bu hızla uçar; süre alt ve üst sınıra
+    // kırpılır. Takas 0.12 sn sürüyor, birleşme onun temposunda kalmalı:
+    // bir hücrelik birleşme alt sınıra, uzak köşeler üst sınıra dayanır.
+    [Header("Süper eşleşme birleşmesi")]
+    [SerializeField, Min(0.01f)] private float superMatchMergeSpeed = 10f;
+    [SerializeField, Min(0f)] private float superMatchMergeMinDuration = 0.08f;
+    [SerializeField, Min(0f)] private float superMatchMergeMaxDuration = 0.2f;
+
     // İki bomba birleşirken ikincisinin kaybolması için takas başladıktan sonra
     // beklenen süre. Takas hareketi 0.12 sn sürüyor; bunun altında tutulmalı.
     [SerializeField, Min(0f)] private float mergedBombHideDelay = 0.05f;
@@ -134,6 +148,17 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private GameObject cannonMaskRight;
     [SerializeField] private GameObject cannonMaskRightDuplicate;
 
+    [Header("Hammer Strike Presentation")]
+    [Tooltip("Butonda animasyonu başlar; ayrı bir parent hedef hücreye gidip geri döner.")]
+    [SerializeField] private GameObject hammerStrikePrefab;
+    [SerializeField, Min(0f)] private float hammerTravelDuration = 0.2f;
+    [Tooltip("Prefabın oluşturulmasından itibaren darbe zamanı (saniye).")]
+    [SerializeField, Min(0f)] private float hammerImpactDelay = 0.75f;
+    [Tooltip("Prefabın oluşturulmasından itibaren geri dönüşün başlayacağı zaman (saniye).")]
+    [SerializeField, Min(0f)] private float hammerReturnDelay = 0.95f;
+    [SerializeField, Min(0f)] private float hammerReturnDuration = 0.35f;
+    [SerializeField, Min(0f)] private float hammerStrikeDuration = 1.5f;
+
     [SerializeField, Min(0f)] private float boardSlideDuration = 0.22f;
     [SerializeField, Min(0f)] private float boardReturnDuration = 0.18f;
     [Tooltip("Cannon için board'un sağa kayacağı tile sayısı. 1 = tam bir hücre genişliği.")]
@@ -148,6 +173,7 @@ public class PotionBoard : MonoBehaviour
     private bool isCannonCinematic;
     private bool isCannonAwaitingTarget;
     private bool isCannonFiring;
+    private bool isHammerStrikeActive;
     private Coroutine cannonAimRoutine;
     private Vector3 boardPresentationHomePosition;
 
@@ -179,7 +205,7 @@ public class PotionBoard : MonoBehaviour
     {
         if (GameManager.Instance.isGameEnded) return;
 
-        if (isCannonCinematic && !isCannonAwaitingTarget)
+        if ((isCannonCinematic && !isCannonAwaitingTarget) || isHammerStrikeActive)
         {
             ClearPointerSelection();
             return;
@@ -459,7 +485,10 @@ public class PotionBoard : MonoBehaviour
                     Potion potion = potionBoard[x, y].potion;
 
                     // Doldurma sırasında hücre açık ama boş olabilir.
-                    if (potion == null) continue;
+                    // Hedef hücresi mantıksal olarak atanmış olsa bile taş henüz
+                    // havadaysa eşleşmeye dahil edilmez. Böylece dikey roketten
+                    // sonra inen kolon yanlışlıkla ara konumdayken temizlenmez.
+                    if (potion == null || potion.isMoving) continue;
 
                     if (!potion.isMatched)
                     {
@@ -572,7 +601,11 @@ public class PotionBoard : MonoBehaviour
 
                 if (matchGroup.IsSuperMatch)
                 {
-                    item.MoveToTarget(matchGroup.protectedPotion.transform.position);
+                    item.MoveToTargetAtSpeed(
+                        matchGroup.protectedPotion.transform.position,
+                        superMatchMergeSpeed,
+                        superMatchMergeMinDuration,
+                        superMatchMergeMaxDuration);
                     StartCoroutine(SuperMatchDestroy(item));
                 }
                 else
@@ -584,23 +617,20 @@ public class PotionBoard : MonoBehaviour
 
         yield return new WaitUntil(() => AreAllMatchedPotionsDestroyed(potionsToRemove));
 
-        currentState = BoardState.Refilling;
-
-        for (int x = 0; x < width; x++)
+        // Normal match'te şimdiye kadar kırılma tamamlanır tamamlanmaz refill
+        // başlıyordu. Çok kısa bu boşluk kırılma efektini okunur bırakır.
+        if (matchSettleDelay > 0f)
         {
-            int dropOrder = 0;
-
-            for (int y = 0; y < height; y++)
-            {
-                if (potionBoard[x, y].isUsable && potionBoard[x, y].potion == null)
-                {
-                    float startDelay = dropOrder * dropStaggerDelay;
-                    RefillPotion(x, y, startDelay);
-                    dropOrder++;
-                }
-            }
+            yield return new WaitForSeconds(matchSettleDelay);
         }
 
+        currentState = BoardState.Refilling;
+
+        StartRefill();
+
+        // Cascade yalnızca tüm board yerleşince kontrol edilir. Gizli rezerv
+        // satırında bile hareket varsa, o taş bir sonraki refill'de görünür
+        // alana inebileceği için CheckBoard'u erken çalıştırmayız.
         yield return new WaitUntil(() => !IsAnyPotionMoving());
     }
 
@@ -758,9 +788,13 @@ public class PotionBoard : MonoBehaviour
     // Özel vuruş: Hammer/Bomb hücreleri anında temizler; Cannon ise aynı satırı
     // top geçerken temizleyen ayrı bir sunum akışına girer. false dönmesi, UI'ın
     // hakkı düşürmemesi ve seçimin açık kalması gerektiği anlamına gelir.
-    public bool TryRunStrike(StrikeKind kind, Vector2Int origin, IEnumerable<Vector2Int> cells)
+    public bool TryRunStrike(
+        StrikeKind kind,
+        Vector2Int origin,
+        IEnumerable<Vector2Int> cells,
+        Transform strikeSource = null)
     {
-        if (kind != StrikeKind.Cannon && isCannonCinematic) return false;
+        if (kind != StrikeKind.Cannon && (isCannonCinematic || isHammerStrikeActive)) return false;
 
         if (kind == StrikeKind.Cannon)
         {
@@ -774,15 +808,129 @@ public class PotionBoard : MonoBehaviour
 
         if (cells == null) return false;
 
+        if (kind == StrikeKind.Hammer)
+        {
+            if (hammerStrikePrefab == null) return false;
+
+            isHammerStrikeActive = true;
+            StartCoroutine(HammerStrikeRoutine(origin, cells, strikeSource));
+            return true;
+        }
+
         StartCoroutine(StrikeRoutine(cells));
         return true;
+    }
+
+    private IEnumerator HammerStrikeRoutine(
+        Vector2Int origin,
+        IEnumerable<Vector2Int> cells,
+        Transform strikeSource)
+    {
+        GameObject travelRoot = null;
+
+        try
+        {
+            Vector3 targetPosition = CellToWorld(origin);
+            targetPosition.z = -0.2f;
+
+            Vector3 startPosition = GetHammerStartPosition(strikeSource, targetPosition);
+            // Animator yalnızca prefabın içini yönetir. Dış parent'ı hareket
+            // ettirerek klip oynarken de hedef hücreye gidip geri dönebiliriz.
+            travelRoot = new GameObject("HammerTravelRoot");
+            travelRoot.transform.position = startPosition;
+            GameObject hammerObject = Instantiate(
+                hammerStrikePrefab, startPosition, Quaternion.identity, travelRoot.transform);
+            HammerStrikeView hammer = hammerObject.GetComponent<HammerStrikeView>();
+            if (hammer == null) hammer = hammerObject.AddComponent<HammerStrikeView>();
+            hammer.PlayStrike();
+            hammer.BeginTravel(travelRoot.transform);
+
+            HashSet<Vector2Int> triggered = new();
+            ChainCounter counter = new();
+            float travelDuration = Mathf.Max(0f, hammerTravelDuration);
+            float impactTime = Mathf.Max(travelDuration, hammerImpactDelay);
+            float returnTime = Mathf.Max(impactTime, hammerReturnDelay);
+            float returnDuration = Mathf.Max(0f, hammerReturnDuration);
+            float endTime = Mathf.Max(hammerStrikeDuration, returnTime + returnDuration);
+            float elapsed = 0f;
+            bool impacted = false;
+
+            // Hareket ve darbe aynı başlangıç saatini kullanır; Animator varışta
+            // tekrar başlatılmaz ve dönüşte başlangıç pozuna sıfırlanmaz.
+            while (travelRoot != null)
+            {
+                if (elapsed < travelDuration)
+                {
+                    float t = Mathf.SmoothStep(0f, 1f, elapsed / travelDuration);
+                    hammer.SetTravelPosition(Vector3.Lerp(startPosition, targetPosition, t), 0f);
+                }
+                else if (elapsed < returnTime)
+                {
+                    hammer.SetTravelPosition(targetPosition, 0f);
+                }
+                else
+                {
+                    float t = returnDuration > 0f
+                        ? Mathf.SmoothStep(0f, 1f, (elapsed - returnTime) / returnDuration)
+                        : 1f;
+                    hammer.SetTravelPosition(Vector3.Lerp(targetPosition, startPosition, t), t);
+                }
+
+                if (!impacted && elapsed >= impactTime)
+                {
+                    impacted = true;
+                    hammer.PlayImpactEffect();
+                    currentState = BoardState.Clearing;
+                    foreach (Vector2Int cell in cells)
+                    {
+                        ClearCell(cell, triggered, counter);
+                    }
+                }
+
+                if (elapsed >= endTime) break;
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+
+            if (travelRoot != null) Destroy(travelRoot);
+            travelRoot = null;
+
+            // Roket/bomba zinciri tokmak animasyonundan bağımsız sürer. Refill
+            // başlamadan önce yine de tamamını beklemek zorundayız.
+            yield return new WaitUntil(() => counter.running == 0);
+
+            // Tokmak ekrandan dönmüş olsa da refill sırasında yeni bir swap
+            // başlatmak güvenli değildir; dar kapsamlı kilit coroutine sonuna
+            // kadar burada kalır.
+            yield return RefillAndCascade();
+        }
+        finally
+        {
+            if (travelRoot != null) Destroy(travelRoot);
+            isHammerStrikeActive = false;
+        }
+    }
+
+    private Vector3 GetHammerStartPosition(Transform strikeSource, Vector3 targetPosition)
+    {
+        Camera sceneCamera = Camera.main;
+        if (strikeSource == null || sceneCamera == null) return targetPosition;
+
+        Vector2 sourceScreenPosition = RectTransformUtility.WorldToScreenPoint(
+            sceneCamera,
+            strikeSource.position);
+
+        return HammerStrikeView.WorldPointFromScreenPoint(
+            sceneCamera,
+            sourceScreenPosition,
+            targetPosition);
     }
 
     // Cannon butonuna basıldığı anda çağrılır: board hemen sinematik duruşuna
     // geçer, fakat hedef satır henüz seçilmediği için yalnızca tek dokunuş bekler.
     public bool TryBeginCannonAim()
     {
-        if (isCannonCinematic || !HasCannonPresentation()) return false;
+        if (isCannonCinematic || isHammerStrikeActive || !HasCannonPresentation()) return false;
 
         isCannonCinematic = true;
         isCannonFiring = false;
@@ -1283,19 +1431,7 @@ public class PotionBoard : MonoBehaviour
     {
         currentState = BoardState.Refilling;
 
-        for (int x = 0; x < width; x++)
-        {
-            int dropOrder = 0;
-
-            for (int y = 0; y < height; y++)
-            {
-                if (potionBoard[x, y].isUsable && potionBoard[x, y].potion == null)
-                {
-                    RefillPotion(x, y, dropOrder * dropStaggerDelay);
-                    dropOrder++;
-                }
-            }
-        }
+        StartRefill();
 
         yield return new WaitUntil(() => !IsAnyPotionMoving());
 
@@ -1551,7 +1687,7 @@ public class PotionBoard : MonoBehaviour
     {
         foreach (Node node in potionBoard)
         {
-            if (node.potion == null)
+            if (node == null || node.potion == null)
             {
                 continue;
             }
@@ -1565,7 +1701,6 @@ public class PotionBoard : MonoBehaviour
         return false;
     }
 
-
     // RefillPotion: ilk başta bir while döngüsü ile üst cell'leri tararız, board'un dışında değilse ve node null ise yOffset'i 1 arttırırız
     // İf ile board'un içinde ve potion içeriği null olmayan bir node var mı kontrol ederiz
     // if koşulu true döndüğünde ilgili poiton'un referansını alırız ve bir Vector3 targetPos belirleriz
@@ -1574,10 +1709,40 @@ public class PotionBoard : MonoBehaviour
     // Sonra potionBoad ile potion'un bulunduğu node'u boş node'a atarız
     // Sonra kayan potion'un eski konumunu null oolarka güncelleriz
     // Bir if kontrolü ile Board'un en üstünde isek SpawnPotionAtTop methodunu çağırırız
-    private void RefillPotion(int x, int y, float startDelay)
+    private void StartRefill()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            int dropOrder = 0;
+            int spawnOrder = 0;
+
+            for (int y = 0; y < height; y++)
+            {
+                if (!potionBoard[x, y].isUsable || potionBoard[x, y].potion != null)
+                {
+                    continue;
+                }
+
+                float startDelay = Mathf.Min(dropOrder * dropStaggerDelay, maxDropStagger);
+
+                if (RefillPotion(x, y, startDelay, spawnOrder))
+                {
+                    // Aynı sütundaki yeni potion'lar aynı dünya koordinatından
+                    // doğmaz: her biri bir hücre daha yukarıdan gelir. Böylece
+                    // uzun düşüşte birbirine yetişip üst üste binemezler.
+                    spawnOrder++;
+                }
+
+                dropOrder++;
+            }
+        }
+    }
+
+    // true: havuzdan yeni potion doğdu; çağıran sütun giriş yüksekliğini artırır.
+    private bool RefillPotion(int x, int y, float startDelay, int spawnOrder)
     {
         // Kapalı hücre asla doldurulmaz.
-        if (!potionBoard[x, y].isUsable) return;
+        if (!potionBoard[x, y].isUsable) return false;
 
         int yOffset = 1;
 
@@ -1600,12 +1765,16 @@ public class PotionBoard : MonoBehaviour
 
             potionBoard[x, y] = potionBoard[x, y + yOffset];
             potionBoard[x, y + yOffset] = new Node(true, null);
+
+            return false;
         }
 
-        if (y + yOffset == height)
+        if (y + yOffset >= height)
         {
-            SpawnPotionAtTop(x, startDelay);
+            return SpawnPotionAtTop(x, startDelay, spawnOrder);
         }
+
+        return false;
     }
 
     // SpawnPotionAtTop: RefillPotion method'unda üstteki potion'ları alt node'a indirdik fakat üst kısımda inecek potion kalmayınca bu methodu çağırıyoruz
@@ -1614,17 +1783,18 @@ public class PotionBoard : MonoBehaviour
     // yeni bir newPotion oluştururuz
     // sonra bu yeni poiton'nu poitonBoard iki boyutlu dizisine kayıt ederiz
     // Sonra Vector3 type'ında bir targetPos oluştururuz ve MoveToTarge methoduna veririz 
-    private void SpawnPotionAtTop(int x, float startDelay)
+    private bool SpawnPotionAtTop(int x, float startDelay, int spawnOrder)
     {
         int index = FindIndexOfLowestNull(x);
 
-        if (index == 99) return;                   // sütunda doldurulacak açık hücre yok
-        if (deactivePotionPool.Count == 0) return; // havuz boş — crash koruması
+        if (index == 99) return false;                   // sütunda doldurulacak açık hücre yok
+        if (deactivePotionPool.Count == 0) return false; // havuz boş — crash koruması
 
         int randomIndex = Random.Range(0, deactivePotionPool.Count);
 
         GameObject newPotionObject = deactivePotionPool[randomIndex];
-        newPotionObject.transform.position = new Vector2((x - spacingX) * cellSize, (height - spacingY) * cellSize);
+        float spawnY = (height + spawnOrder - spacingY) * cellSize;
+        newPotionObject.transform.position = new Vector2((x - spacingX) * cellSize, spawnY);
 
         newPotionObject.SetActive(true);
         deactivePotionPool.Remove(newPotionObject);
@@ -1633,6 +1803,7 @@ public class PotionBoard : MonoBehaviour
         potionBoard[x, index] = new Node(true, newPotion);
         Vector3 targetPos = new Vector3((x - spacingX) * cellSize, (index - spacingY) * cellSize, newPotionObject.transform.position.z);
         newPotion.MoveToDown(targetPos, startDelay);
+        return true;
     }
 
     // FindIndexOfLowestNull: Belirli bir sütundaki en aşağıda bulunan null node'un değerini döndürür
@@ -1814,7 +1985,7 @@ public class PotionBoard : MonoBehaviour
                 Potion neighbourPotion = potionBoard[x, y].potion;
 
                 // Refill sürerken hücre açık ama boş olabilir.
-                if (neighbourPotion == null) break;
+                if (neighbourPotion == null || neighbourPotion.isMoving) break;
 
                 if (!neighbourPotion.isMatched && neighbourPotion.potionType == potionType)
                 {

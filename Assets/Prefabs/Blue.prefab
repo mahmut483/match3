@@ -10786,7 +10786,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 3.14, y: 3.14}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -21105,7 +21105,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_LocalScale: {x: 0.19, y: 0.19, z: 0.19}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8594396025732313757}
@@ -21170,7 +21170,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 3.84, y: 2.56}
+  m_Size: {x: 3.14, y: 3.14}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -21195,6 +21195,9 @@ MonoBehaviour:
   isMoving: 0
   currentPos: {x: 0, y: 0}
   targetPos: {x: 0, y: 0}
+  fallSpeed: 2
+  fallGravity: 25
+  maxFallSpeed: 14
   selectedVisual: {fileID: 4990287864921181708}
   bomb: {fileID: 2249207764991374398}
   bombShadow: {fileID: 6119060491342659630}
@@ -21209,7 +21212,7 @@ MonoBehaviour:
   smokeTrail: 1
   fallStretch: 1.08
   landSquash: 1.08
-  landRecover: 0.24
+  landRecover: 0.1
   matchShrinkDuration: 0.09
 --- !u!61 &639229887289909925
 BoxCollider2D:
@@ -21249,8 +21252,8 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 3.84, y: 2.56}
-    newSize: {x: 3.84, y: 2.56}
+    oldSize: {x: 3.14, y: 3.14}
+    newSize: {x: 3.14, y: 3.14}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0

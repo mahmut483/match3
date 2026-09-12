@@ -164,7 +164,11 @@ public class SpecialStrikes : MonoBehaviour
         // Vuruşun gerçekten başlatılabildiği doğrulanmadan hak düşmez. Cannon
         // prefabı/anchor'ı eksikse seçim açık kalır ve dokunma özel taşı yanlışlıkla
         // patlatmaz; true burada "bu dokunuş özel vuruşa aitti" demektir.
-        if (!board.TryRunStrike(kind, origin, cells)) return true;
+        Transform strikeSource = kind == StrikeKind.Hammer && slot.button != null
+            ? slot.button.transform
+            : null;
+
+        if (!board.TryRunStrike(kind, origin, cells, strikeSource)) return true;
 
         slot.remaining--;
 

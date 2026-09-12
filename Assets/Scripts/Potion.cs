@@ -21,7 +21,15 @@ public class Potion : MonoBehaviour
 
     private float swapSpeed = .12f;
 
-    private float downSpeed = .24f;
+    [Header("Düşüş hareketi")]
+    [Tooltip("Düşüşün BAŞLANGIÇ hızı (birim/sn). Bir hücre 0.575 birim; bir hücrelik düşüş neredeyse bu hızda biter.")]
+    [SerializeField, Min(0.01f)] private float fallSpeed = 13f;
+
+    [Tooltip("Düşerken saniyede kazanılan hız. Uzun düşüşler hızlanır, bir hücrelik düşüşte fark edilmez.")]
+    [SerializeField, Min(0f)] private float fallGravity = 30f;
+
+    [Tooltip("Düşüşün aşamayacağı üst hız.")]
+    [SerializeField, Min(0.01f)] private float maxFallSpeed = 20f;
 
     [SerializeField] private GameObject selectedVisual;
     [SerializeField] private GameObject bomb;
@@ -61,13 +69,9 @@ public class Potion : MonoBehaviour
     // Dikey roket sütun temizler; PotionBoard ateşlerken buna bakar.
     public bool IsVerticalRocket { get; private set; }
 
-    // Taşın kendi görseli. Bombaya dönüşünce gizlenir — bombanın saydam
-    // kenarlarından alttaki renk sızmasın diye.
-    [SerializeField] private SpriteRenderer potionVisual;
-
-    // Bombadayken kullanılacak seçim çerçevesi. Atanmazsa bomba seçiliyken
-    // hiç çerçeve gösterilmez (taşın çerçevesi bombayı örtmediği için).
-    [SerializeField] private GameObject bombSelectedVisual;
+    // Taşın kendi sprite'ı, kökte. Bombaya dönüşünce gizlenir: bombanın saydam
+    // kenarlarından alttaki renk sızmasın diye. Awake'te bulunur.
+    private SpriteRenderer potionVisual;
 
     [Header("Takas dumanı")]
     [SerializeField] private GameObject swapSmoke;
@@ -90,21 +94,11 @@ public class Potion : MonoBehaviour
     // Takas yönüne göre hesaplanan dönüş; duman hareketin tersinde kalır.
     private Quaternion swapSmokeRot = Quaternion.identity;
 
-    [Header("Düşüş esnemesi")]
-    [Tooltip("Düşerken Y çarpanı. X ters oranda incelir, hacim korunmuş görünür.")]
-    [SerializeField, Min(1f)] private float fallStretch = 1.12f;
-
-    [Tooltip("Yere değince X çarpanı. Y ters oranda basılır.")]
-    [SerializeField, Min(1f)] private float landSquash = 1.15f;
-
-    [Tooltip("Squash'tan normal ölçeğe dönüş süresi.")]
-    [SerializeField, Min(0f)] private float landRecover = 0.12f;
-
     [Tooltip("Eşleşen taşın kırılmadan önce sıfıra küçülme süresi.")]
     [SerializeField, Min(0f)] private float matchShrinkDuration = 0.09f;
 
-    // Prefabdaki ölçek. Esneme hep bunun üzerine uygulanır ki
-    // havuzdan çıkan taş bir öncekinin ölçeğini taşımasın.
+    // Prefabdaki ölçek. Küçülme hep bunun üzerine uygulanır ki havuzdan
+    // çıkan taş bir öncekinin ölçeğini taşımasın.
     private Vector3 baseScale;
 
     // Çalışan hareket coroutine'i. Yeni hedef verilmeden önce durdurulur.
@@ -129,7 +123,7 @@ public class Potion : MonoBehaviour
         if (rocketRight != null) rocketRightHomeRot = rocketRight.transform.localRotation;
         if (rocketLeft != null) rocketLeftHomeRot = rocketLeft.transform.localRotation;
 
-        if (potionVisual == null) potionVisual = GetComponent<SpriteRenderer>();
+        potionVisual = GetComponent<SpriteRenderer>();
 
         // Potion kökü havuzdan tekrar kullanılıyor. Cartoon FX'in varsayılan
         // Destroy davranışı, roket izi durunca child efekt objesini kalıcı olarak
@@ -142,23 +136,11 @@ public class Potion : MonoBehaviour
 
     public void setSelectedVisual(bool isPressing)
     {
-        // Özel taşlar (bomba, roket) taşın kendi çerçevesini kullanamaz:
-        // çerçeve mücevher boyutunda, özel görselin arkasından taşıyor.
+        // Özel taşlarda (bomba, roket) çerçeve gösterilmez: çerçeve mücevher
+        // boyutunda ve özel görselin arkasında kalıyor.
         bool isSpecial = potionType == PotionType.Bomb || potionType == PotionType.Rocket;
 
-        // Özel taşın kendi çerçevesi varsa onu, yoksa hiç çerçeve gösterme.
-        if (isSpecial)
-        {
-            if (selectedVisual != null) selectedVisual.SetActive(false);
-
-            if (bombSelectedVisual != null) bombSelectedVisual.SetActive(isPressing);
-
-            return;
-        }
-
-        if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
-
-        if (selectedVisual != null) selectedVisual.SetActive(isPressing);
+        if (selectedVisual != null) selectedVisual.SetActive(isPressing && !isSpecial);
     }
 
 
@@ -173,7 +155,18 @@ public class Potion : MonoBehaviour
     // aynı metot kullanılıyor ama orada iz istemiyoruz.
     public void MoveToTarget(Vector2 _targetPos, bool showSmoke = false)
     {
-        StartMove(_targetPos, swapSpeed, 0f, false, showSmoke);
+        StartMove(_targetPos, swapSpeed, 0f, showSmoke);
+    }
+
+    public void MoveToTargetAtSpeed(
+        Vector2 _targetPos,
+        float unitsPerSecond,
+        float minDuration,
+        float maxDuration)
+    {
+        float distance = Vector2.Distance(transform.position, _targetPos);
+        float duration = distance / Mathf.Max(0.01f, unitsPerSecond);
+        StartMove(_targetPos, Mathf.Clamp(duration, minDuration, maxDuration), 0f);
     }
 
     public void Bomb(bool setActive)
@@ -196,7 +189,6 @@ public class Potion : MonoBehaviour
 
         // Durum değişirken açık kalmış seçim çerçevesi kalmasın.
         if (selectedVisual != null) selectedVisual.SetActive(false);
-        if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
     }
 
     // Bomb(bool)'un roket karşılığı. Uzun eşleşmede korunan taş buraya girer:
@@ -230,7 +222,6 @@ public class Potion : MonoBehaviour
 
         if (potionVisual != null) potionVisual.enabled = !setActive;
         if (selectedVisual != null) selectedVisual.SetActive(false);
-        if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
     }
 
     // Roket ateşlenir: gövde kapanır, iki parça açılır.
@@ -279,23 +270,26 @@ public class Potion : MonoBehaviour
 
         if (potionVisual != null) potionVisual.enabled = true;
         if (selectedVisual != null) selectedVisual.SetActive(false);
-        if (bombSelectedVisual != null) bombSelectedVisual.SetActive(false);
     }
 
     public void MoveToDown(Vector2 _targetPos, float startDelay = 0f)
     {
-        StartMove(_targetPos, downSpeed, startDelay, true);
+        if (moveRoutine != null) StopCoroutine(moveRoutine);
+
+        transform.localScale = baseScale;
+        moveRoutine = StartCoroutine(FallCoroutine(_targetPos, startDelay));
     }
 
     // Taş hareket hâlindeyken yeni bir hedef alabiliyor (cascade sürerken yapılan
     // takas gibi). İki MoveCoroutine aynı anda transform'a yazar ve hangisi önce
     // biterse isMoving'i temizler — bekleyen kod yanlış anda devam eder.
     // Bu yüzden yeni hareket başlamadan önce eskisi kesilir.
-    private void StartMove(Vector2 _targetPos, float duration, float startDelay, bool stretch = false, bool showSmoke = false)
+    private void StartMove(Vector2 _targetPos, float duration, float startDelay, bool showSmoke = false)
     {
         if (moveRoutine != null) StopCoroutine(moveRoutine);
 
-        moveRoutine = StartCoroutine(MoveCoroutine(_targetPos, duration, startDelay, stretch, showSmoke));
+        transform.localScale = baseScale;
+        moveRoutine = StartCoroutine(MoveCoroutine(_targetPos, duration, startDelay, showSmoke));
     }
 
     // Havuza dönerken obje kapanır ve coroutine'ler durur; elde kalan referans
@@ -304,12 +298,11 @@ public class Potion : MonoBehaviour
     {
         moveRoutine = null;
         isMoving = false;
-
-        // Esneme yarıda kalmış olabilir; havuzdan çıkarken temiz başlasın.
+        // Küçülme yarıda kalmış olabilir; havuzdan çıkarken temiz başlasın.
         transform.localScale = baseScale;
     }
 
-    private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration, float startDelay = 0f, bool stretch = false, bool showSmoke = false)
+    private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration, float startDelay = 0f, bool showSmoke = false)
     {
         isMoving = true;
 
@@ -318,13 +311,11 @@ public class Potion : MonoBehaviour
             yield return new WaitForSeconds(startDelay);
         }
 
-        // Düşerken uzar: Y büyür, X aynı oranda incelir.
-        if (stretch) SetScale(1f / fallStretch, fallStretch);
-
         float elaspeed = 0f;
-        Vector2 startPos = transform.position;
+        Vector3 startPos = transform.position;
+        Vector3 targetPos = new(_targetPos.x, _targetPos.y, startPos.z);
 
-        if (showSmoke) StartSwapSmoke(_targetPos - startPos);
+        if (showSmoke) StartSwapSmoke(targetPos - startPos);
 
         while (elaspeed < duration)
         {
@@ -332,49 +323,69 @@ public class Potion : MonoBehaviour
 
             float t = Mathf.Clamp01(elaspeed / duration);
 
-            transform.position = Vector2.Lerp(startPos, _targetPos, t);
+            transform.position = Vector3.Lerp(startPos, targetPos, t);
 
             if (showSmoke) DriveSwapSmoke(t);
 
             yield return null;
         }
-        transform.position = _targetPos;
+        transform.position = targetPos;
 
         if (showSmoke) StopSwapSmoke();
 
-        // Taş hücresine vardı: tahta mantığı buradan itibaren serbest.
-        // Squash tamamen görsel; isMoving'i onun bitişine bağlamak cascade
-        // kontrolünü her taşta landRecover kadar geciktiriyordu.
+        // Taş hedefine vardı: tahta mantığı buradan itibaren serbest.
         isMoving = false;
-
-        // Yere değdi: X büyür, Y basılır; sonra normale yaylanır.
-        // moveRoutine hâlâ bu coroutine'i gösterir ki squash sırasında gelen
-        // yeni bir hareket ya da ShrinkOut onu kesebilsin.
-        if (stretch) yield return LandSquash();
-
         moveRoutine = null;
     }
 
-    // Squash anlık uygulanır, normale dönüş landRecover boyunca yumuşar.
-    private IEnumerator LandSquash()
+    // Sabit süreli Lerp yerine fiziksel hız eğrisi kullanılır: uzun düşüş
+    // hızlanır ama bir üst hızı geçmez. Bu, dikey roketten sonra taşların
+    // sekiz hücreyi tek hücreyle aynı sürede geçmesini engeller.
+    private IEnumerator FallCoroutine(Vector2 _targetPos, float startDelay)
     {
-        SetScale(landSquash, 1f / landSquash);
+        isMoving = true;
 
-        float elapsed = 0f;
-        Vector3 from = transform.localScale;
-
-        while (elapsed < landRecover)
+        if (startDelay > 0f)
         {
-            elapsed += Time.deltaTime;
+            yield return new WaitForSeconds(startDelay);
+        }
 
-            float t = Mathf.Clamp01(elapsed / landRecover);
+        Vector3 start = transform.position;
+        Vector3 target = new(_targetPos.x, _targetPos.y, start.z);
+        float distance = Vector2.Distance(start, target);
 
-            transform.localScale = Vector3.Lerp(from, baseScale, t);
+        if (distance <= Mathf.Epsilon)
+        {
+            transform.position = target;
+            isMoving = false;
+            moveRoutine = null;
+            yield break;
+        }
+
+        // Taş fallSpeed ile başlar ve yerçekimiyle maxFallSpeed'e kadar
+        // hızlanır. Bir hücrelik düşüş hızlanmaya fırsat bulamadan biter, üç
+        // ve daha uzunu belirgin şekilde hızlanır. Sabit hızda uzun düşüş
+        // "havada asılı" görünüyordu: göz düşen nesnenin hızlanmasını bekliyor.
+        float velocity = fallSpeed;
+        float travelled = 0f;
+
+        // Düşüş ve iniş animasyonu burada YOK; o görsel katman ayrı bir
+        // Animator ile yapılacak. Bu coroutine yalnızca konumu taşır.
+        while (travelled < distance)
+        {
+            velocity = Mathf.Min(maxFallSpeed, velocity + fallGravity * Time.deltaTime);
+            travelled = Mathf.Min(distance, travelled + velocity * Time.deltaTime);
+
+            transform.position = Vector3.LerpUnclamped(start, target, travelled / distance);
 
             yield return null;
         }
 
-        transform.localScale = baseScale;
+        transform.position = target;
+
+        // Taş hücresine vardı: tahta mantığı buradan itibaren serbest.
+        isMoving = false;
+        moveRoutine = null;
     }
 
     // Eşleşen taş kırılmadan önce hızlıca sıfıra küçülür.
@@ -466,12 +477,6 @@ public class Potion : MonoBehaviour
         smoke.localScale = swapSmokeHomeScale;
     }
 
-    private void SetScale(float xFactor, float yFactor)
-    {
-        transform.localScale = new Vector3(baseScale.x * xFactor,
-                                           baseScale.y * yFactor,
-                                           baseScale.z);
-    }
 }
 
 // PotionType enum
