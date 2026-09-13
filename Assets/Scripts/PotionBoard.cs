@@ -29,6 +29,9 @@ public class PotionBoard : MonoBehaviour
     // SpecialStrikes satır desenini kurarken tahtanın genişliğini bilmeli.
     public int Width => width;
 
+    // UI paneli açıkken tahta dokunuş almaz. GameBoardUI açar ve kapatır.
+    public bool InputLocked { get; set; }
+
     private List<GameObject> deactivePotionPool = new();
     private bool waitForPointerRelease = false;
 
@@ -205,7 +208,7 @@ public class PotionBoard : MonoBehaviour
     {
         if (GameManager.Instance.isGameEnded) return;
 
-        if ((isCannonCinematic && !isCannonAwaitingTarget) || isHammerStrikeActive)
+        if ((isCannonCinematic && !isCannonAwaitingTarget) || isHammerStrikeActive || InputLocked)
         {
             ClearPointerSelection();
             return;
@@ -260,6 +263,17 @@ public class PotionBoard : MonoBehaviour
 
             firstSelectedPotion = null;
             secondSelectedPotion = null;
+
+            // Dokunulan taş hâlâ tahtada mı? Roket ateşlendiğinde hücresi hemen
+            // boşalır ama objesi parçaları uçarken sahnede kalır ve collider'ı
+            // hâlâ dokunuş alır. Tahtada olmayan bir taşa ne vuruş ne patlatma
+            // uygulanır; yoksa her tık bir hamle yakar, puanı yeniden yazar ve
+            // o sırada dolmaya başlayan hücreleri de temizler.
+            if (tapped != null &&
+                PotionAt(new Vector2Int(tapped.xIndex, tapped.yIndex)) != tapped)
+            {
+                tapped = null;
+            }
 
             // Özel vuruş seçiliyse dokunuş ona gider, taş özel olsun olmasın.
             bool usedStrike = tapped != null
@@ -457,7 +471,7 @@ public class PotionBoard : MonoBehaviour
     // Potion'Un eşleşmediğinden emin oluruz 
     // IsConnected ile potion'ların sağ sol yukarı aşağısı kontrol edilir
     // ardından connectedPotions ile eşleşen potion'ların 3'e eşit veya fazla olup olmadığını kontrol ederiz 
-    private bool CheckBoard(bool _takeAction, Potion preferredPotion = null)
+    private bool CheckBoard(bool _takeAction)
     {
         bool hasMatched = false;
 
@@ -503,7 +517,7 @@ public class PotionBoard : MonoBehaviour
                             {
                                 if (matchGroup.IsSuperMatch)
                                 {
-                                    matchGroup.protectedPotion = ChooseSuperMatchTarget(matchGroup, preferredPotion);
+                                    matchGroup.protectedPotion = ChooseSuperMatchTarget(matchGroup, null);
                                 }
 
                                 currentMatchGroups.Add(matchGroup);
@@ -2169,10 +2183,13 @@ public class PotionBoard : MonoBehaviour
 
         currentState = BoardState.Checking;
 
-        // Takasın geçerliliğine YALNIZCA takas edilen iki taş karar verir.
-        // CheckBoard board'un tamamına bakıyor; refill cascade'i sürerken
-        // başka bir yerdeki eşleşme, hiçbir şey yapmayan takası geçerli gösteriyordu.
-        if (!SwapCreatesMatch(_currentPotion, _targetPotion))
+        // Takasın geçerliliğine YALNIZCA takas edilen iki taş karar verir ve
+        // ilk temizleme de yalnızca onların gruplarını alır. Tahta geneli tarama
+        // burada YANLIŞ: takas kendi iki taşı yerleşir yerleşmez çözülüyor, o
+        // anda başka bir sütunda süren cascade'in henüz almadığı bir eşleşme
+        // durabilir. Onu burada kapmak refill bitmeden birleşme başlatıyordu.
+        // O eşleşme cascade'in işi, tahta durunca kendisi alacak.
+        if (!CollectSwapMatches(_currentPotion, _targetPotion))
         {
             currentState = BoardState.Swapping;
             DoSwap(_currentPotion, _targetPotion);
@@ -2186,7 +2203,8 @@ public class PotionBoard : MonoBehaviour
             yield break;
         }
 
-        bool hasMatched = CheckBoard(true, _currentPotion);
+        // İlk tur takasın grupları; sonraki turlar tahta durunca CheckBoard.
+        bool hasMatched = true;
 
         while (hasMatched)
         {
@@ -2204,25 +2222,48 @@ public class PotionBoard : MonoBehaviour
         currentState = BoardState.Idle;
     }
 
-    // Takas edilen taşlardan biri 3'lü bir diziye girdi mi?
-    // Board'un geri kalanı bilerek yok sayılır.
-    private bool SwapCreatesMatch(Potion _currentPotion, Potion _targetPotion)
+    // Takas edilen iki taşın girdiği eşleşmeleri currentMatchGroups'a toplar.
+    // Tahtanın geri kalanı bilerek yok sayılır. false dönerse takas hiçbir
+    // şey oluşturmamıştır ve geri alınır.
+    private bool CollectSwapMatches(Potion first, Potion second)
     {
-        // IsConnected komşuları tararken isMatched'a bakıyor;
-        // önceki turdan kalmış bayraklar taramayı erken kesmesin.
+        currentMatchGroups.Clear();
+
+        // IsConnected komşuları tararken isMatched'a bakıyor; önceki turdan
+        // kalmış bayraklar taramayı erken kesmesin.
         foreach (Node node in potionBoard)
         {
             if (node.potion != null) node.potion.isMatched = false;
         }
 
-        return IsPartOfMatch(_currentPotion) || IsPartOfMatch(_targetPotion);
-    }
+        foreach (Potion potion in new[] { first, second })
+        {
+            // İkisi aynı gruptaysa ikincisi ilk turda işaretlenmiş olur.
+            if (potion == null || potion.isMatched) continue;
 
-    private bool IsPartOfMatch(Potion potion)
-    {
-        if (potion == null) return false;
+            MatchResult connected = IsConnected(potion);
 
-        return IsConnected(potion).connectedPotions.Count >= 3;
+            if (connected.connectedPotions.Count < 3) continue;
+
+            MatchResult group = SuperMatch(connected);
+
+            if (group.IsSuperMatch)
+            {
+                group.protectedPotion = ChooseSuperMatchTarget(group, first);
+            }
+
+            currentMatchGroups.Add(group);
+
+            foreach (Potion item in group.connectedPotions) item.isMatched = true;
+        }
+
+        // CheckBoard'daki gibi: bayraklar yalnızca bu tarama içinde anlamlı.
+        foreach (MatchResult group in currentMatchGroups)
+        {
+            foreach (Potion item in group.connectedPotions) item.isMatched = false;
+        }
+
+        return currentMatchGroups.Count > 0;
     }
 
     private static bool IsSpecial(Potion potion)

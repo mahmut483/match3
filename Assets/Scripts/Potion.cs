@@ -31,6 +31,9 @@ public class Potion : MonoBehaviour
     [Tooltip("Düşüşün aşamayacağı üst hız.")]
     [SerializeField, Min(0.01f)] private float maxFallSpeed = 20f;
 
+    [Tooltip("Üst hızda Y çarpanı; X ters oranda incelir. Hız arttıkça esneme büyür, yere değince sıfırlanır.")]
+    [SerializeField, Min(1f)] private float fallStretch = 1.08f;
+
     [SerializeField] private GameObject selectedVisual;
     [SerializeField] private GameObject bomb;
 
@@ -69,9 +72,23 @@ public class Potion : MonoBehaviour
     // Dikey roket sütun temizler; PotionBoard ateşlerken buna bakar.
     public bool IsVerticalRocket { get; private set; }
 
-    // Taşın kendi sprite'ı, kökte. Bombaya dönüşünce gizlenir: bombanın saydam
-    // kenarlarından alttaki renk sızmasın diye. Awake'te bulunur.
-    private SpriteRenderer potionVisual;
+    // Taşın kendi sprite'ı, potionVisual adlı ÇOCUKTA. Kök yalnızca konum ve
+    // mantık taşır; sprite ile iniş animasyonunun Animator'ü çocukta durur.
+    // Böylece kodun köke yazdığı ölçek (düşüş esnemesi, eşleşme küçülmesi)
+    // ile Animator'ün çocuğa yazdığı ölçek üst üste yazılmaz, çarpılır.
+    //
+    // Bombaya dönüşünce gizlenir: bombanın saydam kenarlarından alttaki renk
+    // sızmasın diye. Boş bırakılırsa ilk bulunan çocuk sprite'ı alınır.
+    [Tooltip("Taşın sprite'ını taşıyan çocuk. Boşsa hiyerarşideki ilk SpriteRenderer.")]
+    [SerializeField] private SpriteRenderer potionVisual;
+
+    // İniş animasyonu potionVisual üzerindeki Animator'de. Kod yalnızca
+    // state'i tetikler; ölçeği ve konumu klip yönetir, kökle çakışmaz.
+    [Tooltip("potionVisual Animator'ündeki iniş state'inin adı.")]
+    [SerializeField] private string landingState = "PotionLanding";
+
+    private Animator visualAnimator;
+    private int landingStateHash;
 
     [Header("Takas dumanı")]
     [SerializeField] private GameObject swapSmoke;
@@ -123,7 +140,10 @@ public class Potion : MonoBehaviour
         if (rocketRight != null) rocketRightHomeRot = rocketRight.transform.localRotation;
         if (rocketLeft != null) rocketLeftHomeRot = rocketLeft.transform.localRotation;
 
-        potionVisual = GetComponent<SpriteRenderer>();
+        if (potionVisual == null) potionVisual = GetComponentInChildren<SpriteRenderer>();
+        if (potionVisual != null) visualAnimator = potionVisual.GetComponent<Animator>();
+
+        landingStateHash = Animator.StringToHash(landingState);
 
         // Potion kökü havuzdan tekrar kullanılıyor. Cartoon FX'in varsayılan
         // Destroy davranışı, roket izi durunca child efekt objesini kalıcı olarak
@@ -369,8 +389,6 @@ public class Potion : MonoBehaviour
         float velocity = fallSpeed;
         float travelled = 0f;
 
-        // Düşüş ve iniş animasyonu burada YOK; o görsel katman ayrı bir
-        // Animator ile yapılacak. Bu coroutine yalnızca konumu taşır.
         while (travelled < distance)
         {
             velocity = Mathf.Min(maxFallSpeed, velocity + fallGravity * Time.deltaTime);
@@ -378,12 +396,26 @@ public class Potion : MonoBehaviour
 
             transform.position = Vector3.LerpUnclamped(start, target, travelled / distance);
 
+            // Esneme hızla büyür: bir hücrelik düşüş neredeyse hiç esnemez,
+            // hızlanan uzun düşüş belirgin uzar. Sabit esneme kısa düşüşte
+            // ilk karede "pat" diye açılıp kapanıyordu.
+            float stretch = Mathf.Lerp(1f, fallStretch, velocity / maxFallSpeed);
+            transform.localScale = new Vector3(baseScale.x / stretch, baseScale.y * stretch, baseScale.z);
+
             yield return null;
         }
 
         transform.position = target;
+        transform.localScale = baseScale;
 
-        // Taş hücresine vardı: tahta mantığı buradan itibaren serbest.
+        // Yere değdi: iniş animasyonu. Animator çocuğu ezer, kök buna karışmaz.
+        if (visualAnimator != null && visualAnimator.isActiveAndEnabled)
+        {
+            visualAnimator.Play(landingStateHash, 0, 0f);
+        }
+
+        // Taş hücresine vardı: tahta mantığı buradan itibaren serbest; iniş
+        // animasyonu bunu bekletmez.
         isMoving = false;
         moveRoutine = null;
     }

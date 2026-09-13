@@ -20,5 +20,11 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/GemHunterMatch/Scenes/Level3.unity
     guid: 6f8636eea4fd4465593f170e96739fcc
+  - enabled: 1
+    path: Assets/Scenes/GameBoard.unity
+    guid: 58ea8aae29b4543f78c9623a8379b353
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: 1d4d41e3b0bfa4e26b82f1df0e900010
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
