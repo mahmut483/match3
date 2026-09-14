@@ -409,15 +409,34 @@ public class Potion : MonoBehaviour
         transform.localScale = baseScale;
 
         // Yere değdi: iniş animasyonu. Animator çocuğu ezer, kök buna karışmaz.
+        // Animasyon bitene kadar taş hâlâ "hareket ediyor" sayılır; böylece
+        // CheckBoard tahtadaki son taşın inişi tamamlanmadan çalışmaz ve
+        // eşleşen taş esnerken küçülmeye başlamaz. Sıra: düş, in, sonra kırıl.
         if (visualAnimator != null && visualAnimator.isActiveAndEnabled)
         {
             visualAnimator.Play(landingStateHash, 0, 0f);
+
+            // Play bir sonraki karede işlenir; state bilgisi ondan sonra doğru.
+            yield return null;
+
+            while (IsPlayingLanding())
+            {
+                yield return null;
+            }
         }
 
-        // Taş hücresine vardı: tahta mantığı buradan itibaren serbest; iniş
-        // animasyonu bunu bekletmez.
+        // Taş hücresine vardı ve inişi bitti: tahta mantığı buradan itibaren serbest.
         isMoving = false;
         moveRoutine = null;
+    }
+
+    // Klip biter bitmez false döner: Exit üzerinden Idle'a geçtiyse state
+    // değişmiştir, geçiş yoksa normalizedTime 1'i aşmıştır.
+    private bool IsPlayingLanding()
+    {
+        AnimatorStateInfo state = visualAnimator.GetCurrentAnimatorStateInfo(0);
+
+        return state.shortNameHash == landingStateHash && state.normalizedTime < 1f;
     }
 
     // Eşleşen taş kırılmadan önce hızlıca sıfıra küçülür.
