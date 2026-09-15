@@ -114,6 +114,9 @@ public class SpecialStrikes : MonoBehaviour
     // Aynı vuruşa tekrar basmak seçimi bırakır, başkasına basmak ona geçer.
     private void Toggle(StrikeKind kind)
     {
+        // Ayarlar paneli açıkken tahta kilitli; vuruş seçimi de kapalı.
+        if (board != null && board.InputLocked) return;
+
         StrikeSlot slot = SlotFor(kind);
 
         if (slot == null || slot.remaining <= 0) return;

@@ -69,7 +69,8 @@ public class GameBoardUI : MonoBehaviour
         if (settingsPanel != null) settingsPanel.SetActive(false);
     }
 
-    // Panel açıkken tahta girişi kilitlenir. UI paneli tahtanın Physics2D
+    // Panel açıkken tahta girişi kilitlenir; SpecialStrikes de aynı bayrağa
+    // bakıp vuruş seçimini kapatır. UI paneli tahtanın Physics2D
     // raycast'ini engellemiyor; kilit olmasa panelin arkasındaki taşlara
     // dokunulabilirdi. Time.timeScale kullanılmıyor: buton animasyonları ve
     // coroutine'ler donardı. Süren cascade arkada bitmeye devam eder.

@@ -14531,8 +14531,8 @@ MonoBehaviour:
   hammerReturnDuration: 0.7
   hammerStrikeDuration: 1.5
   bombStrikePrefab: {fileID: 961155621397404643, guid: 8ff53eea67d424bfbad7a07d08c27393, type: 3}
-  bombTravelDuration: 1.1
-  bombImpactDelay: 1
+  bombTravelDuration: 0.6
+  bombImpactDelay: 1.8333
   boardSlideDuration: 0.22
   boardReturnDuration: 0.18
   cannonBoardSlideCells: 1

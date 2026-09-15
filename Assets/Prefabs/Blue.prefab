@@ -21261,6 +21261,7 @@ MonoBehaviour:
   rocketRight: {fileID: 4796046558093578569}
   rocketLeft: {fileID: 5773189872992770614}
   potionVisual: {fileID: 1244222928050331781}
+  landingState: PotionLanding
   swapSmoke: {fileID: 5721332951668806405}
   smokeFollow: 14
   smokeGrow: 1.6
