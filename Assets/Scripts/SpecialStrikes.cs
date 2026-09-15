@@ -164,7 +164,7 @@ public class SpecialStrikes : MonoBehaviour
         // Vuruşun gerçekten başlatılabildiği doğrulanmadan hak düşmez. Cannon
         // prefabı/anchor'ı eksikse seçim açık kalır ve dokunma özel taşı yanlışlıkla
         // patlatmaz; true burada "bu dokunuş özel vuruşa aitti" demektir.
-        Transform strikeSource = kind == StrikeKind.Hammer && slot.button != null
+        Transform strikeSource = (kind == StrikeKind.Hammer || kind == StrikeKind.Bomb) && slot.button != null
             ? slot.button.transform
             : null;
 

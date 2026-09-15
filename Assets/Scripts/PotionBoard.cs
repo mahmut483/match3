@@ -162,6 +162,13 @@ public class PotionBoard : MonoBehaviour
     [SerializeField, Min(0f)] private float hammerReturnDuration = 0.35f;
     [SerializeField, Min(0f)] private float hammerStrikeDuration = 1.5f;
 
+    [Header("Bomb Strike Presentation")]
+    [Tooltip("Bomb butonundan seçilen hücreye uçacak prefab. Animator'ü yolculuk boyunca oynar.")]
+    [SerializeField] private GameObject bombStrikePrefab;
+    [SerializeField, Min(0f)] private float bombTravelDuration = 1.1f;
+    [Tooltip("Prefab oluşturulduktan sonra etki anı. Yolculuk bitmeden etki etmez.")]
+    [SerializeField, Min(0f)] private float bombImpactDelay = 1f;
+
     [SerializeField, Min(0f)] private float boardSlideDuration = 0.22f;
     [SerializeField, Min(0f)] private float boardReturnDuration = 0.18f;
     [Tooltip("Cannon için board'un sağa kayacağı tile sayısı. 1 = tam bir hücre genişliği.")]
@@ -177,6 +184,7 @@ public class PotionBoard : MonoBehaviour
     private bool isCannonAwaitingTarget;
     private bool isCannonFiring;
     private bool isHammerStrikeActive;
+    private bool isBombStrikeActive;
     private Coroutine cannonAimRoutine;
     private Vector3 boardPresentationHomePosition;
 
@@ -208,7 +216,8 @@ public class PotionBoard : MonoBehaviour
     {
         if (GameManager.Instance.isGameEnded) return;
 
-        if ((isCannonCinematic && !isCannonAwaitingTarget) || isHammerStrikeActive || InputLocked)
+        if ((isCannonCinematic && !isCannonAwaitingTarget) ||
+            isHammerStrikeActive || isBombStrikeActive || InputLocked)
         {
             ClearPointerSelection();
             return;
@@ -808,7 +817,8 @@ public class PotionBoard : MonoBehaviour
         IEnumerable<Vector2Int> cells,
         Transform strikeSource = null)
     {
-        if (kind != StrikeKind.Cannon && (isCannonCinematic || isHammerStrikeActive)) return false;
+        if (kind != StrikeKind.Cannon &&
+            (isCannonCinematic || isHammerStrikeActive || isBombStrikeActive)) return false;
 
         if (kind == StrikeKind.Cannon)
         {
@@ -831,6 +841,15 @@ public class PotionBoard : MonoBehaviour
             return true;
         }
 
+        if (kind == StrikeKind.Bomb)
+        {
+            if (bombStrikePrefab == null) return false;
+
+            isBombStrikeActive = true;
+            StartCoroutine(BombStrikeRoutine(origin, strikeSource));
+            return true;
+        }
+
         StartCoroutine(StrikeRoutine(cells));
         return true;
     }
@@ -847,7 +866,7 @@ public class PotionBoard : MonoBehaviour
             Vector3 targetPosition = CellToWorld(origin);
             targetPosition.z = -0.2f;
 
-            Vector3 startPosition = GetHammerStartPosition(strikeSource, targetPosition);
+            Vector3 startPosition = GetStrikeStartPosition(strikeSource, targetPosition);
             // Animator yalnızca prefabın içini yönetir. Dış parent'ı hareket
             // ettirerek klip oynarken de hedef hücreye gidip geri dönebiliriz.
             travelRoot = new GameObject("HammerTravelRoot");
@@ -925,7 +944,7 @@ public class PotionBoard : MonoBehaviour
         }
     }
 
-    private Vector3 GetHammerStartPosition(Transform strikeSource, Vector3 targetPosition)
+    private Vector3 GetStrikeStartPosition(Transform strikeSource, Vector3 targetPosition)
     {
         Camera sceneCamera = Camera.main;
         if (strikeSource == null || sceneCamera == null) return targetPosition;
@@ -940,11 +959,81 @@ public class PotionBoard : MonoBehaviour
             targetPosition);
     }
 
+    // Bomb ve hammer aynı uzay dönüşümünü kullanır: UI butonundaki piksel,
+    // tahtadaki hedef hücrenin derinliğinde bir dünya konumuna çevrilir.
+    private IEnumerator BombStrikeRoutine(
+        Vector2Int origin,
+        Transform strikeSource)
+    {
+        GameObject travelRoot = null;
+
+        try
+        {
+            Vector3 targetPosition = CellToWorld(origin);
+            targetPosition.z = -0.2f;
+
+            Vector3 startPosition = GetStrikeStartPosition(strikeSource, targetPosition);
+            travelRoot = new GameObject("BombTravelRoot");
+            travelRoot.transform.position = startPosition;
+
+            GameObject bombObject = Instantiate(
+                bombStrikePrefab, startPosition, Quaternion.identity, travelRoot.transform);
+            BombStrikeView bomb = bombObject.GetComponent<BombStrikeView>();
+            if (bomb == null) bomb = bombObject.AddComponent<BombStrikeView>();
+            float animationDuration = bomb.PlayStrike();
+
+            float travelDuration = Mathf.Max(0f, bombTravelDuration);
+            float impactTime = Mathf.Max(travelDuration, bombImpactDelay, animationDuration);
+            float elapsed = 0f;
+
+            while (elapsed < travelDuration)
+            {
+                float t = travelDuration > 0f
+                    ? Mathf.SmoothStep(0f, 1f, elapsed / travelDuration)
+                    : 1f;
+                travelRoot.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+
+            travelRoot.transform.position = targetPosition;
+
+            // Inspector'daki etki zamanı, yolculuktan kısa tutulsa bile bomba
+            // seçilen taşa varmadan hücreler temizlenmez.
+            while (elapsed < impactTime)
+            {
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+
+            currentState = BoardState.Clearing;
+            HashSet<Vector2Int> triggered = new();
+            ChainCounter counter = new();
+
+            // Özel Bomb'un merkezi patlaması: efekt, ses, puan ve 3x3 temizleme
+            // aynı ortak akıştan gelir. ClearCell'leri burada tek tek çağırmak
+            // yalnızca taşları siliyor, patlamanın kendisini hiç üretmiyordu.
+            BlastAround(origin, triggered, counter);
+
+            if (travelRoot != null) Destroy(travelRoot);
+            travelRoot = null;
+
+            yield return new WaitUntil(() => counter.running == 0);
+            yield return RefillAndCascade();
+        }
+        finally
+        {
+            if (travelRoot != null) Destroy(travelRoot);
+            isBombStrikeActive = false;
+        }
+    }
+
     // Cannon butonuna basıldığı anda çağrılır: board hemen sinematik duruşuna
     // geçer, fakat hedef satır henüz seçilmediği için yalnızca tek dokunuş bekler.
     public bool TryBeginCannonAim()
     {
-        if (isCannonCinematic || isHammerStrikeActive || !HasCannonPresentation()) return false;
+        if (isCannonCinematic || isHammerStrikeActive || isBombStrikeActive || !HasCannonPresentation()) return false;
 
         isCannonCinematic = true;
         isCannonFiring = false;
