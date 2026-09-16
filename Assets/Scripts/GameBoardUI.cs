@@ -12,7 +12,7 @@ using UnityEngine.UI;
 // bağlanmaz.
 public class GameBoardUI : MonoBehaviour
 {
-    // Açılıp kapanan bir ses kanalı: buton, ikon, mixer parametresi, kayıt anahtarı.
+    // Açılıp kapanan bir ses kanalının sahneye ait görsel referansları.
     [System.Serializable]
     public class AudioToggle
     {
@@ -24,12 +24,6 @@ public class GameBoardUI : MonoBehaviour
         [Tooltip("Açık ve kapalı panel sprite'ları (yeşil / gri). İkisi de boşsa kapalıyken panel soluklaşır.")]
         public Sprite onSprite;
         public Sprite offSprite;
-
-        [Tooltip("Mixer'da expose edilmiş volume parametresinin adı.")]
-        public string parameter;
-
-        [Tooltip("PlayerPrefs anahtarı; tercih oturumlar arasında saklanır.")]
-        public string prefsKey;
 
         [HideInInspector] public bool isOn = true;
     }
@@ -43,30 +37,39 @@ public class GameBoardUI : MonoBehaviour
 
     [Header("Ses")]
     [SerializeField] private AudioMixer mixer;
-    [SerializeField] private AudioToggle music = new() { parameter = "MusicVolume", prefsKey = "MusicOn" };
-    [SerializeField] private AudioToggle sfx = new() { parameter = "SfxVolume", prefsKey = "SfxOn" };
+    [SerializeField] private AudioToggle music = new();
+    [SerializeField] private AudioToggle sfx = new();
 
-    // Mixer'da "kapalı" için sessizlik. 0 dB = tam ses.
-    private const float MutedDb = -80f;
+    private GameAudioSettings audioSettings;
 
     private void Start()
     {
+        audioSettings = GameAudioSettings.Shared;
+
         if (settingsOpenButton != null) settingsOpenButton.onClick.AddListener(OpenSettings);
         if (settingsCloseButton != null) settingsCloseButton.onClick.AddListener(CloseSettings);
         if (leaveButton != null) leaveButton.onClick.AddListener(LeaveToMenu);
 
-        if (music.button != null) music.button.onClick.AddListener(() => Toggle(music));
-        if (sfx.button != null) sfx.button.onClick.AddListener(() => Toggle(sfx));
+        if (music.button != null) music.button.onClick.AddListener(ToggleMusic);
+        if (sfx.button != null) sfx.button.onClick.AddListener(ToggleSfx);
 
-        // Kayıtlı tercihler: hiç kaydedilmediyse açık.
-        music.isOn = PlayerPrefs.GetInt(music.prefsKey, 1) == 1;
-        sfx.isOn = PlayerPrefs.GetInt(sfx.prefsKey, 1) == 1;
+        music.isOn = audioSettings.IsEnabled(GameAudioChannel.Music);
+        sfx.isOn = audioSettings.IsEnabled(GameAudioChannel.Sfx);
 
-        Apply(music);
-        Apply(sfx);
+        Apply(music, GameAudioChannel.Music);
+        Apply(sfx, GameAudioChannel.Sfx);
 
         // Panel oyun başında kapalı; sahnede açık unutulmuş olabilir.
         if (settingsPanel != null) settingsPanel.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        if (settingsOpenButton != null) settingsOpenButton.onClick.RemoveListener(OpenSettings);
+        if (settingsCloseButton != null) settingsCloseButton.onClick.RemoveListener(CloseSettings);
+        if (leaveButton != null) leaveButton.onClick.RemoveListener(LeaveToMenu);
+        if (music.button != null) music.button.onClick.RemoveListener(ToggleMusic);
+        if (sfx.button != null) sfx.button.onClick.RemoveListener(ToggleSfx);
     }
 
     // Panel açıkken tahta girişi kilitlenir; SpecialStrikes de aynı bayrağa
@@ -91,41 +94,47 @@ public class GameBoardUI : MonoBehaviour
         SceneManager.LoadScene(ButtonControl.MainMenuScene);
     }
 
-    private void Toggle(AudioToggle channel)
+    private void ToggleMusic()
     {
-        channel.isOn = !channel.isOn;
-
-        PlayerPrefs.SetInt(channel.prefsKey, channel.isOn ? 1 : 0);
-        PlayerPrefs.Save();
-
-        Apply(channel);
+        Toggle(music, GameAudioChannel.Music);
     }
 
-    // Mixer'ı ve ikonu kanalın durumuna getirir. Parametre mixer'da yoksa
-    // SetFloat false döner ve sessizce geçilir; müzik grubu sonradan eklenince
-    // kendiliğinden çalışmaya başlar.
-    private void Apply(AudioToggle channel)
+    private void ToggleSfx()
     {
-        if (mixer != null && !string.IsNullOrEmpty(channel.parameter))
+        Toggle(sfx, GameAudioChannel.Sfx);
+    }
+
+    private void Toggle(AudioToggle view, GameAudioChannel channel)
+    {
+        view.isOn = audioSettings.Toggle(channel);
+        Apply(view, channel);
+    }
+
+    private void Apply(AudioToggle view, GameAudioChannel channel)
+    {
+        if (mixer != null)
         {
-            mixer.SetFloat(channel.parameter, channel.isOn ? 0f : MutedDb);
+            mixer.SetFloat(
+                GameAudioSettings.GetMixerParameter(channel),
+                audioSettings.GetVolumeDb(channel));
         }
 
         // Değişecek görsel butonun kendi paneli; ikon ona dokunulmadan üstte durur.
-        Image image = channel.image != null
-            ? channel.image
-            : (channel.button != null ? channel.button.targetGraphic as Image : null);
+        Image image = view.image != null
+            ? view.image
+            : (view.button != null ? view.button.targetGraphic as Image : null);
 
         if (image == null) return;
 
-        if (channel.onSprite != null && channel.offSprite != null)
+        if (view.onSprite != null && view.offSprite != null)
         {
-            image.sprite = channel.isOn ? channel.onSprite : channel.offSprite;
+            image.sprite = view.isOn ? view.onSprite : view.offSprite;
+            image.color = Color.white;
         }
         else
         {
             // Sprite verilmediyse kapalı durum soluk panel.
-            image.color = channel.isOn ? Color.white : new Color(1f, 1f, 1f, 0.45f);
+            image.color = view.isOn ? Color.white : new Color(1f, 1f, 1f, 0.45f);
         }
     }
 }
