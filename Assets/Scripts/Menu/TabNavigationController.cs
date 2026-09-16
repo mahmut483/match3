@@ -6,7 +6,7 @@ public class TabNavigationController : MonoBehaviour
     [System.Serializable]
     public class Tab
     {
-        [Tooltip("Tab objesi (ShopTab, RankTab...). Icon/Title alt objeleri otomatik bulunur.")]
+        [Tooltip("Tab objesi (RankTab, HomeTab...). Icon/Title alt objeleri otomatik bulunur.")]
         public RectTransform root;
 
         [Tooltip("Bu tab hangi sayfayı açar? Sayfa objesini sürükleyin. " +
@@ -29,6 +29,12 @@ public class TabNavigationController : MonoBehaviour
     [Header("Tabs")]
     [SerializeField] private Tab[] tabs;
 
+    [Header("Sliding Selection")]
+    [Tooltip("Sayfa kaydırılırken tabların arasında hareket eden açık renkli plaka.")]
+    [SerializeField] private RectTransform selectionIndicator;
+
+    [SerializeField] private float indicatorYOffset;
+
     [Header("Selected Effect")]
     [SerializeField] private float normalScale = 1.75f;
     [SerializeField] private float selectedScale = 2f;
@@ -44,6 +50,8 @@ public class TabNavigationController : MonoBehaviour
     [SerializeField] private Color selectedColor = new Color(0.85f, 0.12f, 0.32f, 1f);
 
     private Vector2[] normalIconPositions;
+
+    private RectTransform navigationRoot;
 
     // Sayfa sayısı — tab seçimi buna göre hesaplanır.
     private int pageCount;
@@ -69,6 +77,36 @@ public class TabNavigationController : MonoBehaviour
         }
 
         Canvas.ForceUpdateCanvases();
+
+        navigationRoot = transform as RectTransform;
+
+        if (selectionIndicator != null)
+        {
+            // Inspector'da verilen başlangıç ölçüsünü kilitle. Canvas veya tab
+            // genişliği değişse bile plaka yalnızca hareket eder, ölçeklenmez.
+            Vector2 fixedIndicatorSize = selectionIndicator.rect.size;
+            selectionIndicator.anchorMin = new Vector2(0.5f, 0.5f);
+            selectionIndicator.anchorMax = new Vector2(0.5f, 0.5f);
+            selectionIndicator.pivot = new Vector2(0.5f, 0.5f);
+            selectionIndicator.sizeDelta = fixedIndicatorSize;
+
+            // Layout plakanın genişliğini yönetmemeli; yalnızca tablar yerleşime katılır.
+            LayoutElement indicatorLayout = selectionIndicator.GetComponent<LayoutElement>();
+
+            if (indicatorLayout == null)
+            {
+                indicatorLayout = selectionIndicator.gameObject.AddComponent<LayoutElement>();
+            }
+
+            indicatorLayout.ignoreLayout = true;
+
+            Image indicatorImage = selectionIndicator.GetComponent<Image>();
+            if (indicatorImage != null) indicatorImage.raycastTarget = false;
+
+            // Plaka tab zeminlerinin üstünde çizilir. İkon ve başlıklar aşağıda
+            // ayrı canvas'a alınarak plakanın üstünde kalır.
+            selectionIndicator.SetAsLastSibling();
+        }
 
         pageCount = scrollRect.content.childCount;
 
@@ -108,7 +146,10 @@ public class TabNavigationController : MonoBehaviour
             if (tab.icon != null)
             {
                 normalIconPositions[i] = tab.icon.anchoredPosition;
+                KeepAboveIndicator(tab.icon);
             }
+
+            if (titleTransform != null) KeepAboveIndicator(titleTransform as RectTransform);
 
             if (tab.title == null)
             {
@@ -184,6 +225,8 @@ public class TabNavigationController : MonoBehaviour
                 SetTabSelection(i, PageIndexOf(tabs[i]) == 0 ? 1f : 0f);
             }
 
+            RebuildAndUpdateIndicator(0f);
+
             return;
         }
 
@@ -210,6 +253,8 @@ public class TabNavigationController : MonoBehaviour
 
             SetTabSelection(i, selection);
         }
+
+        RebuildAndUpdateIndicator(pagePosition);
     }
 
     private void SetTabSelection(int index, float selection)
@@ -244,7 +289,70 @@ public class TabNavigationController : MonoBehaviour
 
         if (tab.background != null)
         {
-            tab.background.color = Color.Lerp(normalColor, selectedColor, selection);
+            // Kayan plaka seçili zemini verdiği için tab zeminleri sabit kalır.
+            // Plaka atanmamış eski sahnelerde önceki renk geçişi çalışmaya devam eder.
+            tab.background.color = selectionIndicator != null
+                ? normalColor
+                : Color.Lerp(normalColor, selectedColor, selection);
         }
+    }
+
+    private void RebuildAndUpdateIndicator(float pagePosition)
+    {
+        if (selectionIndicator == null || navigationRoot == null) return;
+
+        // FlexibleWidth değerleri bu karede değiştiği için merkezleri okumadan önce
+        // yerleşimi yenile. Üç tab için maliyeti çok düşüktür ve kaymayı bire bir tutar.
+        LayoutRebuilder.ForceRebuildLayoutImmediate(navigationRoot);
+
+        int leftPage = Mathf.Clamp(Mathf.FloorToInt(pagePosition), 0, Mathf.Max(0, pageCount - 1));
+        int rightPage = Mathf.Clamp(Mathf.CeilToInt(pagePosition), 0, Mathf.Max(0, pageCount - 1));
+        float blend = Mathf.Clamp01(pagePosition - leftPage);
+
+        RectTransform leftTab = FindTabForPage(leftPage);
+        RectTransform rightTab = FindTabForPage(rightPage);
+
+        if (leftTab == null) leftTab = rightTab;
+        if (rightTab == null) rightTab = leftTab;
+
+        if (leftTab == null)
+        {
+            selectionIndicator.gameObject.SetActive(false);
+            return;
+        }
+
+        selectionIndicator.gameObject.SetActive(true);
+
+        Vector3 indicatorWorldPosition = Vector3.Lerp(leftTab.position, rightTab.position, blend);
+        selectionIndicator.position = indicatorWorldPosition;
+
+        Vector2 indicatorPosition = selectionIndicator.anchoredPosition;
+        indicatorPosition.y += indicatorYOffset;
+        selectionIndicator.anchoredPosition = indicatorPosition;
+    }
+
+    private RectTransform FindTabForPage(int pageIndex)
+    {
+        for (int i = 0; i < tabs.Length; i++)
+        {
+            if (PageIndexOf(tabs[i]) == pageIndex) return tabs[i].root;
+        }
+
+        return null;
+    }
+
+    private static void KeepAboveIndicator(RectTransform target)
+    {
+        if (target == null) return;
+
+        Canvas canvas = target.GetComponent<Canvas>();
+
+        if (canvas == null)
+        {
+            canvas = target.gameObject.AddComponent<Canvas>();
+        }
+
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 1;
     }
 }

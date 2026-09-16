@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 42d04428e1ca948248e9bd68a0829108
+guid: dd4707b38ae5149abb53df3ffeb5976a
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5070795732890055717
-    second: HudBar_0
-  - first:
-      213: -7591634992408207371
-    second: HudBar_1
+      213: 6179180736428292250
+    second: pp2_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -112,30 +109,17 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: iOS
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: HudBar_0
+      name: pp2_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 2172
-        height: 647
+        x: 7
+        y: 6
+        width: 299
+        height: 305
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -144,30 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bdb858ca52ae0a9b0800000000000000
-      internalID: -5070795732890055717
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: HudBar_1
-      rect:
-        serializedVersion: 2
-        x: 281
-        y: 112
-        width: 10
-        height: 15
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 5ff5515523815a690800000000000000
-      internalID: -7591634992408207371
+      spriteID: a98bebd142cd0c550800000000000000
+      internalID: 6179180736428292250
       vertices: []
       indices: 
       edges: []
@@ -186,8 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      HudBar_0: -5070795732890055717
-      HudBar_1: -7591634992408207371
+      pp2_0: 6179180736428292250
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

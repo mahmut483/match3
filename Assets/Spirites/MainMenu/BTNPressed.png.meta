@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: d71fbd7572e7c447ea05f13092b7c1a4
+guid: 84c1779ee21b6430ba916fe97ffaee45
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5701719893626919429
-    second: "ChatGPT Image 15 Ag\u0306u 2026 14_45_23_0"
+      213: -4786594215487743270
+    second: BTNPressed_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -109,30 +109,17 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: iOS
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "ChatGPT Image 15 Ag\u0306u 2026 14_45_23_0"
+      name: BTNPressed_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1285
-        height: 2778
+        x: 8
+        y: 7
+        width: 422
+        height: 184
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bf5e69b37fb6fd0b0800000000000000
-      internalID: -5701719893626919429
+      spriteID: adad9e5ebe9929db0800000000000000
+      internalID: -4786594215487743270
       vertices: []
       indices: 
       edges: []
@@ -161,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "ChatGPT Image 15 Ag\u0306u 2026 14_45_23_0": -5701719893626919429
+      BTNPressed_0: -4786594215487743270
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

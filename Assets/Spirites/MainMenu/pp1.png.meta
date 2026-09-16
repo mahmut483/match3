@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 20dce75d0fd714a0dbeba7dde3971be0
+guid: dae2a0fb6a6f543bbb58a9aeac459652
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -827263059367600634
-    second: pirate_skull_cutout_0
+      213: 8453594684477003054
+    second: pp1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: pirate_skull_cutout_0
+      name: pp1_0
       rect:
         serializedVersion: 2
-        x: 315
-        y: 316
-        width: 975
-        height: 995
+        x: 11
+        y: 6
+        width: 292
+        height: 307
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 60e579a61a8f484f0800000000000000
-      internalID: -827263059367600634
+      spriteID: e25d1639393315570800000000000000
+      internalID: 8453594684477003054
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      pirate_skull_cutout_0: -827263059367600634
+      pp1_0: 8453594684477003054
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

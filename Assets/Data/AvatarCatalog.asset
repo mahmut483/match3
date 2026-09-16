@@ -13,9 +13,6 @@ MonoBehaviour:
   m_Name: AvatarCatalog
   m_EditorClassIdentifier: Assembly-CSharp::AvatarCatalog
   avatars:
-  - {fileID: 21300000, guid: 1ba1c7466e53945698bb3df22881ccd9, type: 3}
-  - {fileID: 21300000, guid: 15f051b51b0bd49ebab330c5c1899a3b, type: 3}
-  - {fileID: 21300000, guid: 284cfff22ccc14ee78d7345f7df2174a, type: 3}
-  - {fileID: 21300000, guid: 5bf40b4c3e2dc4b5c99b74672c8ceca7, type: 3}
-  - {fileID: 21300000, guid: 20dce75d0fd714a0dbeba7dde3971be0, type: 3}
-  - {fileID: 21300000, guid: e06836522f8d74fcd8c4a91a34feafc1, type: 3}
+  - {fileID: 21300000, guid: dae2a0fb6a6f543bbb58a9aeac459652, type: 3}
+  - {fileID: 21300000, guid: dd4707b38ae5149abb53df3ffeb5976a, type: 3}
+  - {fileID: 21300000, guid: c5e665a2b99f44cd9904b048f39a0ac9, type: 3}
