@@ -9,16 +9,15 @@ public class ProfilePanel : MonoBehaviour
     [Header("Alanlar")]
     [SerializeField] private TMP_InputField nameInput;
     [SerializeField] private Button saveButton;
+    [SerializeField] private Button closeButton;
 
-    // Sıra önemli: dizideki index = kullanıcının avatarIndex değeri.
-    [SerializeField] private Button[] avatarButtons;
+    [Header("Avatar pagination")]
+    [SerializeField] private Image avatarPreview;
+    [SerializeField] private Button previousAvatarButton;
+    [SerializeField] private Button nextAvatarButton;
 
-    // Butonların görselleri buradan doldurulur — sıra kaymasını engeller.
+    // Listedeki sıra, veritabanında saklanan avatarIndex ile eşleşir.
     [SerializeField] private AvatarCatalog catalog;
-
-    [Header("Seçim görünümü")]
-    [SerializeField] private float normalScale = 1f;
-    [SerializeField] private float selectedScale = 1.2f;
 
     [Header("İsim kuralları")]
     [SerializeField] private int minNameLength = 3;
@@ -28,35 +27,22 @@ public class ProfilePanel : MonoBehaviour
 
     private void Awake()
     {
-        for (int i = 0; i < avatarButtons.Length; i++)
-        {
-            int index = i;
-
-            if (avatarButtons[i] == null) continue;
-
-            avatarButtons[i].onClick.AddListener(() => SelectAvatar(index));
-
-            // Görseli katalogdan al: index ile sprite her zaman eşleşir.
-            if (catalog != null && avatarButtons[i].image != null)
-            {
-                Sprite sprite = catalog.Get(index);
-
-                if (sprite != null) avatarButtons[i].image.sprite = sprite;
-            }
-        }
-
         if (saveButton != null) saveButton.onClick.AddListener(Save);
+        if (closeButton != null) closeButton.onClick.AddListener(Close);
+        if (previousAvatarButton != null) previousAvatarButton.onClick.AddListener(ShowPreviousAvatar);
+        if (nextAvatarButton != null) nextAvatarButton.onClick.AddListener(ShowNextAvatar);
         if (nameInput != null) nameInput.characterLimit = maxNameLength;
+
+        UpdatePaginationButtons();
+        SelectAvatar(0);
     }
 
     private void OnDestroy()
     {
-        foreach (Button button in avatarButtons)
-        {
-            if (button != null) button.onClick.RemoveAllListeners();
-        }
-
         if (saveButton != null) saveButton.onClick.RemoveListener(Save);
+        if (closeButton != null) closeButton.onClick.RemoveListener(Close);
+        if (previousAvatarButton != null) previousAvatarButton.onClick.RemoveListener(ShowPreviousAvatar);
+        if (nextAvatarButton != null) nextAvatarButton.onClick.RemoveListener(ShowNextAvatar);
     }
 
     // Panel her açıldığında mevcut kullanıcı bilgileriyle doldurulur.
@@ -91,16 +77,44 @@ public class ProfilePanel : MonoBehaviour
 
     private void SelectAvatar(int index)
     {
-        selectedAvatar = Mathf.Clamp(index, 0, avatarButtons.Length - 1);
-
-        for (int i = 0; i < avatarButtons.Length; i++)
+        if (catalog == null || catalog.Count == 0)
         {
-            if (avatarButtons[i] == null) continue;
-
-            float scale = i == selectedAvatar ? selectedScale : normalScale;
-
-            avatarButtons[i].transform.localScale = Vector3.one * scale;
+            selectedAvatar = 0;
+            return;
         }
+
+        selectedAvatar = Mathf.Clamp(index, 0, catalog.Count - 1);
+
+        if (avatarPreview != null)
+        {
+            avatarPreview.sprite = catalog.Get(selectedAvatar);
+        }
+    }
+
+    private void ShowPreviousAvatar()
+    {
+        ChangeAvatar(-1);
+    }
+
+    private void ShowNextAvatar()
+    {
+        ChangeAvatar(1);
+    }
+
+    private void ChangeAvatar(int direction)
+    {
+        if (catalog == null || catalog.Count == 0) return;
+
+        int nextIndex = (selectedAvatar + direction + catalog.Count) % catalog.Count;
+        SelectAvatar(nextIndex);
+    }
+
+    private void UpdatePaginationButtons()
+    {
+        bool canPaginate = catalog != null && catalog.Count > 1;
+
+        if (previousAvatarButton != null) previousAvatarButton.interactable = canPaginate;
+        if (nextAvatarButton != null) nextAvatarButton.interactable = canPaginate;
     }
 
     private void Save()
@@ -133,5 +147,10 @@ public class ProfilePanel : MonoBehaviour
 
             gameObject.SetActive(false);
         });
+    }
+
+    private void Close()
+    {
+        gameObject.SetActive(false);
     }
 }
