@@ -24,4 +24,25 @@ public class LevelCatalog : ScriptableObject
 
         return null;
     }
+
+    // Oyuncunun tamamladığı son bölüme göre oynanacak bölümü seçer.
+    // Katalog bittiyse veya kayıt geçersizse ilk bölüme döner.
+    public LevelData GetPlayableLevel(int highestCompletedLevel)
+    {
+        LevelData firstLevel = levels.Find(level => level != null);
+
+        if (firstLevel == null || highestCompletedLevel <= 0)
+        {
+            return firstLevel;
+        }
+
+        LevelData completedLevel = GetByNumber(highestCompletedLevel);
+
+        if (completedLevel == null)
+        {
+            return firstLevel;
+        }
+
+        return GetNext(completedLevel) ?? firstLevel;
+    }
 }

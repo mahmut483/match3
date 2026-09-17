@@ -11329,6 +11329,7 @@ GameObject:
   - component: {fileID: 938407179}
   - component: {fileID: 938407178}
   - component: {fileID: 938407177}
+  - component: {fileID: 938407180}
   m_Layer: 5
   m_Name: PlayBTN
   m_TagString: Untagged
@@ -11399,19 +11400,20 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 938407178}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 976242875}
-        m_TargetAssemblyTypeName: ClanTabButtons, Assembly-CSharp
-        m_MethodName: JoinPage
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
+--- !u!114 &938407180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938407174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc677428c25b4a01b6bc1c61938acb91, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MainMenuPlayButton
+  catalog: {fileID: 11400000, guid: b009933b8caff41ddb08aa991dbd9376, type: 2}
 --- !u!114 &938407178
 MonoBehaviour:
   m_ObjectHideFlags: 0
