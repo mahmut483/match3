@@ -7,7 +7,7 @@ public class LevelCatalog : ScriptableObject
 {
     public List<LevelData> levels = new();
 
-    public LevelData GetByNumber(int levelNumber)
+    private LevelData GetByNumber(int levelNumber)
     {
         return levels.Find(l => l != null && l.level == levelNumber);
     }

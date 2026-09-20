@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
     // Sahnedeki hazır hedef göstergesi: her potion tipi için bir obje
     // (ikonu ve TMP'si içinde hazır duruyor).
     [Serializable]
-    public class GoalDisplay
+    private class GoalDisplay
     {
         public PotionType potionType;
         public GameObject root; // Red / Green / Blue ... objesi
@@ -23,9 +23,9 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance; // static reference
 
-    public GameObject backgroundPanel; // grey background
-    public GameObject victoryPanel;
-    public GameObject losePanel;
+    [SerializeField] private GameObject backgroundPanel; // grey background
+    [SerializeField] private GameObject victoryPanel;
+    [SerializeField] private GameObject losePanel;
 
     // Menüden gelinmediyse (editörde GameBoard direkt açıldıysa) oynanacak test leveli.
     [SerializeField] private LevelData levelData;
@@ -41,12 +41,12 @@ public class GameManager : MonoBehaviour
     // Kalan adetler oyun sırasında bu listede azaltılır (asset'e dokunulmaz).
     private readonly List<PotionGoal> potionGoals = new();
 
-    public bool isGameEnded;
+    public bool isGameEnded { get; private set; }
     private bool isPlayedlast3MovesClip = false;
 
-    public TMP_Text pointsTXT;
-    public TMP_Text movesTXT;
-    public TMP_Text goalTXT;
+    [SerializeField] private TMP_Text pointsTXT;
+    [SerializeField] private TMP_Text movesTXT;
+    [SerializeField] private TMP_Text goalTXT;
 
     [Header("Hedef göstergeleri")]
     // Sahnedeki tüm hedef objeleri. Level'da hedef olanlar açılır, diğerleri kapatılır.
@@ -201,7 +201,7 @@ public class GameManager : MonoBehaviour
     // Bölüm değerlerini LevelData asset'inden okur.
     // potionGoals eleman eleman KOPYALANIR — referans atansaydı oyun sırasında
     // düşen sayaçlar doğrudan asset'in içine yazılır ve kalıcı olurdu.
-    public void Initialize(LevelData level)
+    private void Initialize(LevelData level)
     {
         moves = level.moves;
         goal = level.goal;
@@ -299,7 +299,7 @@ public class GameManager : MonoBehaviour
         points += amount;
     }
 
-    public void ProcessTurn(int _pointsToGain, bool _subtractMoves)
+    public void ProcessTurn(int _pointsToGain)
     {
         // Cascade bittikten sonra biriken hamleler arka arkaya düşülüyor.
         // Oyun bir önceki hamlede bittiyse kalanlar işlenmemeli — yoksa
@@ -307,11 +307,7 @@ public class GameManager : MonoBehaviour
         if (isGameEnded) return;
 
         points += _pointsToGain;
-
-        if (_subtractMoves)
-        {
-            moves--;
-        }
+        moves--;
 
         // Kazanmak için puan hedefi ve TÜM toplama hedefleri tamamlanmalı.
         if (points >= goal && AreAllPotionGoalsComplete())

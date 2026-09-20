@@ -22,7 +22,7 @@ public class HammerStrikeView : MonoBehaviour
 
     // Prefabdaki bütün alt Particle System'leri otomatik bulur. Play On Awake
     // açık olsa bile prefab oluştuğu karede durdurur; efekt yalnızca darbede oynar.
-    public void PrepareImpactEffect()
+    private void PrepareImpactEffect()
     {
         ResolveImpactParticles();
 
@@ -126,13 +126,12 @@ public class HammerStrikeView : MonoBehaviour
 
     public void PlayStrike()
     {
-        Animator animator = ResolveAnimator();
-        if (animator == null) return;
+        if (hammerAnimator == null) return;
 
-        animator.enabled = true;
-        animator.Rebind();
-        animator.Play(strikeStateName, 0, 0f);
-        animator.Update(0f);
+        hammerAnimator.enabled = true;
+        hammerAnimator.Rebind();
+        hammerAnimator.Play(strikeStateName, 0, 0f);
+        hammerAnimator.Update(0f);
     }
 
     // HammerBTN UI canvas'ında, potion ise board dünya uzayında. Başlangıç
@@ -146,16 +145,6 @@ public class HammerStrikeView : MonoBehaviour
 
         float targetDepth = camera.WorldToScreenPoint(targetWorldPosition).z;
         return camera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, targetDepth));
-    }
-
-    private Animator ResolveAnimator()
-    {
-        if (hammerAnimator == null)
-        {
-            hammerAnimator = GetComponentInChildren<Animator>(true);
-        }
-
-        return hammerAnimator;
     }
 
     private void ResolveImpactParticles()

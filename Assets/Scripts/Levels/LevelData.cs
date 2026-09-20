@@ -28,9 +28,21 @@ public class LevelData : ScriptableObject
   public int cannonCount;
   public int bombCount;
 
-  public ArrayLayout arrayLayout;
+  public ArrayLayout arrayLayout = new();
 
   // Tahtanın şeklini tanımlayan boyalı Tilemap prefab'ı.
   // Boyalı hücre = oynanabilir, boş hücre = kapalı.
   public GameObject boardTilemapPrefab;
+
+#if UNITY_EDITOR
+  private void OnValidate()
+  {
+    string validationError = BoardDefinition.GetLayoutValidationError(arrayLayout);
+
+    if (validationError != null)
+    {
+      Debug.LogError($"LevelData '{name}' has an invalid board layout: {validationError}", this);
+    }
+  }
+#endif
 }

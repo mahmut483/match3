@@ -57,7 +57,7 @@ public sealed class GameAudioSettings
         return storage.GetInt(GetPrefsKey(channel), 1) == 1;
     }
 
-    public void SetEnabled(GameAudioChannel channel, bool isEnabled)
+    private void SetEnabled(GameAudioChannel channel, bool isEnabled)
     {
         storage.SetInt(GetPrefsKey(channel), isEnabled ? 1 : 0);
         storage.Save();

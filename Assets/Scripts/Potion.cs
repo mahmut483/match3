@@ -16,9 +16,6 @@ public class Potion : MonoBehaviour
     public bool isMatched;
     public bool isMoving;
 
-    public Vector2 currentPos;
-    public Vector2 targetPos;
-
     private float swapSpeed = .12f;
 
     [Header("Düşüş hareketi")]
@@ -170,12 +167,11 @@ public class Potion : MonoBehaviour
         yIndex = _y;
     }
 
-    //MoveToTarget
-    // showSmoke yalnızca TAKASTA true; süper eşleşmede taşlar bombaya uçarken
-    // aynı metot kullanılıyor ama orada iz istemiyoruz.
-    public void MoveToTarget(Vector2 _targetPos, bool showSmoke = false)
+    // Takas hareketi; taş arkasında duman izi bırakır. Süper eşleşmedeki
+    // birleşme MoveToTargetAtSpeed kullanır, orada iz yok.
+    public void MoveToTarget(Vector2 _targetPos)
     {
-        StartMove(_targetPos, swapSpeed, 0f, showSmoke);
+        StartMove(_targetPos, swapSpeed, showSmoke: true);
     }
 
     public void MoveToTargetAtSpeed(
@@ -186,45 +182,37 @@ public class Potion : MonoBehaviour
     {
         float distance = Vector2.Distance(transform.position, _targetPos);
         float duration = distance / Mathf.Max(0.01f, unitsPerSecond);
-        StartMove(_targetPos, Mathf.Clamp(duration, minDuration, maxDuration), 0f);
+        StartMove(_targetPos, Mathf.Clamp(duration, minDuration, maxDuration));
     }
 
-    public void Bomb(bool setActive)
+    public void BecomeBomb()
     {
-        if (setActive)
-        {
-            potionType = PotionType.Bomb;
-            bomb.SetActive(true);
-        }
-        else
-        {
-            potionType = originalPotionType;
-            bomb.SetActive(false);
-        }
+        potionType = PotionType.Bomb;
+        bomb.SetActive(true);
 
         if (bombShadow != null) bombShadow.SetActive(false);
 
-        // Bomba açıkken taşın görseli kapalı, kapalıyken geri açılır.
-        if (potionVisual != null) potionVisual.enabled = !setActive;
+        // Bomba açıkken taşın görseli kapalı; ClearSpecial geri açar.
+        if (potionVisual != null) potionVisual.enabled = false;
 
         // Durum değişirken açık kalmış seçim çerçevesi kalmasın.
         if (selectedVisual != null) selectedVisual.SetActive(false);
     }
 
-    // Bomb(bool)'un roket karşılığı. Uzun eşleşmede korunan taş buraya girer:
+    // BecomeBomb'un roket karşılığı. Uzun eşleşmede korunan taş buraya girer:
     // yatay eşleşme yatay roket (satır), dikey eşleşme dikey roket (sütun).
     // Dikey roket ayrı bir görsel değil, aynı üç obje 90° döndürülmüş hali —
     // üçü de taşın merkezinde ve pivot'ları ortada, dönüş yerinde kalır.
-    public void Rocket(bool setActive, bool vertical = false)
+    public void BecomeRocket(bool vertical)
     {
-        potionType = setActive ? PotionType.Rocket : originalPotionType;
-        IsVerticalRocket = setActive && vertical;
+        potionType = PotionType.Rocket;
+        IsVerticalRocket = vertical;
 
-        Quaternion turn = IsVerticalRocket ? Quaternion.Euler(0f, 0f, 90f) : Quaternion.identity;
+        Quaternion turn = vertical ? Quaternion.Euler(0f, 0f, 90f) : Quaternion.identity;
 
         if (rocket != null)
         {
-            rocket.SetActive(setActive);
+            rocket.SetActive(true);
             rocket.transform.localRotation = turn * rocketHomeRot;
         }
 
@@ -240,7 +228,7 @@ public class Potion : MonoBehaviour
             rocketLeft.transform.localRotation = turn * rocketLeftHomeRot;
         }
 
-        if (potionVisual != null) potionVisual.enabled = !setActive;
+        if (potionVisual != null) potionVisual.enabled = false;
         if (selectedVisual != null) selectedVisual.SetActive(false);
     }
 
@@ -304,12 +292,12 @@ public class Potion : MonoBehaviour
     // takas gibi). İki MoveCoroutine aynı anda transform'a yazar ve hangisi önce
     // biterse isMoving'i temizler — bekleyen kod yanlış anda devam eder.
     // Bu yüzden yeni hareket başlamadan önce eskisi kesilir.
-    private void StartMove(Vector2 _targetPos, float duration, float startDelay, bool showSmoke = false)
+    private void StartMove(Vector2 _targetPos, float duration, bool showSmoke = false)
     {
         if (moveRoutine != null) StopCoroutine(moveRoutine);
 
         transform.localScale = baseScale;
-        moveRoutine = StartCoroutine(MoveCoroutine(_targetPos, duration, startDelay, showSmoke));
+        moveRoutine = StartCoroutine(MoveCoroutine(_targetPos, duration, showSmoke));
     }
 
     // Havuza dönerken obje kapanır ve coroutine'ler durur; elde kalan referans
@@ -322,14 +310,9 @@ public class Potion : MonoBehaviour
         transform.localScale = baseScale;
     }
 
-    private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration, float startDelay = 0f, bool showSmoke = false)
+    private IEnumerator MoveCoroutine(Vector2 _targetPos, float duration, bool showSmoke = false)
     {
         isMoving = true;
-
-        if (startDelay > 0f)
-        {
-            yield return new WaitForSeconds(startDelay);
-        }
 
         float elaspeed = 0f;
         Vector3 startPos = transform.position;

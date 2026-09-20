@@ -4,13 +4,8 @@ using UnityEditor;
 [CustomPropertyDrawer(typeof(ArrayLayout))]
 public class CustPropertyDrawer : PropertyDrawer
 {
-    // Veri dizisi 15 satır (PotionBoard.height) — spawn alanı dahil.
-    private const int RowCount = 15;
-    // Inspector'da yalnızca görünür (oynanabilir) satırlar çizilir.
-    // Üstteki spawn satırları hep açık kalır, göstermeye gerek yok.
-    private const int VisibleRowCount = 8;
-    private const int ColumnCount = 8;
     private const float CellHeight = 18f;
+    private const float ValidationHeight = 58f;
 
     public override void OnGUI(
         Rect position,
@@ -22,53 +17,51 @@ public class CustPropertyDrawer : PropertyDrawer
         SerializedProperty data =
             property.FindPropertyRelative("rows");
 
-        // Tüm satırların (gizli spawn satırları dahil) boyutunu garanti et,
-        // yoksa PotionBoard okurken IndexOutOfRange fırlar.
-        if (data.arraySize != RowCount)
+        string validationError = GetSerializedValidationError(data);
+
+        if (validationError != null)
         {
-            data.arraySize = RowCount;
-        }
+            Rect helpPosition = position;
+            helpPosition.y += CellHeight;
+            helpPosition.height = 36f;
+            EditorGUI.HelpBox(helpPosition, validationError, MessageType.Error);
 
-        for (int j = 0; j < RowCount; j++)
-        {
-            SerializedProperty row = data
-                .GetArrayElementAtIndex(j)
-                .FindPropertyRelative("row");
+            Rect buttonPosition = helpPosition;
+            buttonPosition.y += helpPosition.height + 2f;
+            buttonPosition.height = CellHeight;
 
-            if (row.arraySize != ColumnCount)
+            if (GUI.Button(buttonPosition, "Migrate layout to 6 x 15"))
             {
-                row.arraySize = ColumnCount;
-            }
+                bool confirmed = EditorUtility.DisplayDialog(
+                    "Migrate board layout",
+                    "The layout will be resized to 6 columns and 15 rows. " +
+                    "Cells outside that area will be removed, and hidden spawn rows will be opened.",
+                    "Migrate",
+                    "Cancel");
 
-            // Gizli spawn satırlarında kalmış eski işaretleri temizle —
-            // görünmez blokaj spawn'ı sessizce bozar.
-            if (j >= VisibleRowCount)
-            {
-                for (int i = 0; i < ColumnCount; i++)
+                if (confirmed)
                 {
-                    SerializedProperty cell = row.GetArrayElementAtIndex(i);
-
-                    if (cell.boolValue)
-                    {
-                        cell.boolValue = false;
-                    }
+                    MigrateLayout(data);
+                    property.serializedObject.ApplyModifiedProperties();
                 }
             }
+
+            return;
         }
 
         // Yalnızca görünür satırları, alttan yukarı (ekrandaki gibi) çiz.
         Rect newPosition = position;
-        newPosition.y += CellHeight * VisibleRowCount;
+        newPosition.y += CellHeight * BoardDefinition.VisibleHeight;
         newPosition.height = CellHeight;
-        newPosition.width = position.width / ColumnCount;
+        newPosition.width = position.width / BoardDefinition.VisibleWidth;
 
-        for (int j = 0; j < VisibleRowCount; j++)
+        for (int j = 0; j < BoardDefinition.VisibleHeight; j++)
         {
             SerializedProperty row = data
                 .GetArrayElementAtIndex(j)
                 .FindPropertyRelative("row");
 
-            for (int i = 0; i < ColumnCount; i++)
+            for (int i = 0; i < BoardDefinition.VisibleWidth; i++)
             {
                 EditorGUI.PropertyField(
                     newPosition,
@@ -88,7 +81,69 @@ public class CustPropertyDrawer : PropertyDrawer
         SerializedProperty property,
         GUIContent label)
     {
+        SerializedProperty data = property.FindPropertyRelative("rows");
+
+        if (GetSerializedValidationError(data) != null)
+        {
+            return CellHeight + ValidationHeight;
+        }
+
         // Görünür grid satırları + 1 başlık satırı
-        return CellHeight * (VisibleRowCount + 1);
+        return CellHeight * (BoardDefinition.VisibleHeight + 1);
+    }
+
+    private static string GetSerializedValidationError(SerializedProperty data)
+    {
+        if (data == null || data.arraySize != BoardDefinition.TotalHeight)
+        {
+            int rowCount = data != null ? data.arraySize : 0;
+            return $"Layout requires {BoardDefinition.TotalHeight} rows; found {rowCount}.";
+        }
+
+        for (int y = 0; y < BoardDefinition.TotalHeight; y++)
+        {
+            SerializedProperty row = data
+                .GetArrayElementAtIndex(y)
+                .FindPropertyRelative("row");
+
+            if (row == null || row.arraySize != BoardDefinition.VisibleWidth)
+            {
+                int columnCount = row != null ? row.arraySize : 0;
+                return $"Row {y} requires {BoardDefinition.VisibleWidth} columns; found {columnCount}.";
+            }
+
+            if (y < BoardDefinition.VisibleHeight) continue;
+
+            for (int x = 0; x < BoardDefinition.VisibleWidth; x++)
+            {
+                if (row.GetArrayElementAtIndex(x).boolValue)
+                {
+                    return $"Spawn cell ({x}, {y}) must remain usable.";
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static void MigrateLayout(SerializedProperty data)
+    {
+        data.arraySize = BoardDefinition.TotalHeight;
+
+        for (int y = 0; y < BoardDefinition.TotalHeight; y++)
+        {
+            SerializedProperty row = data
+                .GetArrayElementAtIndex(y)
+                .FindPropertyRelative("row");
+
+            row.arraySize = BoardDefinition.VisibleWidth;
+
+            if (y < BoardDefinition.VisibleHeight) continue;
+
+            for (int x = 0; x < BoardDefinition.VisibleWidth; x++)
+            {
+                row.GetArrayElementAtIndex(x).boolValue = false;
+            }
+        }
     }
 }

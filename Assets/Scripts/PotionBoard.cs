@@ -9,28 +9,23 @@ public class PotionBoard : MonoBehaviour
     private const string DoubleRocketClipResourcePath = "SFX/duableRocket";
 
     // Değerler 11
-    //define the size of the board
-    [SerializeField] private int width = 8;
-    [SerializeField] private int height = 15;
+    // Board ölçüleri tek kaynaktan gelir. Scene'deki eski width/height verileri
+    // artık runtime davranışını değiştiremez.
+    private int width => BoardDefinition.VisibleWidth;
+    private int height => BoardDefinition.TotalHeight;
     //define some spacing for the board
-    [SerializeField] private float spacingX;
-    [SerializeField] private float spacingY;
+    private float spacingX;
+    private float spacingY;
     private float cellSize = 0.575f;
     //get a reference to our potion prefabs
     [SerializeField] private GameObject[] potionPrefabs;
-    [SerializeField] private Node[,] potionBoard;
+    private Node[,] potionBoard;
     [SerializeField] private GameObject potionParent;
-    private List<GameObject> potionToDestroy = new();
     private readonly List<MatchResult> currentMatchGroups = new();
-
-    [SerializeField] private BoardState currentState = BoardState.Initializing;
 
     // Tab bar'daki özel vuruşlar. Seçim ve desen hesabı orada; burası yalnızca
     // verilen hücreleri temizliyor.
     [SerializeField] private SpecialStrikes specialStrikes;
-
-    // SpecialStrikes satır desenini kurarken tahtanın genişliğini bilmeli.
-    public int Width => width;
 
     // UI paneli açıkken tahta dokunuş almaz. GameBoardUI açar ve kapatır.
     public bool InputLocked { get; set; }
@@ -54,7 +49,7 @@ public class PotionBoard : MonoBehaviour
 
     private Potion firstSelectedPotion;
 
-    [SerializeField] private Potion secondSelectedPotion;
+    private Potion secondSelectedPotion;
     [SerializeField] private ParticleSystem destroyParticlesRed;
     [SerializeField] private ParticleSystem destroyParticlesBlue;
     [SerializeField] private ParticleSystem destroyParticlesGreen;
@@ -182,7 +177,7 @@ public class PotionBoard : MonoBehaviour
     [SerializeField, Min(0.1f)] private float cannonballSpeed = 12f;
     [SerializeField, Min(0f)] private float cannonballExitPadding = 0.75f;
 
-    // Bu bir BoardState kapısı değildir. Yalnızca parent transform hareket
+    // Bu genel bir tahta kilidi değildir. Yalnızca parent transform hareket
     // ederken yeni bir input'un dünya konumlarını bozmasını önleyen dar kapsamlı
     // Cannon sinematiği kilididir.
     private bool isCannonCinematic;
@@ -196,13 +191,9 @@ public class PotionBoard : MonoBehaviour
     public bool IsCannonPresentationActive => isCannonCinematic;
     public event System.Action CannonStrikeFinished;
 
-    //public static of potionboard
-    public static PotionBoard Instance;
-
 
     private void Awake()
     {
-        Instance = this;
 
         // Sahne referansı eksik veya eski bir sahne kaydı tarafından silinmiş olsa
         // bile Super Bomb sesi build'e dahil olan sabit Resources yolundan yüklenir.
@@ -224,8 +215,20 @@ public class PotionBoard : MonoBehaviour
 
     private void Start()
     {
+        LevelData activeLevel = GameManager.Instance != null
+            ? GameManager.Instance.ActiveLevel
+            : null;
+        string validationError = BoardDefinition.GetLayoutValidationError(
+            activeLevel != null ? activeLevel.arrayLayout : null);
+
+        if (validationError != null)
+        {
+            Debug.LogError($"PotionBoard cannot initialize: {validationError}", this);
+            enabled = false;
+            return;
+        }
+
         InitializeBoard();
-        currentState = BoardState.Idle;
     }
 
     // Ray ile hangi position'a tıkladığını alırız sonra if kontrollerini yaparız sonra tıkladığımız potion'ı bir referansa kaydederiz.
@@ -333,11 +336,11 @@ public class PotionBoard : MonoBehaviour
     {
         yield return ExplodeChain(special);
 
-        GameManager.Instance.ProcessTurn(0, true);
+        GameManager.Instance.ProcessTurn(0);
     }
 
     //InitializeBoard Board oluşturma methodu
-    // İlk başta potionları yok eden methodu çağırırız sonra board'u yata ve dikey olarak merkeze yerleştiren hesaplamaları yaparız
+    // Board'u yatay ve dikey olarak merkeze yerleştiren hesaplamaları yaparız
     // Tahtanın iki boyutlu dizisi oluşturulur
     // Tüm cell'ler gezilir ve o anki cell'in position'nu belirlenir
     // arrayLayout yasaklı cell kontrolü yapılır 
@@ -345,12 +348,9 @@ public class PotionBoard : MonoBehaviour
     // Bu üretilen potionların parentleri potionParent olarak belirlenir
     // Sonra potion'un konumunu matrise kaydederiz(potion'Un konumunu potion'a öğretiriz)
     // Potion'Un konumunu board'a öğretiriz
-    // potion'U silme listesine ekleriz
     // Potion seçilirken başlangıçta eşleşme oluşturmayacak türler arasından seçim yapılır
     private void InitializeBoard()
     {
-        DestroyPotions();
-
         LoadBoardTilemap();
 
         // Tahta şekli aktif level'ın ArrayLayout'undan okunur.
@@ -379,7 +379,6 @@ public class PotionBoard : MonoBehaviour
                     potionObject.transform.SetParent(potionParent.transform);
                     Potion potion = potionObject.GetComponent<Potion>();
                     potion.SetIndicies(x, y);
-                    potionToDestroy.Add(potionObject);
                     potionBoard[x, y] = new Node(true, potion);
 
                 }
@@ -458,7 +457,7 @@ public class PotionBoard : MonoBehaviour
 
     private bool IsSamePotionType(int x, int y, PotionType candidateType)
     {
-        if (x < 0 || x >= width || y < 0 || y >= height)
+        if (!BoardDefinition.IsWithinStorage(new Vector2Int(x, y)))
         {
             return false;
         }
@@ -473,22 +472,6 @@ public class PotionBoard : MonoBehaviour
         return node.potion.potionType == candidateType;
     }
 
-    // DestroyPotions: PotionToDestroy List dolu ise listedeki tüm elemanları gezer destroy ederiz sonra listeyi temizleriz
-    private void DestroyPotions()
-    {
-        if (potionToDestroy.Count >= 1)
-        {
-            foreach (GameObject item in potionToDestroy)
-            {
-                item.SetActive(false);
-                deactivePotionPool.Add(item);
-
-            }
-            potionToDestroy.Clear();
-        }
-    }
-
-
     // CheckBoard: İlk başta console'a "Checking Match" yazdırırız ve hasMatch değerini oluştururuz
     // potionsToRemove list'i oluşturulur
     // tüm node'lar dolaşılır(foreach) içinde potion yoksa isMatched'lar false olur
@@ -497,16 +480,13 @@ public class PotionBoard : MonoBehaviour
     // Potion'Un eşleşmediğinden emin oluruz 
     // IsConnected ile potion'ların sağ sol yukarı aşağısı kontrol edilir
     // ardından connectedPotions ile eşleşen potion'ların 3'e eşit veya fazla olup olmadığını kontrol ederiz 
-    private bool CheckBoard(bool _takeAction)
+    private bool CheckBoard()
     {
         bool hasMatched = false;
 
         List<Potion> matchedPotionsThisCheck = new();
 
-        if (_takeAction)
-        {
-            currentMatchGroups.Clear();
-        }
+        currentMatchGroups.Clear();
 
         foreach (Node item in potionBoard)
         {
@@ -518,7 +498,7 @@ public class PotionBoard : MonoBehaviour
 
         for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < 8; y++)
+            for (int y = 0; y < BoardDefinition.VisibleHeight; y++)
             {
                 if (potionBoard[x, y].isUsable)
                 {
@@ -539,15 +519,12 @@ public class PotionBoard : MonoBehaviour
                         {
                             MatchResult matchGroup = SuperMatch(matchedPotions);
 
-                            if (_takeAction)
+                            if (matchGroup.IsSuperMatch)
                             {
-                                if (matchGroup.IsSuperMatch)
-                                {
-                                    matchGroup.protectedPotion = ChooseSuperMatchTarget(matchGroup, null);
-                                }
-
-                                currentMatchGroups.Add(matchGroup);
+                                matchGroup.protectedPotion = ChooseSuperMatchTarget(matchGroup, null);
                             }
+
+                            currentMatchGroups.Add(matchGroup);
 
                             matchedPotionsThisCheck.AddRange(matchGroup.connectedPotions);
 
@@ -563,12 +540,9 @@ public class PotionBoard : MonoBehaviour
             }
         }
 
-        if (_takeAction)
+        foreach (Potion item in matchedPotionsThisCheck)
         {
-            foreach (Potion item in matchedPotionsThisCheck)
-            {
-                item.isMatched = false;
-            }
+            item.isMatched = false;
         }
 
         return hasMatched;
@@ -620,13 +594,13 @@ public class PotionBoard : MonoBehaviour
                     if (matchGroup.direction == MatchDirection.LongHorizontal ||
                         matchGroup.direction == MatchDirection.LongVertical)
                     {
-                        item.Rocket(true, vertical: matchGroup.direction == MatchDirection.LongVertical);
+                        item.BecomeRocket(vertical: matchGroup.direction == MatchDirection.LongVertical);
 
                         SpawnRocketParticle(item);
                     }
                     else
                     {
-                        item.Bomb(true);
+                        item.BecomeBomb();
                     }
 
                     continue;
@@ -663,8 +637,6 @@ public class PotionBoard : MonoBehaviour
         {
             yield return new WaitForSeconds(matchSettleDelay);
         }
-
-        currentState = BoardState.Refilling;
 
         StartRefill();
 
@@ -709,8 +681,6 @@ public class PotionBoard : MonoBehaviour
     // etmek yerine ayakta tutmamızın sebebi bu.
     private IEnumerator DoubleRocketExplode(Potion horizontal, Potion vertical)
     {
-        currentState = BoardState.Clearing;
-
         Vector2Int center = new Vector2Int(horizontal.xIndex, horizontal.yIndex);
 
         // DuableRocket yalnızca Rocket parçasının Animator'ünde tanımlı;
@@ -782,7 +752,7 @@ public class PotionBoard : MonoBehaviour
         vertical.yIndex = center.y;
 
         vertical.gameObject.SetActive(true);
-        vertical.Rocket(true, vertical: true);
+        vertical.BecomeRocket(vertical: true);
 
         // Hayatta kalan roket takasta iki hücrenin ortasında durdu; uçan
         // parçalar hücre merkezinden çıkmalı, yoksa temizlenen hücrelerle
@@ -791,7 +761,7 @@ public class PotionBoard : MonoBehaviour
             new Vector3(centerWorld.x, centerWorld.y, horizontal.transform.position.z);
 
         // Yataya sabitlenir, çünkü oyuncu iki dikey roketi de birleştirebilir.
-        horizontal.Rocket(true, vertical: false);
+        horizontal.BecomeRocket(vertical: false);
 
         // Birleşme klibi döngüde; Animator varsayılan state'e döndürülmezse
         // taş havuzdan yeniden roket olarak çıktığında animasyon kendiliğinden
@@ -873,8 +843,7 @@ public class PotionBoard : MonoBehaviour
             return true;
         }
 
-        StartCoroutine(StrikeRoutine(cells));
-        return true;
+        return false;
     }
 
     private IEnumerator HammerStrikeRoutine(
@@ -897,7 +866,6 @@ public class PotionBoard : MonoBehaviour
             GameObject hammerObject = Instantiate(
                 hammerStrikePrefab, startPosition, Quaternion.identity, travelRoot.transform);
             HammerStrikeView hammer = hammerObject.GetComponent<HammerStrikeView>();
-            if (hammer == null) hammer = hammerObject.AddComponent<HammerStrikeView>();
             hammer.PlayStrike();
             hammer.BeginTravel(travelRoot.transform);
 
@@ -936,7 +904,6 @@ public class PotionBoard : MonoBehaviour
                 {
                     impacted = true;
                     hammer.PlayImpactEffect();
-                    currentState = BoardState.Clearing;
                     foreach (Vector2Int cell in cells)
                     {
                         ClearCell(cell, triggered, counter);
@@ -1002,7 +969,6 @@ public class PotionBoard : MonoBehaviour
             GameObject bombObject = Instantiate(
                 bombStrikePrefab, startPosition, Quaternion.identity, travelRoot.transform);
             BombStrikeView bomb = bombObject.GetComponent<BombStrikeView>();
-            if (bomb == null) bomb = bombObject.AddComponent<BombStrikeView>();
             float animationDuration = bomb.PlayStrike();
 
             float travelDuration = Mathf.Max(0f, bombTravelDuration);
@@ -1030,7 +996,6 @@ public class PotionBoard : MonoBehaviour
                 elapsed += Time.deltaTime;
             }
 
-            currentState = BoardState.Clearing;
             HashSet<Vector2Int> triggered = new();
             ChainCounter counter = new();
 
@@ -1293,27 +1258,8 @@ public class PotionBoard : MonoBehaviour
         boardPresentation.position = target;
     }
 
-    private IEnumerator StrikeRoutine(IEnumerable<Vector2Int> cells)
-    {
-        currentState = BoardState.Clearing;
-
-        HashSet<Vector2Int> triggered = new();
-        ChainCounter counter = new();
-
-        foreach (Vector2Int cell in cells)
-        {
-            ClearCell(cell, triggered, counter);
-        }
-
-        yield return new WaitUntil(() => counter.running == 0);
-
-        yield return RefillAndCascade();
-    }
-
     private IEnumerator ExplodeChain(Potion first)
     {
-        currentState = BoardState.Clearing;
-
         HashSet<Vector2Int> triggered = new();
         ChainCounter counter = new();
 
@@ -1383,7 +1329,7 @@ public class PotionBoard : MonoBehaviour
         // satır indeksi (y) değişir ve sınır görünür yükseklik (8).
         Vector2Int step = vertical ? Vector2Int.up : Vector2Int.right;
         Vector3 worldStep = vertical ? Vector3.up : Vector3.right;
-        int limit = vertical ? 8 : width;
+        int limit = vertical ? BoardDefinition.VisibleHeight : width;
         int origin = vertical ? trigger.position.y : trigger.position.x;
 
         explodingSource.PlayOneShot(explodingClip, explodingVolume);
@@ -1507,7 +1453,7 @@ public class PotionBoard : MonoBehaviour
     // onu kuyruktan çıkınca SweepLine havuza döndürür.
     private void ClearCell(Vector2Int cell, HashSet<Vector2Int> triggered, ChainCounter counter)
     {
-        if (cell.x < 0 || cell.x >= width || cell.y < 0 || cell.y >= 8) return;
+        if (!BoardDefinition.IsPlayable(cell)) return;
 
         Node node = potionBoard[cell.x, cell.y];
 
@@ -1518,13 +1464,14 @@ public class PotionBoard : MonoBehaviour
         // Havuz metodu tipi orijinaline döndüreceği için önce kaydedilir.
         PotionType type = potion.potionType;
 
-        potionBoard[cell.x, cell.y] = new Node(true, null);
-
+        // Roketin hücresini SweepLine boşaltır.
         if (type == PotionType.Rocket)
         {
             TriggerSpecial(new SpecialTrigger(cell, type, potion), triggered, counter);
             return;
         }
+
+        potionBoard[cell.x, cell.y] = new Node(true, null);
 
         SpawnDestroyParticle(potion);
         ReturnPotionToPool(potion);
@@ -1555,35 +1502,24 @@ public class PotionBoard : MonoBehaviour
     // Hem zincir hem süper bomba buraya iner — eskiden ikisinde kopyalanmıştı.
     private IEnumerator RefillAndCascade()
     {
-        currentState = BoardState.Refilling;
-
         StartRefill();
 
         yield return new WaitUntil(() => !IsAnyPotionMoving());
 
-        currentState = BoardState.Checking;
-
-        bool hasMatched = CheckBoard(true);
+        bool hasMatched = CheckBoard();
 
         while (hasMatched)
         {
-            currentState = BoardState.Clearing;
-
             List<MatchResult> matchGroups = new List<MatchResult>(currentMatchGroups);
 
             yield return RemoveAndRefill(matchGroups);
 
-            currentState = BoardState.Checking;
-            hasMatched = CheckBoard(true);
+            hasMatched = CheckBoard();
         }
-
-        currentState = BoardState.Idle;
     }
 
     private IEnumerator SuperBombExplod(Potion _targetPotion, Potion _mergedPotion)
     {
-        currentState = BoardState.Clearing;
-
         Vector2Int bombPosition = new Vector2Int(_targetPotion.xIndex, _targetPotion.yIndex);
 
         // İki bomba birbirine doğru geldi; birleşme iki hücrenin ORTASINDA
@@ -1695,7 +1631,7 @@ public class PotionBoard : MonoBehaviour
                         continue;
                     }
 
-                    if (xIndex < 0 || xIndex >= width || yIndex < 0 || yIndex >= 8)
+                    if (!BoardDefinition.IsPlayable(new Vector2Int(xIndex, yIndex)))
                     {
                         continue;
                     }
@@ -1886,7 +1822,7 @@ public class PotionBoard : MonoBehaviour
             yOffset++;
         }
 
-        if (y + yOffset < height && potionBoard[x, y + yOffset].potion != null)
+        if (y + yOffset < height)
         {
             Potion potion = potionBoard[x, y + yOffset].potion;
 
@@ -1902,25 +1838,14 @@ public class PotionBoard : MonoBehaviour
             return false;
         }
 
-        if (y + yOffset >= height)
-        {
-            return SpawnPotionAtTop(x, startDelay, spawnOrder);
-        }
-
-        return false;
+        return SpawnPotionAtTop(x, y, startDelay, spawnOrder);
     }
 
-    // SpawnPotionAtTop: RefillPotion method'unda üstteki potion'ları alt node'a indirdik fakat üst kısımda inecek potion kalmayınca bu methodu çağırıyoruz
-    // İlk önce index adında bir değer oluştururuz ve ona FindIndexOfLowestNull methodundan gelen int değeri atarız, bu method sütundaki en alttaki boş node'un değerini bize verir
-    // Yeni oluşacak iksirin yukarıdan aşağıya ne kaç birim hareket edeceğini hesaplarız height - index
-    // yeni bir newPotion oluştururuz
-    // sonra bu yeni poiton'nu poitonBoard iki boyutlu dizisine kayıt ederiz
-    // Sonra Vector3 type'ında bir targetPos oluştururuz ve MoveToTarge methoduna veririz 
-    private bool SpawnPotionAtTop(int x, float startDelay, int spawnOrder)
+    // SpawnPotionAtTop: RefillPotion sütunun üstünde inecek taş kalmayınca çağırır;
+    // (x, y) o sırada sütundaki en alttaki boş hücredir. Havuzdan bir taş alınıp
+    // tahtanın üstünden bu hücreye düşürülür.
+    private bool SpawnPotionAtTop(int x, int y, float startDelay, int spawnOrder)
     {
-        int index = FindIndexOfLowestNull(x);
-
-        if (index == 99) return false;                   // sütunda doldurulacak açık hücre yok
         if (deactivePotionPool.Count == 0) return false; // havuz boş — crash koruması
 
         int randomIndex = Random.Range(0, deactivePotionPool.Count);
@@ -1932,36 +1857,12 @@ public class PotionBoard : MonoBehaviour
         newPotionObject.SetActive(true);
         deactivePotionPool.Remove(newPotionObject);
         Potion newPotion = newPotionObject.GetComponent<Potion>();
-        newPotion.SetIndicies(x, index);
-        potionBoard[x, index] = new Node(true, newPotion);
-        Vector3 targetPos = new Vector3((x - spacingX) * cellSize, (index - spacingY) * cellSize, newPotionObject.transform.position.z);
+        newPotion.SetIndicies(x, y);
+        potionBoard[x, y] = new Node(true, newPotion);
+        Vector3 targetPos = new Vector3((x - spacingX) * cellSize, (y - spacingY) * cellSize, newPotionObject.transform.position.z);
         newPotion.MoveToDown(targetPos, startDelay);
         return true;
     }
-
-    // FindIndexOfLowestNull: Belirli bir sütundaki en aşağıda bulunan null node'un değerini döndürür
-    // lowestNull adınad bir değer oluşturulur
-    // aynı sütun içerisinde aşağıya doğru node'ları tarayan bir for yazılır
-    // Eğer potion == null olan değer varsa y değeri lowestNull'a atanır 
-    // lowestNull return edilir
-    private int FindIndexOfLowestNull(int x)
-    {
-        int lowestNull = 99;
-
-        for (int y = height - 1; y >= 0; y--)
-        {
-            if (potionBoard[x, y].isUsable && potionBoard[x, y].potion == null)
-            {
-                lowestNull = y;
-            }
-        }
-
-        return lowestNull;
-    }
-
-    #region Cascading Potions
-
-    #endregion
 
     // SuperMatch: MatchResult türünde bir method, MatchResult type'ında _matchedResults adında bir parametre alıyor
     // İlk öncelikle _mathedResults.direction ile match yönünü belirleriz bunun için bir if ve if else kullanırız
@@ -1997,7 +1898,7 @@ public class PotionBoard : MonoBehaviour
                 direction = _matchedResults.direction
             };
         }
-        else if (_matchedResults.direction == MatchDirection.Vertical || _matchedResults.direction == MatchDirection.LongVertical)
+        else
         {
             foreach (Potion pot in _matchedResults.connectedPotions)
             {
@@ -2023,8 +1924,6 @@ public class PotionBoard : MonoBehaviour
                 direction = _matchedResults.direction
             };
         }
-
-        return null;
     }
 
     // IsConncected: 
@@ -2111,7 +2010,7 @@ public class PotionBoard : MonoBehaviour
         int x = pot.xIndex + direction.x;
         int y = pot.yIndex + direction.y;
 
-        while (x >= 0 && x < width && y >= 0 && y < 8)
+        while (BoardDefinition.IsPlayable(new Vector2Int(x, y)))
         {
             if (potionBoard[x, y].isUsable)
             {
@@ -2175,7 +2074,6 @@ public class PotionBoard : MonoBehaviour
 
     private void BeginSwap(Potion currentPotion, Potion targetPotion)
     {
-        currentState = BoardState.Swapping;
         DoSwap(currentPotion, targetPotion);
 
         StartCoroutine(ProcessMatches(currentPotion, targetPotion));
@@ -2183,7 +2081,7 @@ public class PotionBoard : MonoBehaviour
 
     private Potion PotionAt(Vector2Int cell)
     {
-        if (cell.x < 0 || cell.x >= width || cell.y < 0 || cell.y >= height) return null;
+        if (!BoardDefinition.IsWithinStorage(cell)) return null;
 
         Node node = potionBoard[cell.x, cell.y];
         return node != null && node.isUsable ? node.potion : null;
@@ -2238,8 +2136,8 @@ public class PotionBoard : MonoBehaviour
         // Düşüş sırasında swap başlasa bile ara transform konumlarını hedef yapma.
         // Grid, taşların tek doğruluk kaynağıdır; iki taş da yeni hücre merkezine gider.
         // Takasta iki taş da arkasında iz bırakır.
-        _currentPotion.MoveToTarget(currentTarget, showSmoke: true);
-        _targetPotion.MoveToTarget(targetTarget, showSmoke: true);
+        _currentPotion.MoveToTarget(currentTarget);
+        _targetPotion.MoveToTarget(targetTarget);
 
     }
 
@@ -2273,7 +2171,7 @@ public class PotionBoard : MonoBehaviour
             // Bomba patlaması, refill ve cascade tamamen bitsin.
             yield return SuperBombExplod(_currentPotion, _targetPotion);
 
-            GameManager.Instance.ProcessTurn(0, true);
+            GameManager.Instance.ProcessTurn(0);
 
             // Normal CheckBoard ve geri swap çalışmasın.
             yield break;
@@ -2284,7 +2182,7 @@ public class PotionBoard : MonoBehaviour
             // Artı roket: birleşme animasyonu, patlama, refill ve cascade bitsin.
             yield return DoubleRocketExplode(_currentPotion, _targetPotion);
 
-            GameManager.Instance.ProcessTurn(0, true);
+            GameManager.Instance.ProcessTurn(0);
 
             // Normal CheckBoard ve geri swap çalışmasın.
             yield break;
@@ -2294,13 +2192,11 @@ public class PotionBoard : MonoBehaviour
             // Patlama/süpürme zinciri, refill ve cascade tamamen bitsin.
             yield return ExplodeChain(specialToTrigger);
 
-            GameManager.Instance.ProcessTurn(0, true);
+            GameManager.Instance.ProcessTurn(0);
 
             // Normal CheckBoard ve geri swap çalışmasın.
             yield break;
         }
-
-        currentState = BoardState.Checking;
 
         // Takasın geçerliliğine YALNIZCA takas edilen iki taş karar verir ve
         // ilk temizleme de yalnızca onların gruplarını alır. Tahta geneli tarama
@@ -2310,7 +2206,6 @@ public class PotionBoard : MonoBehaviour
         // O eşleşme cascade'in işi, tahta durunca kendisi alacak.
         if (!CollectSwapMatches(_currentPotion, _targetPotion))
         {
-            currentState = BoardState.Swapping;
             DoSwap(_currentPotion, _targetPotion);
 
             yield return new WaitUntil(() =>
@@ -2318,7 +2213,6 @@ public class PotionBoard : MonoBehaviour
                 !_targetPotion.isMoving
             );
 
-            currentState = BoardState.Idle;
             yield break;
         }
 
@@ -2327,18 +2221,14 @@ public class PotionBoard : MonoBehaviour
 
         while (hasMatched)
         {
-            currentState = BoardState.Clearing;
-
             List<MatchResult> matchGroups = new List<MatchResult>(currentMatchGroups);
 
             yield return RemoveAndRefill(matchGroups);
 
-            currentState = BoardState.Checking;
-            hasMatched = CheckBoard(true);
+            hasMatched = CheckBoard();
         }
 
-        GameManager.Instance.ProcessTurn(10, true);
-        currentState = BoardState.Idle;
+        GameManager.Instance.ProcessTurn(10);
     }
 
     // Takas edilen iki taşın girdiği eşleşmeleri currentMatchGroups'a toplar.
@@ -2420,14 +2310,4 @@ public enum MatchDirection
     LongHorizontal,
     Super,
     None
-}
-
-public enum BoardState
-{
-    Initializing,
-    Idle,
-    Swapping,
-    Checking,
-    Clearing,
-    Refilling
 }

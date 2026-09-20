@@ -14,7 +14,7 @@ public class GameBoardUI : MonoBehaviour
 {
     // Açılıp kapanan bir ses kanalının sahneye ait görsel referansları.
     [System.Serializable]
-    public class AudioToggle
+    private class AudioToggle
     {
         public Button button;
 

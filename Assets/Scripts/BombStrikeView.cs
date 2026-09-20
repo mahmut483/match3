@@ -16,11 +16,6 @@ public class BombStrikeView : MonoBehaviour
     // bile animasyon yarıda kesilmez.
     public float PlayStrike()
     {
-        if (bombAnimator == null)
-        {
-            bombAnimator = GetComponentInChildren<Animator>(true);
-        }
-
         if (bombAnimator == null || string.IsNullOrEmpty(strikeStateName)) return 0f;
 
         bombAnimator.enabled = true;

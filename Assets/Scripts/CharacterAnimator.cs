@@ -22,7 +22,7 @@ public class CharacterAnimator : MonoBehaviour
         PlayIdle();
     }
 
-    public void PlayIdle()
+    private void PlayIdle()
     {
         Play(idleAnimation, true);
     }

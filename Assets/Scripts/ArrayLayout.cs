@@ -10,6 +10,18 @@ public class ArrayLayout
         public bool[] row;
     }
 
-    public rowData[] rows = new rowData[15]; //creates a grid with a Y of 8, ultimately controlled by the CustPropertyDrawer.cs
+    public rowData[] rows = CreateRows();
+
+    private static rowData[] CreateRows()
+    {
+        rowData[] result = new rowData[BoardDefinition.TotalHeight];
+
+        for (int y = 0; y < result.Length; y++)
+        {
+            result[y].row = new bool[BoardDefinition.VisibleWidth];
+        }
+
+        return result;
+    }
 
 }

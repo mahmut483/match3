@@ -20,7 +20,7 @@ public enum StrikeKind
 public class SpecialStrikes : MonoBehaviour
 {
     [System.Serializable]
-    public class StrikeSlot
+    private class StrikeSlot
     {
         public StrikeKind kind;
         public Button button;
@@ -161,8 +161,6 @@ public class SpecialStrikes : MonoBehaviour
         StrikeKind kind = armed.Value;
         Vector2Int origin = new(potion.xIndex, potion.yIndex);
         List<Vector2Int> cells = kind == StrikeKind.Cannon ? null : CellsFor(kind, origin);
-
-        if (cells != null && cells.Count == 0) return false;
 
         // Vuruşun gerçekten başlatılabildiği doğrulanmadan hak düşmez. Cannon
         // prefabı/anchor'ı eksikse seçim açık kalır ve dokunma özel taşı yanlışlıkla

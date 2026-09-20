@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 162305669176956425}
+  - component: {fileID: 411596157292940450}
   m_Layer: 0
   m_Name: BombStrike
   m_TagString: Untagged
@@ -32,6 +33,20 @@ Transform:
   - {fileID: 3471032236495351359}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &411596157292940450
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 961155621397404643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eab6f509ce3742578efebefc6d1dc3d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BombStrikeView
+  bombAnimator: {fileID: 3970910379591273721}
+  strikeStateName: Bomb
 --- !u!1 &1043748151083072273
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class Node
 {
     public bool isUsable;

@@ -14468,19 +14468,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cb7cd5d7a187463a93a0b131a337f42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PotionBoard
-  width: 6
-  height: 15
-  spacingX: 0
-  spacingY: 0
   potionPrefabs:
   - {fileID: 7927807542344970782, guid: bb60bc505e820734584f3d8bd0a16f53, type: 3}
   - {fileID: 7927807542344970782, guid: 04a81442ef4438841a0074ba8568d5d9, type: 3}
   - {fileID: 3930743957587144660, guid: f3e47e37930ff8f48b693da87b4025c7, type: 3}
   - {fileID: 7927807542344970782, guid: 924c8da2c1342cd41a99abdae62388df, type: 3}
   potionParent: {fileID: 1190611720}
-  currentState: 0
   specialStrikes: {fileID: 1537404166}
-  secondSelectedPotion: {fileID: 0}
   destroyParticlesRed: {fileID: 7114066461626933240, guid: f35660e44c91a46a5823256134cbf536, type: 3}
   destroyParticlesBlue: {fileID: 7114066461626933240, guid: e813785599365452f999a01beb8aa912, type: 3}
   destroyParticlesGreen: {fileID: 7114066461626933240, guid: c62b72cef73264c6aa64703c98457529, type: 3}
@@ -15202,7 +15196,6 @@ MonoBehaviour:
   victoryPanel: {fileID: 1530944413}
   losePanel: {fileID: 1945671538}
   levelData: {fileID: 11400000, guid: 7050801670cd44c3294568518d5b44d7, type: 2}
-  isGameEnded: 0
   pointsTXT: {fileID: 363502408}
   movesTXT: {fileID: 1727687719}
   goalTXT: {fileID: 2076973518}
