@@ -3,6 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class GameManager : MonoBehaviour
 {
@@ -54,6 +59,15 @@ public class GameManager : MonoBehaviour
     [SerializeField] private CharacterAnimator charAnim;
     [SerializeField] private GameObject confetti;
 
+    [Header("Kaybetme ekranı")]
+    [SerializeField] private Button tryAgainButton;
+    [SerializeField] private Button loseScreenCloseButton;
+
+    [Header("Kazanma ekranı")]
+    [SerializeField] private Button nextLevelButton;
+    [SerializeField] private Button victoryScreenCloseButton;
+    [SerializeField] private LevelCatalog levelCatalog;
+
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip last3MoveClip;
     [SerializeField] private AudioClip winClip;
@@ -80,6 +94,108 @@ public class GameManager : MonoBehaviour
         }
 
         Initialize(ActiveLevel);
+
+        ResolveGameOverButtons();
+
+        if (tryAgainButton != null) tryAgainButton.onClick.AddListener(RestartCurrentLevel);
+        if (loseScreenCloseButton != null) loseScreenCloseButton.onClick.AddListener(ReturnToMainMenu);
+        if (nextLevelButton != null) nextLevelButton.onClick.AddListener(AdvanceToNextLevel);
+        if (victoryScreenCloseButton != null) victoryScreenCloseButton.onClick.AddListener(ReturnToMainMenu);
+
+        if (tryAgainButton == null || loseScreenCloseButton == null ||
+            nextLevelButton == null || victoryScreenCloseButton == null)
+        {
+            Debug.LogError("GameManager: Game over ekranındaki butonlar bulunamadı.", this);
+        }
+    }
+
+    // Açık sahne kaydedilmemiş olsa bile panel çocuklarından doğru butonları bulur.
+    private void ResolveGameOverButtons()
+    {
+        if (tryAgainButton == null)
+        {
+            tryAgainButton = FindButton(losePanel, "TryAgain");
+        }
+
+        if (loseScreenCloseButton == null)
+        {
+            loseScreenCloseButton = FindButton(losePanel, "CrossBTN");
+        }
+
+        if (nextLevelButton == null)
+        {
+            nextLevelButton = FindButton(victoryPanel, "NextLevel");
+        }
+
+        if (victoryScreenCloseButton == null)
+        {
+            victoryScreenCloseButton = FindButton(victoryPanel, "CrossBTN");
+        }
+
+        if (levelCatalog == null)
+        {
+            levelCatalog = LevelLoader.catalog;
+        }
+
+#if UNITY_EDITOR
+        // Kaydedilmemiş açık sahne, diskteki yeni catalog referansını taşımayabilir.
+        if (levelCatalog == null)
+        {
+            levelCatalog = AssetDatabase.LoadAssetAtPath<LevelCatalog>(
+                "Assets/Scripts/Levels/LevelsData/LevelCatalog.asset");
+        }
+#endif
+    }
+
+    private static Button FindButton(GameObject panel, string buttonName)
+    {
+        if (panel == null) return null;
+
+        foreach (Button button in panel.GetComponentsInChildren<Button>(true))
+        {
+            if (button.name == buttonName) return button;
+        }
+
+        return null;
+    }
+
+    private void OnDestroy()
+    {
+        if (tryAgainButton != null) tryAgainButton.onClick.RemoveListener(RestartCurrentLevel);
+        if (loseScreenCloseButton != null) loseScreenCloseButton.onClick.RemoveListener(ReturnToMainMenu);
+        if (nextLevelButton != null) nextLevelButton.onClick.RemoveListener(AdvanceToNextLevel);
+        if (victoryScreenCloseButton != null) victoryScreenCloseButton.onClick.RemoveListener(ReturnToMainMenu);
+    }
+
+    // LevelLoader.selectedLevel sahne değişiminde korunduğu için aynı bölüm baştan kurulur.
+    private void RestartCurrentLevel()
+    {
+        SceneManager.LoadScene(ButtonControl.GameBoardScene);
+    }
+
+    private void ReturnToMainMenu()
+    {
+        SceneManager.LoadScene(ButtonControl.MainMenuScene);
+    }
+
+    private void AdvanceToNextLevel()
+    {
+        if (levelCatalog == null)
+        {
+            Debug.LogError("GameManager: Next Level için LevelCatalog atanmamış.");
+            return;
+        }
+
+        LevelData nextLevel = levelCatalog.GetNext(ActiveLevel);
+
+        if (nextLevel == null)
+        {
+            ReturnToMainMenu();
+            return;
+        }
+
+        LevelLoader.selectedLevel = nextLevel;
+        SceneManager.LoadScene(ButtonControl.GameBoardScene);
     }
 
     // Bölüm değerlerini LevelData asset'inden okur.

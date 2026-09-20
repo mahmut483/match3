@@ -189,7 +189,7 @@ MonoBehaviour:
     m_FadeDuration: 0.1
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 21300000, guid: 7f85979030a88974992ae57906f3b04a, type: 3}
+    m_PressedSprite: {fileID: 0}
     m_SelectedSprite: {fileID: 0}
     m_DisabledSprite: {fileID: 0}
   m_AnimationTriggers:
@@ -1225,7 +1225,7 @@ MonoBehaviour:
     m_FadeDuration: 0.1
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 21300000, guid: 7f85979030a88974992ae57906f3b04a, type: 3}
+    m_PressedSprite: {fileID: 0}
     m_SelectedSprite: {fileID: 0}
     m_DisabledSprite: {fileID: 0}
   m_AnimationTriggers:
@@ -7468,13 +7468,13 @@ AudioSource:
   m_GameObject: {fileID: 519420028}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -2234567890123456789, guid: 9bacbde8926984ca480bd9942eaed069, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: d2d9859f069ae4c8a9c6b3daba76dd1b, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -13591,7 +13591,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &802939619
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14496,9 +14496,13 @@ MonoBehaviour:
   matchClip: {fileID: 8300000, guid: ffb159a21c8a04135a5616979c828fab, type: 3}
   superMatchClip: {fileID: 8300000, guid: 7bd6b897eb5ca4b7d88a205c4a51640c, type: 3}
   explodingClip: {fileID: 8300000, guid: e53c50cdd14c0004f8f381d4a956ab7b, type: 3}
+  bombClip: {fileID: 0}
+  doubleRocketClip: {fileID: 0}
   matchVolume: 1
   superMatchVolume: 1
   explodingVolume: 1
+  bombVolume: 1
+  doubleRocketVolume: 1
   dropStaggerDelay: 0.07
   maxDropStagger: 0.2
   matchSettleDelay: 0.1
@@ -15216,6 +15220,11 @@ MonoBehaviour:
   outOfMovesPanel: {fileID: 1265628479}
   charAnim: {fileID: 1066963353}
   confetti: {fileID: 658823543}
+  tryAgainButton: {fileID: 0}
+  loseScreenCloseButton: {fileID: 0}
+  nextLevelButton: {fileID: 0}
+  victoryScreenCloseButton: {fileID: 0}
+  levelCatalog: {fileID: 0}
   audioSource: {fileID: 1076215352}
   last3MoveClip: {fileID: 8300000, guid: c5e2a73ad4706440f93bf05df0b465fe, type: 3}
   winClip: {fileID: 8300000, guid: 2667a0a008b044e218b63df62e2be749, type: 3}
@@ -16565,8 +16574,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Korsan Tokma\u011F\u0131"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: ef63cbca0f0980f47911f4dae1f3f33c, type: 2}
-  m_sharedMaterial: {fileID: -5660775149628104760, guid: ef63cbca0f0980f47911f4dae1f3f33c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
+  m_sharedMaterial: {fileID: 524515893638682886, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -23175,7 +23184,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 35.4}
+  m_AnchoredPosition: {x: 0, y: 23}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1909265239
@@ -23275,8 +23284,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Yok etmek istedi\u011Fin objeyi se\xE7!"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: d86e933e6ca983a45ad912f7d7fa9882, type: 2}
-  m_sharedMaterial: {fileID: -5660775149628104760, guid: d86e933e6ca983a45ad912f7d7fa9882, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
+  m_sharedMaterial: {fileID: 524515893638682886, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

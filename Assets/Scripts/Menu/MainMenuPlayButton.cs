@@ -73,6 +73,7 @@ public class MainMenuPlayButton : MonoBehaviour
         }
 
         LevelLoader.selectedLevel = selectedLevel;
+        LevelLoader.catalog = catalog;
         SceneManager.LoadScene(ButtonControl.GameBoardScene);
     }
 }

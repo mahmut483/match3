@@ -5,6 +5,9 @@ using UnityEngine.InputSystem;
 
 public class PotionBoard : MonoBehaviour
 {
+    private const string BombClipResourcePath = "SFX/superBombSound";
+    private const string DoubleRocketClipResourcePath = "SFX/duableRocket";
+
     // Değerler 11
     //define the size of the board
     [SerializeField] private int width = 8;
@@ -79,12 +82,14 @@ public class PotionBoard : MonoBehaviour
     [SerializeField] private AudioSource superMatchSource;
     [SerializeField] private AudioSource explodingSource;
 
-    [SerializeField] private AudioClip matchClip, superMatchClip, explodingClip;
+    [SerializeField] private AudioClip matchClip, superMatchClip, explodingClip, bombClip, doubleRocketClip;
 
     [Header("Ses seviyeleri")]
     [SerializeField, Range(0f, 1f)] private float matchVolume = 1f;
     [SerializeField, Range(0f, 1f)] private float superMatchVolume = 1f;
     [SerializeField, Range(0f, 1f)] private float explodingVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float bombVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float doubleRocketVolume = 1f;
 
 
     [SerializeField, Min(0f)] private float dropStaggerDelay = 0.2f;
@@ -198,6 +203,18 @@ public class PotionBoard : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+
+        // Sahne referansı eksik veya eski bir sahne kaydı tarafından silinmiş olsa
+        // bile Super Bomb sesi build'e dahil olan sabit Resources yolundan yüklenir.
+        if (bombClip == null)
+        {
+            bombClip = Resources.Load<AudioClip>(BombClipResourcePath);
+        }
+
+        if (doubleRocketClip == null)
+        {
+            doubleRocketClip = Resources.Load<AudioClip>(DoubleRocketClipResourcePath);
+        }
 
         if (boardPresentation != null)
         {
@@ -709,6 +726,12 @@ public class PotionBoard : MonoBehaviour
             if (!animator.HasState(0, mergeState)) continue;
 
             animator.Play(mergeState, 0, 0f);
+        }
+
+        // Birleşme sesi DuableRocket animasyonuyla aynı karede bir kez başlar.
+        if (explodingSource != null && doubleRocketClip != null)
+        {
+            explodingSource.PlayOneShot(doubleRocketClip, doubleRocketVolume);
         }
 
         // Bombadan farklı olarak ikinci roket animasyonla AYNI karede gizlenir:
@@ -1595,6 +1618,13 @@ public class PotionBoard : MonoBehaviour
             if (!animator.HasState(0, superState)) continue;
 
             animator.Play(superState, 0, 0f);
+        }
+
+        // Fünyenin sesi SuperBomb animasyonuyla aynı karede ve yalnızca bir kez başlar.
+        // Patlama anındaki explodingClip ayrıca aşağıda çalmaya devam eder.
+        if (explodingSource != null && bombClip != null)
+        {
+            explodingSource.PlayOneShot(bombClip, bombVolume);
         }
 
         // İkinci bomba animasyon BAŞLADIKTAN kısa süre sonra kaybolur; iki
