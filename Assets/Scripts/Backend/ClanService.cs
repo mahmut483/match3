@@ -194,6 +194,7 @@ public static class ClanService
             if (CreateCost > 0) user.gold = newGold;
 
             // Kuran kişi otomatik olarak clanın üyesi olur.
+            bootstrap.NotifyUserUpdated();
             ClanChanged?.Invoke();
             onDone?.Invoke(true, "");
         });

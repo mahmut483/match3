@@ -25,6 +25,7 @@ public class MainMenuSettingsUI : MonoBehaviour
 
     [Header("Ses")]
     [SerializeField] private AudioMixer mixer;
+    [SerializeField] private AudioSource musicSource;
     [SerializeField] private AudioToggleView music;
     [SerializeField] private AudioToggleView sfx;
 
@@ -82,6 +83,8 @@ public class MainMenuSettingsUI : MonoBehaviour
 
     private void ApplyAndRefresh(GameAudioChannel channel, AudioToggleView view)
     {
+        bool isEnabled = settings.IsEnabled(channel);
+
         if (mixer != null)
         {
             mixer.SetFloat(
@@ -89,7 +92,11 @@ public class MainMenuSettingsUI : MonoBehaviour
                 settings.GetVolumeDb(channel));
         }
 
-        bool isEnabled = settings.IsEnabled(channel);
+        if (channel == GameAudioChannel.Music)
+        {
+            ApplyMusicPlayback(isEnabled);
+        }
+
         Image image = view.image != null
             ? view.image
             : (view.button != null ? view.button.targetGraphic as Image : null);
@@ -106,6 +113,22 @@ public class MainMenuSettingsUI : MonoBehaviour
         image.color = isEnabled
             ? Color.white
             : new Color(1f, 1f, 1f, 0.45f);
+    }
+
+    private void ApplyMusicPlayback(bool isEnabled)
+    {
+        if (musicSource == null) return;
+
+        musicSource.mute = !isEnabled;
+
+        if (isEnabled)
+        {
+            if (!musicSource.isPlaying) musicSource.Play();
+        }
+        else if (musicSource.isPlaying)
+        {
+            musicSource.Stop();
+        }
     }
 
     private void QuitGame()

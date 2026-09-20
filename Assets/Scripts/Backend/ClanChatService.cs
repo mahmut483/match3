@@ -195,6 +195,7 @@ public static class ClanChatService
             }
 
             user.lives = newLives;
+            bootstrap.NotifyUserUpdated();
 
             userDoc.UpdateAsync(new Dictionary<string, object>
             {

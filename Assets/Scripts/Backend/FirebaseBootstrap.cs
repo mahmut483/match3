@@ -167,9 +167,59 @@ public class FirebaseBootstrap : MonoBehaviour
             User.displayName = newName;
             User.avatarIndex = newAvatarIndex;
 
-            UserReady?.Invoke(User);
+            NotifyUserUpdated();
             onDone?.Invoke(true);
         });
+    }
+
+    // Yerel kullanıcı verisini değiştiren servisler üst bar gibi açık UI'ları
+    // aynı UserData örneğiyle anında yenilemek için bunu çağırır.
+    public void NotifyUserUpdated()
+    {
+        if (User != null) UserReady?.Invoke(User);
+    }
+
+    // Can sıfırdayken yenilenme süresi dolduğunda yerel veriyi hemen yeniler
+    // ve aynı değeri Firestore'a kalıcı olarak yazar.
+    public void RefillLivesToFull(int maximumLives, Action<bool> onDone = null)
+    {
+        if (!IsReady || User == null)
+        {
+            onDone?.Invoke(false);
+            return;
+        }
+
+        if (User.lives > 0)
+        {
+            onDone?.Invoke(true);
+            return;
+        }
+
+        int safeMaximum = Mathf.Max(1, maximumLives);
+        Timestamp now = Timestamp.FromDateTime(DateTime.UtcNow);
+
+        User.lives = safeMaximum;
+        User.livesUpdatedAt = now;
+        NotifyUserUpdated();
+
+        Dictionary<string, object> fields = new Dictionary<string, object>
+        {
+            { "lives", safeMaximum },
+            { "livesUpdatedAt", now }
+        };
+
+        db.Collection("users").Document(Uid).UpdateAsync(fields)
+            .ContinueWithOnMainThread(task =>
+            {
+                if (task.IsFaulted || task.IsCanceled)
+                {
+                    Debug.LogError("Canlar yenilenirken Firestore güncellenemedi: " + task.Exception);
+                    onDone?.Invoke(false);
+                    return;
+                }
+
+                onDone?.Invoke(true);
+            });
     }
 
     // Son görülme zamanı — başka bir alana dokunmaz.
@@ -181,6 +231,6 @@ public class FirebaseBootstrap : MonoBehaviour
     private void Finish()
     {
         IsReady = true;
-        UserReady?.Invoke(User);
+        NotifyUserUpdated();
     }
 }
