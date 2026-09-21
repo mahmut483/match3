@@ -163,7 +163,9 @@ public class SpecialStrikes : MonoBehaviour
 
         StrikeKind kind = armed.Value;
         Vector2Int origin = new(potion.xIndex, potion.yIndex);
-        List<Vector2Int> cells = kind == StrikeKind.Cannon ? null : CellsFor(kind, origin);
+        // Yalnızca Hammer hücre listesi taşır: Bomb'un 3x3'ünü tahta BlastAround
+        // ile kendisi hesaplar, Cannon satırı top geçerken temizlenir.
+        List<Vector2Int> cells = kind == StrikeKind.Hammer ? HammerCells(origin) : null;
 
         // Vuruşun gerçekten başlatılabildiği doğrulanmadan hak düşmez. Cannon
         // prefabı/anchor'ı eksikse seçim açık kalır ve dokunma özel taşı yanlışlıkla
@@ -204,33 +206,16 @@ public class SpecialStrikes : MonoBehaviour
 
     // Tahta sınırının dışına taşan hücreler ayıklanmıyor: ClearCell zaten sınır
     // kontrolü yapıyor ve dışarıdakini sessizce atlıyor.
-    private List<Vector2Int> CellsFor(StrikeKind kind, Vector2Int origin)
+    private List<Vector2Int> HammerCells(Vector2Int origin)
     {
-        List<Vector2Int> cells = new();
+        List<Vector2Int> cells = new() { origin };
 
-        switch (kind)
+        for (int step = 1; step <= hammerReach; step++)
         {
-            case StrikeKind.Hammer:
-                cells.Add(origin);
-
-                for (int step = 1; step <= hammerReach; step++)
-                {
-                    cells.Add(origin + Vector2Int.right * step);
-                    cells.Add(origin + Vector2Int.left * step);
-                    cells.Add(origin + Vector2Int.up * step);
-                    cells.Add(origin + Vector2Int.down * step);
-                }
-                break;
-
-            case StrikeKind.Bomb:
-                for (int x = origin.x - 1; x <= origin.x + 1; x++)
-                {
-                    for (int y = origin.y - 1; y <= origin.y + 1; y++)
-                    {
-                        cells.Add(new Vector2Int(x, y));
-                    }
-                }
-                break;
+            cells.Add(origin + Vector2Int.right * step);
+            cells.Add(origin + Vector2Int.left * step);
+            cells.Add(origin + Vector2Int.up * step);
+            cells.Add(origin + Vector2Int.down * step);
         }
 
         return cells;
