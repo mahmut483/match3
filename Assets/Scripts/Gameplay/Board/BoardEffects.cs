@@ -35,12 +35,16 @@ namespace Match3.Gameplay.Board
 
         [SerializeField] private AudioClip matchClip, superMatchClip, explodingClip, bombClip, doubleRocketClip;
 
+        [Tooltip("Hammer'ın taşa vurduğu anda çalan ses.")]
+        [SerializeField] private AudioClip hammerClip;
+
         [Header("Ses seviyeleri")]
         [SerializeField, Range(0f, 1f)] private float matchVolume = 1f;
         [SerializeField, Range(0f, 1f)] private float superMatchVolume = 1f;
         [SerializeField, Range(0f, 1f)] private float explodingVolume = 1f;
         [SerializeField, Range(0f, 1f)] private float bombVolume = 1f;
         [SerializeField, Range(0f, 1f)] private float doubleRocketVolume = 1f;
+        [SerializeField, Range(0f, 1f)] private float hammerVolume = 1f;
 
         [Tooltip("Board'a bağlı kırılma/patlama efektlerinin root'u. Boş bırakılırsa BoardPresentation altında çalışma anında oluşturulur.")]
         [SerializeField] private Transform boardVfxRoot;
@@ -69,6 +73,11 @@ namespace Match3.Gameplay.Board
         public void PlayExplosion() => explodingSource.PlayOneShot(explodingClip, explodingVolume);
 
         // Süper bomba fitili; klip yoksa sessiz kalır.
+        public void PlayHammerHit()
+        {
+            if (hammerClip != null) explodingSource.PlayOneShot(hammerClip, hammerVolume);
+        }
+
         public void PlayBombFuse()
         {
             if (bombClip != null) explodingSource.PlayOneShot(bombClip, bombVolume);

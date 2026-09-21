@@ -14832,11 +14832,13 @@ MonoBehaviour:
   superMatchClip: {fileID: 8300000, guid: 7bd6b897eb5ca4b7d88a205c4a51640c, type: 3}
   explodingClip: {fileID: 8300000, guid: e53c50cdd14c0004f8f381d4a956ab7b, type: 3}
   bombClip: {fileID: 0}
+  hammerClip: {fileID: 8300000, guid: a85be36680de54dfc8da71784994507e, type: 3}
   doubleRocketClip: {fileID: 0}
   matchVolume: 1
   superMatchVolume: 1
   explodingVolume: 1
   bombVolume: 1
+  hammerVolume: 1
   doubleRocketVolume: 1
   boardVfxRoot: {fileID: 0}
 --- !u!114 &1016066666

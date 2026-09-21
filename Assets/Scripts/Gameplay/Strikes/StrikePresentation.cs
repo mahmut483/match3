@@ -60,6 +60,7 @@ namespace Match3.Gameplay.Strikes
         private BoardGrid grid;
         private BoardGeometry geometry;
         private SpecialChain specialChain;
+        private BoardEffects effects;
         private Transform boardPresentation;
 
         public bool IsCannonCinematic => isCannonCinematic;
@@ -72,11 +73,12 @@ namespace Match3.Gameplay.Strikes
         // Cannon paneli (top + zincir + board dönüşü) bitince; refill'den önce.
         public event Action CannonStrikeFinished;
 
-        public void Initialize(BoardGrid grid, BoardGeometry geometry, SpecialChain specialChain, Transform boardPresentation)
+        public void Initialize(BoardGrid grid, BoardGeometry geometry, SpecialChain specialChain, BoardEffects effects, Transform boardPresentation)
         {
             this.grid = grid;
             this.geometry = geometry;
             this.specialChain = specialChain;
+            this.effects = effects;
             this.boardPresentation = boardPresentation;
         }
 
@@ -191,6 +193,7 @@ namespace Match3.Gameplay.Strikes
                     {
                         impacted = true;
                         hammer.PlayImpactEffect();
+                        effects.PlayHammerHit();
                         foreach (Vector2Int cell in cells)
                         {
                             specialChain.ClearCell(cell, chain);
@@ -309,6 +312,9 @@ namespace Match3.Gameplay.Strikes
                 }
 
                 SpecialChain.ChainContext chain = new();
+
+                // Top namludan çıkarken patlama sesi bir kez çalar.
+                effects.PlayExplosion();
 
                 cannonballInstance = Instantiate(cannonballProjectilePrefab, muzzle.position, Quaternion.identity);
                 yield return CannonballSweep(origin.y, cannonballInstance.transform, chain);

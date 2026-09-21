@@ -159,7 +159,7 @@ namespace Match3.Gameplay.Board
 
             refill.Initialize(grid, geometry);
             specialChain.Initialize(grid, geometry, effects, ReturnPotionToPool);
-            strikes.Initialize(grid, geometry, specialChain, boardPresentation);
+            strikes.Initialize(grid, geometry, specialChain, effects, boardPresentation);
             refill.CreateInitialPotions();
         }
 
