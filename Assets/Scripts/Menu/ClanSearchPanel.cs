@@ -2,83 +2,88 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// SearchPage: isme göre clan arama.
-public class ClanSearchPanel : MonoBehaviour
+using Match3.Backend;
+
+namespace Match3.Menu
 {
-    [SerializeField] private TMP_InputField searchInput;
-    [SerializeField] private Button searchButton;
-    [SerializeField] private Button clearButton;
-
-    // Sonuçların gösterileceği liste (JoinPage'deki panelin aynısı olabilir
-    // ya da SearchPage'e ait ayrı bir liste).
-    [SerializeField] private ClanListPanel resultList;
-
-    [Header("Clanları göster butonu")]
-    [SerializeField] private Button viewClansButton;
-    [SerializeField] private ClanTabButtons tabButtons;
-
-    [Tooltip("Arama yapılmadan önce görünen öneri bloğu. Sonuç gelince gizlenir.")]
-    [SerializeField] private GameObject suggestionBody;
-
-    [SerializeField] private int searchLimit = 30;
-
-    private void Awake()
+    // SearchPage: isme göre clan arama.
+    public class ClanSearchPanel : MonoBehaviour
     {
-        if (searchButton != null) searchButton.onClick.AddListener(Search);
-        if (clearButton != null) clearButton.onClick.AddListener(Clear);
-        if (viewClansButton != null) viewClansButton.onClick.AddListener(ShowJoinPage);
+        [SerializeField] private TMP_InputField searchInput;
+        [SerializeField] private Button searchButton;
+        [SerializeField] private Button clearButton;
 
-        // Klavyeden Enter'a basınca da arasın.
-        if (searchInput != null) searchInput.onSubmit.AddListener(_ => Search());
-    }
+        // Sonuçların gösterileceği liste (JoinPage'deki panelin aynısı olabilir
+        // ya da SearchPage'e ait ayrı bir liste).
+        [SerializeField] private ClanListPanel resultList;
 
-    private void OnDestroy()
-    {
-        if (searchButton != null) searchButton.onClick.RemoveListener(Search);
-        if (clearButton != null) clearButton.onClick.RemoveListener(Clear);
-        if (viewClansButton != null) viewClansButton.onClick.RemoveListener(ShowJoinPage);
-        if (searchInput != null) searchInput.onSubmit.RemoveAllListeners();
-    }
+        [Header("Clanları göster butonu")]
+        [SerializeField] private Button viewClansButton;
+        [SerializeField] private ClanTabButtons tabButtons;
 
-    public void Search()
-    {
-        if (searchInput == null || resultList == null) return;
+        [Tooltip("Arama yapılmadan önce görünen öneri bloğu. Sonuç gelince gizlenir.")]
+        [SerializeField] private GameObject suggestionBody;
 
-        // Boş aramada öneri bloğuna geri dön.
-        if (string.IsNullOrWhiteSpace(searchInput.text))
+        [SerializeField] private int searchLimit = 30;
+
+        private void Awake()
         {
-            ShowSuggestion(true);
-            resultList.ClearResults();
-            return;
+            if (searchButton != null) searchButton.onClick.AddListener(Search);
+            if (clearButton != null) clearButton.onClick.AddListener(Clear);
+            if (viewClansButton != null) viewClansButton.onClick.AddListener(ShowJoinPage);
+
+            // Klavyeden Enter'a basınca da arasın.
+            if (searchInput != null) searchInput.onSubmit.AddListener(_ => Search());
         }
 
-        ShowSuggestion(false);
+        private void OnDestroy()
+        {
+            if (searchButton != null) searchButton.onClick.RemoveListener(Search);
+            if (clearButton != null) clearButton.onClick.RemoveListener(Clear);
+            if (viewClansButton != null) viewClansButton.onClick.RemoveListener(ShowJoinPage);
+            if (searchInput != null) searchInput.onSubmit.RemoveAllListeners();
+        }
 
-        ClanService.SearchClans(searchInput.text, searchLimit, resultList.Show);
-    }
+        public void Search()
+        {
+            if (searchInput == null || resultList == null) return;
 
-    public void Clear()
-    {
-        if (searchInput != null) searchInput.text = "";
+            // Boş aramada öneri bloğuna geri dön.
+            if (string.IsNullOrWhiteSpace(searchInput.text))
+            {
+                ShowSuggestion(true);
+                resultList.ClearResults();
+                return;
+            }
 
-        ShowSuggestion(true);
+            ShowSuggestion(false);
 
-        if (resultList != null) resultList.ClearResults();
-    }
+            ClanService.SearchClans(searchInput.text, searchLimit, resultList.Show);
+        }
 
-    // Öneri bloğu ile sonuç listesi aynı anda görünmez.
-    private void ShowSuggestion(bool show)
-    {
-        if (suggestionBody != null) suggestionBody.SetActive(show);
-    }
+        public void Clear()
+        {
+            if (searchInput != null) searchInput.text = "";
 
-    private void OnEnable()
-    {
-        ShowSuggestion(true);
-    }
+            ShowSuggestion(true);
 
-    private void ShowJoinPage()
-    {
-        if (tabButtons != null) tabButtons.JoinPage();
+            if (resultList != null) resultList.ClearResults();
+        }
+
+        // Öneri bloğu ile sonuç listesi aynı anda görünmez.
+        private void ShowSuggestion(bool show)
+        {
+            if (suggestionBody != null) suggestionBody.SetActive(show);
+        }
+
+        private void OnEnable()
+        {
+            ShowSuggestion(true);
+        }
+
+        private void ShowJoinPage()
+        {
+            if (tabButtons != null) tabButtons.JoinPage();
+        }
     }
 }

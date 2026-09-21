@@ -3,40 +3,45 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Clan listesindeki tek satır.
-public class ClanRowUI : MonoBehaviour
+using Match3.Backend;
+
+namespace Match3.Menu
 {
-    [SerializeField] private Image emblem;
-    [SerializeField] private TMP_Text nameText;
-    [SerializeField] private TMP_Text capacityText;
-    [SerializeField] private TMP_Text minLevelText;
-    [SerializeField] private Button actionButton;
-
-    [SerializeField] private AvatarCatalog emblemCatalog;
-
-    private ClanData clan;
-    private Action<ClanData> onAction;
-
-    public void Setup(ClanData data, Action<ClanData> action)
+    // Clan listesindeki tek satır.
+    public class ClanRowUI : MonoBehaviour
     {
-        clan = data;
-        onAction = action;
+        [SerializeField] private Image emblem;
+        [SerializeField] private TMP_Text nameText;
+        [SerializeField] private TMP_Text capacityText;
+        [SerializeField] private TMP_Text minLevelText;
+        [SerializeField] private Button actionButton;
 
-        if (nameText != null) nameText.text = data.name;
-        if (capacityText != null) capacityText.text = data.memberCount + "/" + data.maxMembers;
-        if (minLevelText != null) minLevelText.text = data.minLevel > 0 ? "Lv " + data.minLevel : "";
+        [SerializeField] private AvatarCatalog emblemCatalog;
 
-        if (emblem != null && emblemCatalog != null)
+        private ClanData clan;
+        private Action<ClanData> onAction;
+
+        public void Setup(ClanData data, Action<ClanData> action)
         {
-            Sprite sprite = emblemCatalog.Get(data.emblemIndex);
+            clan = data;
+            onAction = action;
 
-            if (sprite != null) emblem.sprite = sprite;
-        }
+            if (nameText != null) nameText.text = data.name;
+            if (capacityText != null) capacityText.text = data.memberCount + "/" + data.maxMembers;
+            if (minLevelText != null) minLevelText.text = data.minLevel > 0 ? "Lv " + data.minLevel : "";
 
-        if (actionButton != null)
-        {
-            actionButton.onClick.RemoveAllListeners();
-            actionButton.onClick.AddListener(() => onAction?.Invoke(clan));
+            if (emblem != null && emblemCatalog != null)
+            {
+                Sprite sprite = emblemCatalog.Get(data.emblemIndex);
+
+                if (sprite != null) emblem.sprite = sprite;
+            }
+
+            if (actionButton != null)
+            {
+                actionButton.onClick.RemoveAllListeners();
+                actionButton.onClick.AddListener(() => onAction?.Invoke(clan));
+            }
         }
     }
 }

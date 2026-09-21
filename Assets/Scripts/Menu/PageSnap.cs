@@ -3,147 +3,150 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-[RequireComponent(typeof(ScrollRect))]
-public class PageSnap : MonoBehaviour,
-    IBeginDragHandler,
-    IEndDragHandler
+namespace Match3.Menu
 {
-    [SerializeField] private ScrollRect scrollRect;
-    [SerializeField] private float snapSpeed = 12f;
-
-    // Menü açıldığında gösterilecek sayfa. Objeyi sürükleyin — sırası
-    // otomatik bulunur, sayfa ekleyip çıkarınca bozulmaz.
-    [SerializeField] private RectTransform startPage;
-
-    private int pageCount;
-    private int currentPage;
-
-    private float targetPosition;
-
-    private bool isDragging;
-    private bool isSnapping;
-
-    private void Awake()
+    [RequireComponent(typeof(ScrollRect))]
+    public class PageSnap : MonoBehaviour,
+        IBeginDragHandler,
+        IEndDragHandler
     {
-        if (scrollRect == null)
-            scrollRect = GetComponent<ScrollRect>();
-    }
+        [SerializeField] private ScrollRect scrollRect;
+        [SerializeField] private float snapSpeed = 12f;
 
-    // ScrollView'un içerik boyutu ilk karede henüz hesaplanmamış olabiliyor;
-    // konum ataması o an işe yaramaz ve sayfa 0'da kalır. Layout oturduktan
-    // sonra bir kez daha uygulanır.
-    private IEnumerator Start()
-    {
-        pageCount = scrollRect.content.childCount;
+        // Menü açıldığında gösterilecek sayfa. Objeyi sürükleyin — sırası
+        // otomatik bulunur, sayfa ekleyip çıkarınca bozulmaz.
+        [SerializeField] private RectTransform startPage;
 
-        int startIndex = 0;
+        private int pageCount;
+        private int currentPage;
 
-        if (startPage != null)
+        private float targetPosition;
+
+        private bool isDragging;
+        private bool isSnapping;
+
+        private void Awake()
         {
-            if (startPage.parent != scrollRect.content)
+            if (scrollRect == null)
+                scrollRect = GetComponent<ScrollRect>();
+        }
+
+        // ScrollView'un içerik boyutu ilk karede henüz hesaplanmamış olabiliyor;
+        // konum ataması o an işe yaramaz ve sayfa 0'da kalır. Layout oturduktan
+        // sonra bir kez daha uygulanır.
+        private IEnumerator Start()
+        {
+            pageCount = scrollRect.content.childCount;
+
+            int startIndex = 0;
+
+            if (startPage != null)
             {
-                Debug.LogWarning($"PageSnap: {startPage.name} Content'in altında değil.");
+                if (startPage.parent != scrollRect.content)
+                {
+                    Debug.LogWarning($"PageSnap: {startPage.name} Content'in altında değil.");
+                }
+
+                startIndex = startPage.GetSiblingIndex();
             }
 
-            startIndex = startPage.GetSiblingIndex();
+            ApplyStartPage(startIndex);
+
+            // Layout group'lar bir kare sonra kesinleşiyor; konumu tekrar uygula.
+            yield return null;
+
+            ApplyStartPage(startIndex);
         }
 
-        ApplyStartPage(startIndex);
+        // Kaydırma konumu ancak Content'in genişliği hesaplandıktan sonra anlam kazanır.
+        // ForceUpdateCanvases tek başına LayoutGroup'ları yeniden kurmuyor.
+        private void ApplyStartPage(int startIndex)
+        {
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
 
-        // Layout group'lar bir kare sonra kesinleşiyor; konumu tekrar uygula.
-        yield return null;
+            GoToPage(startIndex, true);
+        }
 
-        ApplyStartPage(startIndex);
-    }
+        private void Update()
+        {
+            if (!isSnapping || isDragging)
+                return;
 
-    // Kaydırma konumu ancak Content'in genişliği hesaplandıktan sonra anlam kazanır.
-    // ForceUpdateCanvases tek başına LayoutGroup'ları yeniden kurmuyor.
-    private void ApplyStartPage(int startIndex)
-    {
-        Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
+            scrollRect.horizontalNormalizedPosition =
+                Mathf.Lerp(
+                    scrollRect.horizontalNormalizedPosition,
+                    targetPosition,
+                    snapSpeed * Time.unscaledDeltaTime
+                );
 
-        GoToPage(startIndex, true);
-    }
+            if (Mathf.Abs(
+                scrollRect.horizontalNormalizedPosition -
+                targetPosition) < 0.001f)
+            {
+                scrollRect.horizontalNormalizedPosition =
+                    targetPosition;
 
-    private void Update()
-    {
-        if (!isSnapping || isDragging)
-            return;
+                isSnapping = false;
+            }
+        }
 
-        scrollRect.horizontalNormalizedPosition =
-            Mathf.Lerp(
-                scrollRect.horizontalNormalizedPosition,
-                targetPosition,
-                snapSpeed * Time.unscaledDeltaTime
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            isDragging = true;
+            isSnapping = false;
+
+            scrollRect.StopMovement();
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            isDragging = false;
+
+            float position =
+                scrollRect.horizontalNormalizedPosition;
+
+            int page = Mathf.RoundToInt(
+                position * (pageCount - 1)
             );
 
-        if (Mathf.Abs(
-            scrollRect.horizontalNormalizedPosition -
-            targetPosition) < 0.001f)
-        {
-            scrollRect.horizontalNormalizedPosition =
-                targetPosition;
-
-            isSnapping = false;
+            GoToPage(page);
         }
-    }
 
-    public void OnBeginDrag(PointerEventData eventData)
-    {
-        isDragging = true;
-        isSnapping = false;
-
-        scrollRect.StopMovement();
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        isDragging = false;
-
-        float position =
-            scrollRect.horizontalNormalizedPosition;
-
-        int page = Mathf.RoundToInt(
-            position * (pageCount - 1)
-        );
-
-        GoToPage(page);
-    }
-
-    public void GoToPage(int pageIndex)
-    {
-        GoToPage(pageIndex, false);
-    }
-
-    public void GoToPage(int pageIndex, bool instant)
-    {
-        pageIndex = Mathf.Clamp(
-            pageIndex,
-            0,
-            pageCount - 1
-        );
-
-        currentPage = pageIndex;
-
-        if (pageCount <= 1)
-            targetPosition = 0f;
-        else
-            targetPosition =
-                (float)pageIndex / (pageCount - 1);
-
-        scrollRect.StopMovement();
-
-        isDragging = false;
-
-        if (instant)
+        public void GoToPage(int pageIndex)
         {
-            scrollRect.horizontalNormalizedPosition = targetPosition;
-            isSnapping = false;
+            GoToPage(pageIndex, false);
         }
-        else
+
+        public void GoToPage(int pageIndex, bool instant)
         {
-            isSnapping = true;
+            pageIndex = Mathf.Clamp(
+                pageIndex,
+                0,
+                pageCount - 1
+            );
+
+            currentPage = pageIndex;
+
+            if (pageCount <= 1)
+                targetPosition = 0f;
+            else
+                targetPosition =
+                    (float)pageIndex / (pageCount - 1);
+
+            scrollRect.StopMovement();
+
+            isDragging = false;
+
+            if (instant)
+            {
+                scrollRect.horizontalNormalizedPosition = targetPosition;
+                isSnapping = false;
+            }
+            else
+            {
+                isSnapping = true;
+            }
         }
     }
 }

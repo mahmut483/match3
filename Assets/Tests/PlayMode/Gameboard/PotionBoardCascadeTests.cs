@@ -1,4 +1,8 @@
 #if UNITY_EDITOR
+using Match3.Gameplay.Board;
+using Match3.Gameplay.Potions;
+using Match3.Gameplay.Session;
+using Match3.Levels;
 using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
@@ -23,12 +27,12 @@ public class PotionBoardCascadeTests : PotionBoardTestBase
         SetType(PotionType.Green, new(0, 0), new(1, 0), new(2, 0), new(3, 0), new(4, 1));
 
         // En yakın taş (1 hücre) en önce havuza döner; en uzak (4 hücre) en son.
-        Potion firstPooled = grid[3, 0].potion;
+        Potion firstPooled = grid[3, 0].Potion;
 
         KeepActive keepActive = root.AddComponent<KeepActive>();
         keepActive.target = firstPooled.gameObject;
 
-        Invoke("BeginSwap", grid[4, 0].potion, grid[4, 1].potion);
+        Invoke("BeginSwap", grid[4, 0].Potion, grid[4, 1].Potion);
 
         float deadline = Time.time + 6f;
 

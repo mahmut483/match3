@@ -14433,6 +14433,11 @@ GameObject:
   - component: {fileID: 1016066662}
   - component: {fileID: 1016066664}
   - component: {fileID: 1016066663}
+  - component: {fileID: 1016066665}
+  - component: {fileID: 1016066666}
+  - component: {fileID: 1016066669}
+  - component: {fileID: 1016066668}
+  - component: {fileID: 1016066667}
   m_Layer: 0
   m_Name: Potion Board
   m_TagString: Untagged
@@ -14503,37 +14508,11 @@ MonoBehaviour:
   superMatchMergeSpeed: 6
   superMatchMergeMinDuration: 0.14
   superMatchMergeMaxDuration: 0.3
-  mergedBombHideDelay: 0.05
-  explosionSettleDelay: 0.25
-  superBombRingDelay: 0.06
-  doubleRocketDelay: 1
-  rocketSpeed: 8
   matchPoints: 10
   superMatchPoints: 15
-  bombPoints: 10
   boardGrid: {fileID: 344793428}
   boardPresentation: {fileID: 2100001002}
   boardVfxRoot: {fileID: 0}
-  cannonLeftAnchor: {fileID: 2100001004}
-  cannonEntryPrefab: {fileID: 11400000, guid: d4210ef1b3c24e32aee96af816b440be, type: 3}
-  cannonballProjectilePrefab: {fileID: 100000, guid: 3b5f1d7a9c324fdfaa52528502d0b5d4, type: 3}
-  cannonMaskRight: {fileID: 1975755287}
-  cannonMaskRightDuplicate: {fileID: 326226020}
-  hammerStrikePrefab: {fileID: 4273149661954886223, guid: 34981f19872df469298957ba4aafdb84, type: 3}
-  hammerTravelDuration: 0.6
-  hammerImpactDelay: 0.8
-  hammerReturnDelay: 1
-  hammerReturnDuration: 0.7
-  hammerStrikeDuration: 1.5
-  bombStrikePrefab: {fileID: 961155621397404643, guid: 8ff53eea67d424bfbad7a07d08c27393, type: 3}
-  bombTravelDuration: 1.1
-  bombImpactDelay: 1
-  boardSlideDuration: 0.22
-  boardReturnDuration: 0.18
-  cannonBoardSlideCells: 1
-  cannonFireDelay: 1.04
-  cannonballSpeed: 12
-  cannonballExitPadding: 0.75
 --- !u!82 &1016066662
 AudioSource:
   m_ObjectHideFlags: 0
@@ -14825,6 +14804,124 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1016066665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1016066658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d68b19a3683f484a8d346a6dedb901bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Match3::Match3.Gameplay.Board.BoardEffects
+  destroyParticlesRed: {fileID: 7114066461626933240, guid: f35660e44c91a46a5823256134cbf536, type: 3}
+  destroyParticlesBlue: {fileID: 7114066461626933240, guid: e813785599365452f999a01beb8aa912, type: 3}
+  destroyParticlesGreen: {fileID: 7114066461626933240, guid: c62b72cef73264c6aa64703c98457529, type: 3}
+  destroyParticlesYellow: {fileID: 7114066461626933240, guid: 212ffb3bb0fcc48f2b4709a825a6c3cc, type: 3}
+  explodingPaticles: {fileID: 725748389856807712, guid: 4bda94453d2ca7444a0fff05b2d425f5, type: 3}
+  superExplodingParticles: {fileID: 725748389856807712, guid: 6c2e93fefd4c548069a3bd343de74641, type: 3}
+  rocketSpawnParticles: {fileID: 6856126483460176776, guid: 299ff16e538a14cd7afdff06eae1cb0d, type: 3}
+  rocketFireParticles: {fileID: 3787576505771008625, guid: 6ebd41b6ce0d94d44b58845f26321776, type: 3}
+  doubleRocketParticles: {fileID: 6442537486272230216, guid: d169104dca4044bb486745b8ae51b405, type: 3}
+  matchSource: {fileID: 1016066662}
+  superMatchSource: {fileID: 1016066664}
+  explodingSource: {fileID: 1016066663}
+  matchClip: {fileID: 8300000, guid: ffb159a21c8a04135a5616979c828fab, type: 3}
+  superMatchClip: {fileID: 8300000, guid: 7bd6b897eb5ca4b7d88a205c4a51640c, type: 3}
+  explodingClip: {fileID: 8300000, guid: e53c50cdd14c0004f8f381d4a956ab7b, type: 3}
+  bombClip: {fileID: 0}
+  doubleRocketClip: {fileID: 0}
+  matchVolume: 1
+  superMatchVolume: 1
+  explodingVolume: 1
+  bombVolume: 1
+  doubleRocketVolume: 1
+  boardVfxRoot: {fileID: 0}
+--- !u!114 &1016066666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1016066658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9589e76e24d1453595be0378f2c9282e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Match3::Match3.Gameplay.Board.BoardRefill
+  potionPrefabs:
+  - {fileID: 7927807542344970782, guid: bb60bc505e820734584f3d8bd0a16f53, type: 3}
+  - {fileID: 7927807542344970782, guid: 04a81442ef4438841a0074ba8568d5d9, type: 3}
+  - {fileID: 3930743957587144660, guid: f3e47e37930ff8f48b693da87b4025c7, type: 3}
+  - {fileID: 7927807542344970782, guid: 924c8da2c1342cd41a99abdae62388df, type: 3}
+  potionParent: {fileID: 1190611720}
+  dropStaggerDelay: 0.07
+  maxDropStagger: 0.2
+--- !u!114 &1016066667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1016066658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05ee6678353740998dc5d76bd5511d0e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Match3::Match3.Gameplay.Board.BoardInput
+  board: {fileID: 1016066661}
+--- !u!114 &1016066668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1016066658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f017dbd9990f4179b2942fafde7d1d7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Match3::Match3.Gameplay.Strikes.StrikePresentation
+  cannonLeftAnchor: {fileID: 2100001004}
+  cannonEntryPrefab: {fileID: 11400000, guid: d4210ef1b3c24e32aee96af816b440be, type: 3}
+  cannonballProjectilePrefab: {fileID: 100000, guid: 3b5f1d7a9c324fdfaa52528502d0b5d4, type: 3}
+  cannonMaskRight: {fileID: 1975755287}
+  cannonMaskRightDuplicate: {fileID: 326226020}
+  hammerStrikePrefab: {fileID: 4273149661954886223, guid: 34981f19872df469298957ba4aafdb84, type: 3}
+  hammerTravelDuration: 0.6
+  hammerImpactDelay: 0.8
+  hammerReturnDelay: 1
+  hammerReturnDuration: 0.7
+  hammerStrikeDuration: 1.5
+  bombStrikePrefab: {fileID: 961155621397404643, guid: 8ff53eea67d424bfbad7a07d08c27393, type: 3}
+  bombTravelDuration: 1.1
+  bombImpactDelay: 1
+  boardSlideDuration: 0.22
+  boardReturnDuration: 0.18
+  cannonBoardSlideCells: 1
+  cannonFireDelay: 1.04
+  cannonballSpeed: 12
+  cannonballExitPadding: 0.75
+--- !u!114 &1016066669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1016066658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd8835bd0915464187e9aa6b8e1ea482, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Match3::Match3.Gameplay.Board.SpecialChain
+  mergedBombHideDelay: 0.05
+  explosionSettleDelay: 0.25
+  superBombRingDelay: 0.06
+  doubleRocketDelay: 1
+  rocketSpeed: 8
+  bombPoints: 10
 --- !u!1 &1051447775
 GameObject:
   m_ObjectHideFlags: 0

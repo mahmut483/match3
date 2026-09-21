@@ -2,6 +2,19 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Durum (2026-09-21):** Bu plan tamamlandı ve yerini `docs/superpowers/specs/2026-09-21-gameboard-split-design.md` +
+> `docs/superpowers/plans/2026-09-21-gameboard-split.md`'ye bıraktı. Özet:
+> - Task 1–2 (baseline, `BoardDefinition`) yapıldı. Task 3–8'in içeriği yeni planda **davranış korunarak** uygulandı:
+>   `BoardGrid`, `MatchFinder`, `BoardGeometry`, `BoardEffects`, `BoardRefill`, `SpecialChain`, `StrikePresentation`,
+>   `BoardInput`, `GameSession`. `PotionBoard` 2.447 → ~540 satır.
+> - Düzeltilen bug'lar: kazanma yalnızca hamle harcanınca tespit ediliyordu (özel vuruşla tamamlanan hedef kaçıyordu);
+>   cascade havuzdan yeniden alınan taş yüzünden takılıyordu (B1); Cannon sırasında refill kayık iniyordu (B3);
+>   çift roket üç efekt / iki ses / iki puan üretiyordu.
+> - Ürün kararları: tur sonu +10 puan kaldırıldı (D1); yeni taş rengi uniform rastgele (D2); süper eşleşme özel taşı
+>   eşleşmeyi yapan takas taşında doğar (D3); roket `Rocket` hedefine sayılır (D5). D4 (H şekli ikinci kol) atlandı.
+> - **Yapılmadı / ertelendi:** hücre sahipliği ve işlem reddi (Task 4'ün ikinci yarısı), hamlesiz tahta kontrolü,
+>   havuz boşken bekleme/büyüme politikası, B4 (süper bomba + eşzamanlı roket). Eşzamanlılık arcade modeli aynen kalır.
+
 **Goal:** Match-3 gameboard'ının davranışını koruyarak doğru, test edilebilir ve küçük sorumluluklara ayrılmış bir yapıya taşımak.
 
 **Architecture:** Önce mevcut davranışın sözleşmesi, tahta invariant'ları ve kritik senaryolar testlerle sabitlenir. Ardından saf domain mantığı (`BoardGrid`, eşleşme ve refill planlaması) Unity/animasyon kodundan ayrılır; `PotionBoard` yalnızca orkestrasyon ve sunum adaptörü olur. Girdi, tur çözümü ve özel-vuruşlar ortak bir kabul katmanından geçer fakat mevcut arcade davranışı gereği güvenli işlemler eşzamanlı çalışabilir; her işlem kendi bağlamını ve tamamlanma durumunu taşır. `Potion`, yalnızca taşın görsel/hareket yaşam döngüsünden sorumlu kalır.

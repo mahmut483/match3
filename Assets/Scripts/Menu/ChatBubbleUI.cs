@@ -2,29 +2,34 @@ using System;
 using TMPro;
 using UnityEngine;
 
-// Sohbetteki tek mesaj balonu.
-public class ChatBubbleUI : MonoBehaviour
+using Match3.Backend;
+
+namespace Match3.Menu
 {
-    [SerializeField] private TMP_Text nameText;
-    [SerializeField] private TMP_Text messageText;
-    [SerializeField] private TMP_Text timeText;
-
-    public void Setup(ClanMessage message)
+    // Sohbetteki tek mesaj balonu.
+    public class ChatBubbleUI : MonoBehaviour
     {
-        if (nameText != null) nameText.text = message.senderName;
-        if (messageText != null) messageText.text = message.text;
-        if (timeText != null) timeText.text = FormatAge(message.createdAt.ToDateTime());
-    }
+        [SerializeField] private TMP_Text nameText;
+        [SerializeField] private TMP_Text messageText;
+        [SerializeField] private TMP_Text timeText;
 
-    // "az önce", "5dk", "3sa", "2g" gibi kısa gösterim.
-    private static string FormatAge(DateTime utc)
-    {
-        TimeSpan age = DateTime.UtcNow - utc;
+        public void Setup(ClanMessage message)
+        {
+            if (nameText != null) nameText.text = message.senderName;
+            if (messageText != null) messageText.text = message.text;
+            if (timeText != null) timeText.text = FormatAge(message.createdAt.ToDateTime());
+        }
 
-        if (age.TotalMinutes < 1) return "az önce";
-        if (age.TotalHours < 1) return (int)age.TotalMinutes + "dk";
-        if (age.TotalDays < 1) return (int)age.TotalHours + "sa";
+        // "az önce", "5dk", "3sa", "2g" gibi kısa gösterim.
+        private static string FormatAge(DateTime utc)
+        {
+            TimeSpan age = DateTime.UtcNow - utc;
 
-        return (int)age.TotalDays + "g";
+            if (age.TotalMinutes < 1) return "az önce";
+            if (age.TotalHours < 1) return (int)age.TotalMinutes + "dk";
+            if (age.TotalDays < 1) return (int)age.TotalHours + "sa";
+
+            return (int)age.TotalDays + "g";
+        }
     }
 }

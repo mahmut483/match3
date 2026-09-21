@@ -1,41 +1,46 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// Bir Image'ı girişli kullanıcının avatarıyla doldurur.
-// Profil butonu (PP) gibi yerlerde kullanılır; kullanıcı avatarını değiştirince kendini günceller.
-[RequireComponent(typeof(Image))]
-public class AvatarImage : MonoBehaviour
+using Match3.Backend;
+
+namespace Match3.Menu
 {
-    [SerializeField] private AvatarCatalog catalog;
-
-    private Image image;
-
-    private void Awake()
+    // Bir Image'ı girişli kullanıcının avatarıyla doldurur.
+    // Profil butonu (PP) gibi yerlerde kullanılır; kullanıcı avatarını değiştirince kendini günceller.
+    [RequireComponent(typeof(Image))]
+    public class AvatarImage : MonoBehaviour
     {
-        image = GetComponent<Image>();
-    }
+        [SerializeField] private AvatarCatalog catalog;
 
-    private void OnEnable()
-    {
-        FirebaseBootstrap.UserReady += Apply;
+        private Image image;
 
-        FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
+        private void Awake()
+        {
+            image = GetComponent<Image>();
+        }
 
-        // Veri zaten gelmişse olayı bekleme.
-        if (bootstrap != null && bootstrap.IsReady) Apply(bootstrap.User);
-    }
+        private void OnEnable()
+        {
+            FirebaseBootstrap.UserReady += Apply;
 
-    private void OnDisable()
-    {
-        FirebaseBootstrap.UserReady -= Apply;
-    }
+            FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
 
-    private void Apply(UserData user)
-    {
-        if (catalog == null || user == null) return;
+            // Veri zaten gelmişse olayı bekleme.
+            if (bootstrap != null && bootstrap.IsReady) Apply(bootstrap.User);
+        }
 
-        Sprite sprite = catalog.Get(user.avatarIndex);
+        private void OnDisable()
+        {
+            FirebaseBootstrap.UserReady -= Apply;
+        }
 
-        if (sprite != null) image.sprite = sprite;
+        private void Apply(UserData user)
+        {
+            if (catalog == null || user == null) return;
+
+            Sprite sprite = catalog.Get(user.avatarIndex);
+
+            if (sprite != null) image.sprite = sprite;
+        }
     }
 }

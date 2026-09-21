@@ -3287,7 +3287,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 976242875}
-        m_TargetAssemblyTypeName: ClanTabButtons, Assembly-CSharp
+        m_TargetAssemblyTypeName: Match3.Menu.ClanTabButtons, Match3
         m_MethodName: JoinPage
         m_Mode: 1
         m_Arguments:
@@ -8853,7 +8853,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 976242875}
-        m_TargetAssemblyTypeName: ClanTabButtons, Assembly-CSharp
+        m_TargetAssemblyTypeName: Match3.Menu.ClanTabButtons, Match3
         m_MethodName: JoinPage
         m_Mode: 1
         m_Arguments:
@@ -11966,7 +11966,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 976242875}
-        m_TargetAssemblyTypeName: ClanTabButtons, Assembly-CSharp
+        m_TargetAssemblyTypeName: Match3.Menu.ClanTabButtons, Match3
         m_MethodName: JoinPage
         m_Mode: 1
         m_Arguments:
@@ -18904,7 +18904,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 976242875}
-        m_TargetAssemblyTypeName: ClanTabButtons, Assembly-CSharp
+        m_TargetAssemblyTypeName: Match3.Menu.ClanTabButtons, Match3
         m_MethodName: JoinPage
         m_Mode: 1
         m_Arguments:
@@ -24186,7 +24186,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 976242875}
-        m_TargetAssemblyTypeName: ClanTabButtons, Assembly-CSharp
+        m_TargetAssemblyTypeName: Match3.Menu.ClanTabButtons, Match3
         m_MethodName: SearchPage
         m_Mode: 1
         m_Arguments:
@@ -25385,7 +25385,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 976242875}
-        m_TargetAssemblyTypeName: ClanTabButtons, Assembly-CSharp
+        m_TargetAssemblyTypeName: Match3.Menu.ClanTabButtons, Match3
         m_MethodName: CreatePage
         m_Mode: 1
         m_Arguments:

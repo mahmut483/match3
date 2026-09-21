@@ -6,231 +6,234 @@ using Firebase.Extensions;
 using Firebase.Firestore;
 using UnityEngine;
 
-// Oyun açılışında bir kez çalışır: Firebase'i hazırlar, anonim giriş yapar,
-// kullanıcının Firestore dökümanını yükler (yoksa oluşturur).
-// Sahneler arasında yaşar (DontDestroyOnLoad).
-public class FirebaseBootstrap : MonoBehaviour
+namespace Match3.Backend
 {
-    public static FirebaseBootstrap Instance { get; private set; }
-
-    // Kullanıcı verisi hazır olduğunda tetiklenir. UI bunu dinleyip kendini günceller.
-    public static event Action<UserData> UserReady;
-
-    public string Uid { get; private set; }
-    public UserData User { get; private set; }
-    public bool IsReady { get; private set; }
-
-    [Header("Yeni oyuncu varsayılanları")]
-    [SerializeField] private int startingLives = 5;
-    [SerializeField] private string defaultNamePrefix = "Oyuncu";
-
-    private FirebaseAuth auth;
-    private FirebaseFirestore db;
-
-    private void Awake()
+    // Oyun açılışında bir kez çalışır: Firebase'i hazırlar, anonim giriş yapar,
+    // kullanıcının Firestore dökümanını yükler (yoksa oluşturur).
+    // Sahneler arasında yaşar (DontDestroyOnLoad).
+    public class FirebaseBootstrap : MonoBehaviour
     {
-        if (Instance != null && Instance != this)
+        public static FirebaseBootstrap Instance { get; private set; }
+
+        // Kullanıcı verisi hazır olduğunda tetiklenir. UI bunu dinleyip kendini günceller.
+        public static event Action<UserData> UserReady;
+
+        public string Uid { get; private set; }
+        public UserData User { get; private set; }
+        public bool IsReady { get; private set; }
+
+        [Header("Yeni oyuncu varsayılanları")]
+        [SerializeField] private int startingLives = 5;
+        [SerializeField] private string defaultNamePrefix = "Oyuncu";
+
+        private FirebaseAuth auth;
+        private FirebaseFirestore db;
+
+        private void Awake()
         {
-            Destroy(gameObject);
-            return;
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
+            // Android'de Google Play Services eksikse burada düzeltilir.
+            FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.Result != DependencyStatus.Available)
+                {
+                    Debug.LogError("Firebase hazır değil: " + task.Result);
+                    return;
+                }
+
+                auth = FirebaseAuth.DefaultInstance;
+                db = FirebaseFirestore.DefaultInstance;
+
+                SignIn();
+            });
         }
 
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-
-        // Android'de Google Play Services eksikse burada düzeltilir.
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+        // Cihazda kayıtlı hesap varsa yeni hesap AÇILMAZ; aynı uid geri gelir.
+        private void SignIn()
         {
-            if (task.Result != DependencyStatus.Available)
+            if (auth.CurrentUser != null)
             {
-                Debug.LogError("Firebase hazır değil: " + task.Result);
+                OnSignedIn(auth.CurrentUser.UserId);
                 return;
             }
 
-            auth = FirebaseAuth.DefaultInstance;
-            db = FirebaseFirestore.DefaultInstance;
+            auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsFaulted || task.IsCanceled)
+                {
+                    Debug.LogError("Anonim giriş başarısız: " + task.Exception);
+                    return;
+                }
 
-            SignIn();
-        });
-    }
-
-    // Cihazda kayıtlı hesap varsa yeni hesap AÇILMAZ; aynı uid geri gelir.
-    private void SignIn()
-    {
-        if (auth.CurrentUser != null)
-        {
-            OnSignedIn(auth.CurrentUser.UserId);
-            return;
+                OnSignedIn(task.Result.User.UserId);
+            });
         }
 
-        auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
+        private void OnSignedIn(string uid)
         {
-            if (task.IsFaulted || task.IsCanceled)
+            Uid = uid;
+
+            DocumentReference doc = db.Collection("users").Document(uid);
+
+            doc.GetSnapshotAsync().ContinueWithOnMainThread(task =>
             {
-                Debug.LogError("Anonim giriş başarısız: " + task.Exception);
-                return;
-            }
+                if (task.IsFaulted || task.IsCanceled)
+                {
+                    Debug.LogError("Kullanıcı dökümanı okunamadı: " + task.Exception);
+                    return;
+                }
 
-            OnSignedIn(task.Result.User.UserId);
-        });
-    }
+                if (task.Result.Exists)
+                {
+                    User = task.Result.ConvertTo<UserData>();
+                    TouchLastSeen(doc);
+                    Finish();
+                }
+                else
+                {
+                    CreateUser(doc);
+                }
+            });
+        }
 
-    private void OnSignedIn(string uid)
-    {
-        Uid = uid;
-
-        DocumentReference doc = db.Collection("users").Document(uid);
-
-        doc.GetSnapshotAsync().ContinueWithOnMainThread(task =>
+        private void CreateUser(DocumentReference doc)
         {
-            if (task.IsFaulted || task.IsCanceled)
-            {
-                Debug.LogError("Kullanıcı dökümanı okunamadı: " + task.Exception);
-                return;
-            }
+            Timestamp now = Timestamp.FromDateTime(DateTime.UtcNow);
 
-            if (task.Result.Exists)
+            // Güvenlik kuralları yeni kullanıcıda totalScore/level/gold = 0 bekliyor.
+            User = new UserData
             {
-                User = task.Result.ConvertTo<UserData>();
-                TouchLastSeen(doc);
+                displayName = defaultNamePrefix + UnityEngine.Random.Range(1000, 9999),
+                avatarIndex = 0,
+                isLinked = false,
+                createdAt = now,
+                lastSeenAt = now,
+                highestCompletedLevel = 0,
+                totalScore = 0,
+                bestScores = new Dictionary<string, int>(),
+                lives = startingLives,
+                livesUpdatedAt = now,
+                gold = 0,
+                clanId = null
+            };
+
+            doc.SetAsync(User).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Debug.LogError("Kullanıcı oluşturulamadı: " + task.Exception);
+                    return;
+                }
+
+                Debug.Log("Yeni kullanıcı oluşturuldu: " + Uid);
                 Finish();
-            }
-            else
-            {
-                CreateUser(doc);
-            }
-        });
-    }
-
-    private void CreateUser(DocumentReference doc)
-    {
-        Timestamp now = Timestamp.FromDateTime(DateTime.UtcNow);
-
-        // Güvenlik kuralları yeni kullanıcıda totalScore/level/gold = 0 bekliyor.
-        User = new UserData
-        {
-            displayName = defaultNamePrefix + UnityEngine.Random.Range(1000, 9999),
-            avatarIndex = 0,
-            isLinked = false,
-            createdAt = now,
-            lastSeenAt = now,
-            highestCompletedLevel = 0,
-            totalScore = 0,
-            bestScores = new Dictionary<string, int>(),
-            lives = startingLives,
-            livesUpdatedAt = now,
-            gold = 0,
-            clanId = null
-        };
-
-        doc.SetAsync(User).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsFaulted)
-            {
-                Debug.LogError("Kullanıcı oluşturulamadı: " + task.Exception);
-                return;
-            }
-
-            Debug.Log("Yeni kullanıcı oluşturuldu: " + Uid);
-            Finish();
-        });
-    }
-
-    // Profil bilgilerini günceller. Yalnızca bu iki alana dokunur,
-    // ilerleme/ekonomi alanları etkilenmez.
-    public void UpdateProfile(string newName, int newAvatarIndex, Action<bool> onDone)
-    {
-        if (!IsReady)
-        {
-            onDone?.Invoke(false);
-            return;
+            });
         }
 
-        DocumentReference doc = db.Collection("users").Document(Uid);
-
-        Dictionary<string, object> fields = new Dictionary<string, object>
+        // Profil bilgilerini günceller. Yalnızca bu iki alana dokunur,
+        // ilerleme/ekonomi alanları etkilenmez.
+        public void UpdateProfile(string newName, int newAvatarIndex, Action<bool> onDone)
         {
-            { "displayName", newName },
-            { "avatarIndex", newAvatarIndex }
-        };
-
-        doc.UpdateAsync(fields).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsFaulted || task.IsCanceled)
+            if (!IsReady)
             {
-                Debug.LogError("Profil güncellenemedi: " + task.Exception);
                 onDone?.Invoke(false);
                 return;
             }
 
-            // Yerel kopyayı da güncelle ki UI'lar doğru veriyi görsün.
-            User.displayName = newName;
-            User.avatarIndex = newAvatarIndex;
+            DocumentReference doc = db.Collection("users").Document(Uid);
 
-            NotifyUserUpdated();
-            onDone?.Invoke(true);
-        });
-    }
+            Dictionary<string, object> fields = new Dictionary<string, object>
+            {
+                { "displayName", newName },
+                { "avatarIndex", newAvatarIndex }
+            };
 
-    // Yerel kullanıcı verisini değiştiren servisler üst bar gibi açık UI'ları
-    // aynı UserData örneğiyle anında yenilemek için bunu çağırır.
-    public void NotifyUserUpdated()
-    {
-        if (User != null) UserReady?.Invoke(User);
-    }
-
-    // Can sıfırdayken yenilenme süresi dolduğunda yerel veriyi hemen yeniler
-    // ve aynı değeri Firestore'a kalıcı olarak yazar.
-    public void RefillLivesToFull(int maximumLives, Action<bool> onDone = null)
-    {
-        if (!IsReady || User == null)
-        {
-            onDone?.Invoke(false);
-            return;
-        }
-
-        if (User.lives > 0)
-        {
-            onDone?.Invoke(true);
-            return;
-        }
-
-        int safeMaximum = Mathf.Max(1, maximumLives);
-        Timestamp now = Timestamp.FromDateTime(DateTime.UtcNow);
-
-        User.lives = safeMaximum;
-        User.livesUpdatedAt = now;
-        NotifyUserUpdated();
-
-        Dictionary<string, object> fields = new Dictionary<string, object>
-        {
-            { "lives", safeMaximum },
-            { "livesUpdatedAt", now }
-        };
-
-        db.Collection("users").Document(Uid).UpdateAsync(fields)
-            .ContinueWithOnMainThread(task =>
+            doc.UpdateAsync(fields).ContinueWithOnMainThread(task =>
             {
                 if (task.IsFaulted || task.IsCanceled)
                 {
-                    Debug.LogError("Canlar yenilenirken Firestore güncellenemedi: " + task.Exception);
+                    Debug.LogError("Profil güncellenemedi: " + task.Exception);
                     onDone?.Invoke(false);
                     return;
                 }
 
+                // Yerel kopyayı da güncelle ki UI'lar doğru veriyi görsün.
+                User.displayName = newName;
+                User.avatarIndex = newAvatarIndex;
+
+                NotifyUserUpdated();
                 onDone?.Invoke(true);
             });
-    }
+        }
 
-    // Son görülme zamanı — başka bir alana dokunmaz.
-    private void TouchLastSeen(DocumentReference doc)
-    {
-        doc.UpdateAsync("lastSeenAt", Timestamp.FromDateTime(DateTime.UtcNow));
-    }
+        // Yerel kullanıcı verisini değiştiren servisler üst bar gibi açık UI'ları
+        // aynı UserData örneğiyle anında yenilemek için bunu çağırır.
+        public void NotifyUserUpdated()
+        {
+            if (User != null) UserReady?.Invoke(User);
+        }
 
-    private void Finish()
-    {
-        IsReady = true;
-        NotifyUserUpdated();
+        // Can sıfırdayken yenilenme süresi dolduğunda yerel veriyi hemen yeniler
+        // ve aynı değeri Firestore'a kalıcı olarak yazar.
+        public void RefillLivesToFull(int maximumLives, Action<bool> onDone = null)
+        {
+            if (!IsReady || User == null)
+            {
+                onDone?.Invoke(false);
+                return;
+            }
+
+            if (User.lives > 0)
+            {
+                onDone?.Invoke(true);
+                return;
+            }
+
+            int safeMaximum = Mathf.Max(1, maximumLives);
+            Timestamp now = Timestamp.FromDateTime(DateTime.UtcNow);
+
+            User.lives = safeMaximum;
+            User.livesUpdatedAt = now;
+            NotifyUserUpdated();
+
+            Dictionary<string, object> fields = new Dictionary<string, object>
+            {
+                { "lives", safeMaximum },
+                { "livesUpdatedAt", now }
+            };
+
+            db.Collection("users").Document(Uid).UpdateAsync(fields)
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsFaulted || task.IsCanceled)
+                    {
+                        Debug.LogError("Canlar yenilenirken Firestore güncellenemedi: " + task.Exception);
+                        onDone?.Invoke(false);
+                        return;
+                    }
+
+                    onDone?.Invoke(true);
+                });
+        }
+
+        // Son görülme zamanı — başka bir alana dokunmaz.
+        private void TouchLastSeen(DocumentReference doc)
+        {
+            doc.UpdateAsync("lastSeenAt", Timestamp.FromDateTime(DateTime.UtcNow));
+        }
+
+        private void Finish()
+        {
+            IsReady = true;
+            NotifyUserUpdated();
+        }
     }
 }

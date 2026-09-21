@@ -182,3 +182,12 @@ Refactor sözleşmesi:
 - [x] Koddan türetilen davranış matrisi kaydedildi.
 - [x] Test yaklaşımı kaydedildi; kullanıcı isteğiyle test oluşturulmadı.
 - [x] Eşzamanlı arcade davranışının korunacağı kararlaştırıldı.
+
+## Güncelleme (2026-09-21)
+
+- §5 P0 boyut sözleşmesi: `BoardDefinition` ile çözüldü. §5 P1 dead-board ve havuz: **ertelendi**. §5 P1 catalog fallback ve null güvenliği: dokunulmadı.
+- §4 matrisindeki "her grup 10 + tur sonu 10 puan" davranışı değiştirildi: yalnızca olay başına puan (D1).
+- §4 hedef sayacı: roket artık `Rocket` hedefine de sayılır (D5).
+- Kazanma artık hedef tamamlandığı anda ilan edilir (özel vuruşla da); `GameSession` içinde.
+- §7 eşzamanlılık kararı korundu; hücre sahipliği uygulanmadı. Bulunan ve düzeltilen yarış: `AreAllMatchedPotionsDestroyed` (B1).
+- Kod yapısı: `docs/superpowers/specs/2026-09-21-gameboard-split-design.md`.

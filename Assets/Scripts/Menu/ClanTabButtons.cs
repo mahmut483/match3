@@ -1,75 +1,78 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// Clan sayfasındaki Join / Search / Create sekmeleri.
-// Butona basınca ilgili sayfa açılır, diğerleri kapanır.
-public class ClanTabButtons : MonoBehaviour
+namespace Match3.Menu
 {
-    [SerializeField] private GameObject joinPage;
-    [SerializeField] private GameObject searchPage;
-    [SerializeField] private GameObject createPage;
-
-    [SerializeField] private Button joinButton;
-    [SerializeField] private Button searchButton;
-    [SerializeField] private Button createButton;
-
-    [SerializeField] private Sprite normalSprite;
-    [SerializeField] private Sprite selectedSprite;
-
-    // Butonlar koddan bağlanır — Inspector'daki OnClick listeleri BOŞ olmalı,
-    // yoksa yanlış metoda bağlanma riski geri gelir.
-    void Awake()
+    // Clan sayfasındaki Join / Search / Create sekmeleri.
+    // Butona basınca ilgili sayfa açılır, diğerleri kapanır.
+    public class ClanTabButtons : MonoBehaviour
     {
-        joinButton.onClick.AddListener(JoinPage);
-        searchButton.onClick.AddListener(SearchPage);
-        createButton.onClick.AddListener(CreatePage);
-    }
+        [SerializeField] private GameObject joinPage;
+        [SerializeField] private GameObject searchPage;
+        [SerializeField] private GameObject createPage;
 
-    void OnDestroy()
-    {
-        joinButton.onClick.RemoveListener(JoinPage);
-        searchButton.onClick.RemoveListener(SearchPage);
-        createButton.onClick.RemoveListener(CreatePage);
-    }
+        [SerializeField] private Button joinButton;
+        [SerializeField] private Button searchButton;
+        [SerializeField] private Button createButton;
 
-    // Clan sayfası her açıldığında Join sekmesine döner.
-    void OnEnable()
-    {
-        JoinPage();
-    }
+        [SerializeField] private Sprite normalSprite;
+        [SerializeField] private Sprite selectedSprite;
 
-    public void JoinPage()
-    {
-        joinPage.SetActive(true);
-        searchPage.SetActive(false);
-        createPage.SetActive(false);
+        // Butonlar koddan bağlanır — Inspector'daki OnClick listeleri BOŞ olmalı,
+        // yoksa yanlış metoda bağlanma riski geri gelir.
+        void Awake()
+        {
+            joinButton.onClick.AddListener(JoinPage);
+            searchButton.onClick.AddListener(SearchPage);
+            createButton.onClick.AddListener(CreatePage);
+        }
 
-        SetSelected(joinButton);
-    }
+        void OnDestroy()
+        {
+            joinButton.onClick.RemoveListener(JoinPage);
+            searchButton.onClick.RemoveListener(SearchPage);
+            createButton.onClick.RemoveListener(CreatePage);
+        }
 
-    public void SearchPage()
-    {
-        joinPage.SetActive(false);
-        searchPage.SetActive(true);
-        createPage.SetActive(false);
+        // Clan sayfası her açıldığında Join sekmesine döner.
+        void OnEnable()
+        {
+            JoinPage();
+        }
 
-        SetSelected(searchButton);
-    }
+        public void JoinPage()
+        {
+            joinPage.SetActive(true);
+            searchPage.SetActive(false);
+            createPage.SetActive(false);
 
-    public void CreatePage()
-    {
-        joinPage.SetActive(false);
-        searchPage.SetActive(false);
-        createPage.SetActive(true);
+            SetSelected(joinButton);
+        }
 
-        SetSelected(createButton);
-    }
+        public void SearchPage()
+        {
+            joinPage.SetActive(false);
+            searchPage.SetActive(true);
+            createPage.SetActive(false);
 
-    // Seçili butona selectedSprite, diğerlerine normalSprite verir.
-    private void SetSelected(Button selected)
-    {
-        joinButton.image.sprite = joinButton == selected ? selectedSprite : normalSprite;
-        searchButton.image.sprite = searchButton == selected ? selectedSprite : normalSprite;
-        createButton.image.sprite = createButton == selected ? selectedSprite : normalSprite;
+            SetSelected(searchButton);
+        }
+
+        public void CreatePage()
+        {
+            joinPage.SetActive(false);
+            searchPage.SetActive(false);
+            createPage.SetActive(true);
+
+            SetSelected(createButton);
+        }
+
+        // Seçili butona selectedSprite, diğerlerine normalSprite verir.
+        private void SetSelected(Button selected)
+        {
+            joinButton.image.sprite = joinButton == selected ? selectedSprite : normalSprite;
+            searchButton.image.sprite = searchButton == selected ? selectedSprite : normalSprite;
+            createButton.image.sprite = createButton == selected ? selectedSprite : normalSprite;
+        }
     }
 }

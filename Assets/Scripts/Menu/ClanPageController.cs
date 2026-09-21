@@ -1,41 +1,46 @@
 using UnityEngine;
 
-// Clan sayfasının iki halini yönetir:
-// clanı yoksa OutOfClan (katıl/ara/kur), varsa InOfClan (clan içi ekran).
-public class ClanPageController : MonoBehaviour
+using Match3.Backend;
+
+namespace Match3.Menu
 {
-    [SerializeField] private GameObject outOfClan;
-    [SerializeField] private GameObject inOfClan;
-
-    private void OnEnable()
+    // Clan sayfasının iki halini yönetir:
+    // clanı yoksa OutOfClan (katıl/ara/kur), varsa InOfClan (clan içi ekran).
+    public class ClanPageController : MonoBehaviour
     {
-        FirebaseBootstrap.UserReady += OnUserReady;
-        ClanService.ClanChanged += Refresh;
+        [SerializeField] private GameObject outOfClan;
+        [SerializeField] private GameObject inOfClan;
 
-        Refresh();
-    }
+        private void OnEnable()
+        {
+            FirebaseBootstrap.UserReady += OnUserReady;
+            ClanService.ClanChanged += Refresh;
 
-    private void OnDisable()
-    {
-        FirebaseBootstrap.UserReady -= OnUserReady;
-        ClanService.ClanChanged -= Refresh;
-    }
+            Refresh();
+        }
 
-    private void OnUserReady(UserData user)
-    {
-        Refresh();
-    }
+        private void OnDisable()
+        {
+            FirebaseBootstrap.UserReady -= OnUserReady;
+            ClanService.ClanChanged -= Refresh;
+        }
 
-    public void Refresh()
-    {
-        FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
+        private void OnUserReady(UserData user)
+        {
+            Refresh();
+        }
 
-        // Veri gelmeden karar veremeyiz; gelene kadar OutOfClan gösterilir.
-        bool hasClan = bootstrap != null &&
-                       bootstrap.IsReady &&
-                       !string.IsNullOrEmpty(bootstrap.User.clanId);
+        public void Refresh()
+        {
+            FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
 
-        if (outOfClan != null) outOfClan.SetActive(!hasClan);
-        if (inOfClan != null) inOfClan.SetActive(hasClan);
+            // Veri gelmeden karar veremeyiz; gelene kadar OutOfClan gösterilir.
+            bool hasClan = bootstrap != null &&
+                           bootstrap.IsReady &&
+                           !string.IsNullOrEmpty(bootstrap.User.clanId);
+
+            if (outOfClan != null) outOfClan.SetActive(!hasClan);
+            if (inOfClan != null) inOfClan.SetActive(hasClan);
+        }
     }
 }

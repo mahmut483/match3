@@ -1,0 +1,19 @@
+{
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "name": "Match3",
+    "rootNamespace": "Match3",
+    "references": [
+        "Unity.TextMeshPro",
+        "Unity.InputSystem",
+        "spine-unity",
+        "CFXRRuntime"
+    ]
+}

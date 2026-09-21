@@ -3,124 +3,127 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// ◀ değer ▶ şeklindeki seçici. Pagination objesine eklenir.
-// Butonlar ve yazı alt objelerden otomatik bulunur — elle sürüklemeye gerek yok.
-// Hiyerarşideki İLK buton sol ok, İKİNCİ buton sağ ok kabul edilir.
-public class OptionSelector : MonoBehaviour
+namespace Match3.Menu
 {
-    [Header("Seçenekler")]
-    [Tooltip("Ekranda görünecek yazılar.")]
-    [SerializeField] private string[] labels;
-
-    [Tooltip("Her seçeneğin kaydedilecek sayısal karşılığı. Boş bırakılırsa sıra numarası kullanılır.")]
-    [SerializeField] private int[] values;
-
-    [Header("Referanslar (boş bırakılabilir)")]
-    [Tooltip("Butonların sırası tersse buradan elle atayın.")]
-    [SerializeField] private Button prevButton;
-    [SerializeField] private Button nextButton;
-    [SerializeField] private TMP_Text valueText;
-
-    public event Action Changed;
-
-    private int index;
-
-    public int SelectedIndex => index;
-
-    public int SelectedValue =>
-        values != null && index < values.Length ? values[index] : index;
-
-    private void Awake()
+    // ◀ değer ▶ şeklindeki seçici. Pagination objesine eklenir.
+    // Butonlar ve yazı alt objelerden otomatik bulunur — elle sürüklemeye gerek yok.
+    // Hiyerarşideki İLK buton sol ok, İKİNCİ buton sağ ok kabul edilir.
+    public class OptionSelector : MonoBehaviour
     {
-        AutoWire();
+        [Header("Seçenekler")]
+        [Tooltip("Ekranda görünecek yazılar.")]
+        [SerializeField] private string[] labels;
 
-        if (prevButton != null) prevButton.onClick.AddListener(() => Step(-1));
-        if (nextButton != null) nextButton.onClick.AddListener(() => Step(1));
+        [Tooltip("Her seçeneğin kaydedilecek sayısal karşılığı. Boş bırakılırsa sıra numarası kullanılır.")]
+        [SerializeField] private int[] values;
 
-        Refresh();
-    }
+        [Header("Referanslar (boş bırakılabilir)")]
+        [Tooltip("Butonların sırası tersse buradan elle atayın.")]
+        [SerializeField] private Button prevButton;
+        [SerializeField] private Button nextButton;
+        [SerializeField] private TMP_Text valueText;
 
-    // Atanmamış referansları alt objelerden bulur.
-    private void AutoWire()
-    {
-        if (prevButton == null || nextButton == null)
+        public event Action Changed;
+
+        private int index;
+
+        public int SelectedIndex => index;
+
+        public int SelectedValue =>
+            values != null && index < values.Length ? values[index] : index;
+
+        private void Awake()
         {
-            Button[] buttons = GetComponentsInChildren<Button>(true);
+            AutoWire();
 
-            if (prevButton == null && buttons.Length > 0) prevButton = buttons[0];
-            if (nextButton == null && buttons.Length > 1) nextButton = buttons[1];
+            if (prevButton != null) prevButton.onClick.AddListener(() => Step(-1));
+            if (nextButton != null) nextButton.onClick.AddListener(() => Step(1));
 
-            if (buttons.Length < 2)
+            Refresh();
+        }
+
+        // Atanmamış referansları alt objelerden bulur.
+        private void AutoWire()
+        {
+            if (prevButton == null || nextButton == null)
             {
-                Debug.LogWarning($"{name}: Seçici için iki buton gerekiyor, {buttons.Length} bulundu.");
+                Button[] buttons = GetComponentsInChildren<Button>(true);
+
+                if (prevButton == null && buttons.Length > 0) prevButton = buttons[0];
+                if (nextButton == null && buttons.Length > 1) nextButton = buttons[1];
+
+                if (buttons.Length < 2)
+                {
+                    Debug.LogWarning($"{name}: Seçici için iki buton gerekiyor, {buttons.Length} bulundu.");
+                }
+            }
+
+            if (valueText == null)
+            {
+                // Butonların içindeki yazıları atla, gerçek değer yazısını bul.
+                foreach (TMP_Text text in GetComponentsInChildren<TMP_Text>(true))
+                {
+                    if (text.GetComponentInParent<Button>() != null) continue;
+
+                    valueText = text;
+                    break;
+                }
+            }
+
+            if (valueText == null)
+            {
+                Debug.LogWarning($"{name}: Değer yazısı (TMP) bulunamadı.");
             }
         }
 
-        if (valueText == null)
+        private void OnDestroy()
         {
-            // Butonların içindeki yazıları atla, gerçek değer yazısını bul.
-            foreach (TMP_Text text in GetComponentsInChildren<TMP_Text>(true))
+            if (prevButton != null) prevButton.onClick.RemoveAllListeners();
+            if (nextButton != null) nextButton.onClick.RemoveAllListeners();
+        }
+
+        // Uçlarda başa/sona sarar.
+        private void Step(int direction)
+        {
+            if (labels == null || labels.Length == 0) return;
+
+            index = (index + direction + labels.Length) % labels.Length;
+
+            Refresh();
+            Changed?.Invoke();
+        }
+
+        // Kayıtlı bir değere karşılık gelen seçeneği seçer (düzenleme ekranı için).
+        public void SetValue(int value)
+        {
+            if (values != null)
             {
-                if (text.GetComponentInParent<Button>() != null) continue;
+                for (int i = 0; i < values.Length; i++)
+                {
+                    if (values[i] != value) continue;
 
-                valueText = text;
-                break;
+                    SetIndex(i);
+                    return;
+                }
             }
+
+            SetIndex(value);
         }
 
-        if (valueText == null)
+        public void SetIndex(int newIndex)
         {
-            Debug.LogWarning($"{name}: Değer yazısı (TMP) bulunamadı.");
+            if (labels == null || labels.Length == 0) return;
+
+            index = Mathf.Clamp(newIndex, 0, labels.Length - 1);
+            Refresh();
         }
-    }
 
-    private void OnDestroy()
-    {
-        if (prevButton != null) prevButton.onClick.RemoveAllListeners();
-        if (nextButton != null) nextButton.onClick.RemoveAllListeners();
-    }
-
-    // Uçlarda başa/sona sarar.
-    private void Step(int direction)
-    {
-        if (labels == null || labels.Length == 0) return;
-
-        index = (index + direction + labels.Length) % labels.Length;
-
-        Refresh();
-        Changed?.Invoke();
-    }
-
-    // Kayıtlı bir değere karşılık gelen seçeneği seçer (düzenleme ekranı için).
-    public void SetValue(int value)
-    {
-        if (values != null)
+        private void Refresh()
         {
-            for (int i = 0; i < values.Length; i++)
+            if (valueText != null && labels != null && index < labels.Length)
             {
-                if (values[i] != value) continue;
-
-                SetIndex(i);
-                return;
+                valueText.text = labels[index];
             }
-        }
-
-        SetIndex(value);
-    }
-
-    public void SetIndex(int newIndex)
-    {
-        if (labels == null || labels.Length == 0) return;
-
-        index = Mathf.Clamp(newIndex, 0, labels.Length - 1);
-        Refresh();
-    }
-
-    private void Refresh()
-    {
-        if (valueText != null && labels != null && index < labels.Length)
-        {
-            valueText.text = labels[index];
         }
     }
 }
