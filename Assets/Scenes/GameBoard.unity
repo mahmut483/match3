@@ -7175,7 +7175,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: You Failled!
+  m_text: "You Failed!"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: d01daf6da634740eca63a08f4a1f61d6, type: 2}
@@ -16662,7 +16662,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Korsan Tokma\u011F\u0131"
+  m_text: "Pirate Hammer"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
   m_sharedMaterial: {fileID: 524515893638682886, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
@@ -22021,8 +22021,8 @@ MonoBehaviour:
     selectedVisual: {fileID: 582594513}
     canvas: {fileID: 1009743578}
     panelIcon: {fileID: 21300000, guid: ba6c7177c4b75425ea93e3bb7652a966, type: 3}
-    title: Korsan Balyozu
-    description: "K\u0131rmak istedi\u011Fin objeyi se\xE7!"
+    title: "Pirate Hammer"
+    description: "Pick a piece to smash!"
     remaining: 0
   - kind: 1
     button: {fileID: 425707176}
@@ -22030,8 +22030,8 @@ MonoBehaviour:
     selectedVisual: {fileID: 1531845127}
     canvas: {fileID: 425707179}
     panelIcon: {fileID: 21300000, guid: 7ad2567951caa42f8b86a8ad7f1a7dcd, type: 3}
-    title: "\u015Eahi Topu"
-    description: "K\u0131rmak istedi\u011Fin sat\u0131r\u0131 se\xE7!"
+    title: "Royal Cannon"
+    description: "Pick a row to blast!"
     remaining: 0
   - kind: 2
     button: {fileID: 1785195480}
@@ -22039,8 +22039,8 @@ MonoBehaviour:
     selectedVisual: {fileID: 365775061}
     canvas: {fileID: 1785195483}
     panelIcon: {fileID: 21300000, guid: c21bf215e8fe14b57b87de5c2d6ca86c, type: 3}
-    title: "El Bombas\u0131"
-    description: "Patlatmak istedi\u011Fin objeyi se\xE7!"
+    title: "Hand Bomb"
+    description: "Pick a piece to blow up!"
     remaining: 0
   hammerReach: 1
   specialShotPanel: {fileID: 116241351}
@@ -23372,7 +23372,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Yok etmek istedi\u011Fin objeyi se\xE7!"
+  m_text: "Pick a piece to smash!"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
   m_sharedMaterial: {fileID: 524515893638682886, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}

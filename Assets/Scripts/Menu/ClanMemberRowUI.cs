@@ -19,7 +19,7 @@ namespace Match3.Menu
         {
             if (nameText != null) nameText.text = member.displayName;
             if (levelText != null) levelText.text = member.highestCompletedLevel.ToString();
-            if (roleText != null) roleText.text = isLeader ? "Lider" : "Üye";
+            if (roleText != null) roleText.text = isLeader ? "Leader" : "Member";
 
             if (avatarImage == null || avatarCatalog == null) return;
 

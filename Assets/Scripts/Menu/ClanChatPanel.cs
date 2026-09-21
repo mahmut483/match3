@@ -26,7 +26,7 @@ namespace Match3.Menu
         [Header("Yazma")]
         [SerializeField] private Button writeButton;
         [SerializeField] private int maxMessageLength = 120;
-        [SerializeField] private string keyboardPlaceholder = "Mesajını yaz...";
+        [SerializeField] private string keyboardPlaceholder = "Type a message...";
 
         [Tooltip("Yalnızca editörde test için. Cihazda kullanılmaz, boş bırakılabilir.")]
         [SerializeField] private TMP_InputField editorInput;

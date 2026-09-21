@@ -23,7 +23,7 @@ namespace Match3.Menu
         [SerializeField] private TMP_Text membersValue;
 
         [Tooltip("joinType sayısının karşılığı: 0, 1, 2 sırasıyla.")]
-        [SerializeField] private string[] joinTypeLabels = { "Açık", "Onaylı", "Kapalı" };
+        [SerializeField] private string[] joinTypeLabels = { "Open", "Approval", "Closed" };
 
         [Header("Üye listesi")]
         [SerializeField] private ClanMemberRowUI memberRowPrefab;

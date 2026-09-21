@@ -20,16 +20,16 @@ namespace Match3.Menu
             if (timeText != null) timeText.text = FormatAge(message.createdAt.ToDateTime());
         }
 
-        // "az önce", "5dk", "3sa", "2g" gibi kısa gösterim.
+        // "just now", "5m", "3h", "2d" gibi kısa gösterim.
         private static string FormatAge(DateTime utc)
         {
             TimeSpan age = DateTime.UtcNow - utc;
 
-            if (age.TotalMinutes < 1) return "az önce";
-            if (age.TotalHours < 1) return (int)age.TotalMinutes + "dk";
-            if (age.TotalDays < 1) return (int)age.TotalHours + "sa";
+            if (age.TotalMinutes < 1) return "just now";
+            if (age.TotalHours < 1) return (int)age.TotalMinutes + "m";
+            if (age.TotalDays < 1) return (int)age.TotalHours + "h";
 
-            return (int)age.TotalDays + "g";
+            return (int)age.TotalDays + "d";
         }
     }
 }

@@ -72,7 +72,7 @@ namespace Match3.Backend
                 .OrderByDescending("totalScore")
                 .Limit(limit);
 
-            Run(query, onDone, "Clan listesi alınamadı");
+            Run(query, onDone, "Couldn't load clans");
         }
 
         // Arama: Firestore metin araması yapamaz, bu yüzden ön-ek sorgusu kullanılır.
@@ -92,7 +92,7 @@ namespace Match3.Backend
                 .WhereLessThan("nameLower", q + "\uf8ff")
                 .Limit(limit);
 
-            Run(query, onDone, "Arama başarısız");
+            Run(query, onDone, "Search failed");
         }
 
         private static void Run(Query query, Action<List<ClanData>> onDone, string errorLabel)
@@ -127,7 +127,7 @@ namespace Match3.Backend
 
             if (bootstrap == null || !bootstrap.IsReady)
             {
-                onDone?.Invoke(false, "Bağlantı yok.");
+                onDone?.Invoke(false, "No connection.");
                 return;
             }
 
@@ -135,13 +135,13 @@ namespace Match3.Backend
 
             if (!string.IsNullOrEmpty(user.clanId))
             {
-                onDone?.Invoke(false, "Zaten bir clandasın.");
+                onDone?.Invoke(false, "You're already in a clan.");
                 return;
             }
 
             if (CreateCost > 0 && user.gold < CreateCost)
             {
-                onDone?.Invoke(false, "Yeterli altının yok.");
+                onDone?.Invoke(false, "Not enough gold.");
                 return;
             }
 
@@ -185,7 +185,7 @@ namespace Match3.Backend
 
                     if (!nameTaken) Debug.LogError("Clan kurulamadı: " + task.Exception);
 
-                    onDone?.Invoke(false, nameTaken ? "Bu isim alınmış." : "Clan kurulamadı.");
+                    onDone?.Invoke(false, nameTaken ? "That name is taken." : "Couldn't create the clan.");
                     return;
                 }
 
@@ -247,7 +247,7 @@ namespace Match3.Backend
 
             if (bootstrap == null || !bootstrap.IsReady || CurrentClan == null)
             {
-                onDone?.Invoke(false, "Clan verisi yok.");
+                onDone?.Invoke(false, "Clan data not found.");
                 return;
             }
 
@@ -257,7 +257,7 @@ namespace Match3.Backend
 
             if (isLeader && clan.memberCount > 1)
             {
-                onDone?.Invoke(false, "Lider, başka üyeler varken ayrılamaz.");
+                onDone?.Invoke(false, "The leader can't leave while others are in the clan.");
                 return;
             }
 
@@ -295,7 +295,7 @@ namespace Match3.Backend
                 if (task.IsFaulted || task.IsCanceled)
                 {
                     Debug.LogError("Clandan ayrılınamadı: " + task.Exception);
-                    onDone?.Invoke(false, "Ayrılınamadı.");
+                    onDone?.Invoke(false, "Couldn't leave the clan.");
                     return;
                 }
 
@@ -317,13 +317,13 @@ namespace Match3.Backend
 
             if (bootstrap == null || !bootstrap.IsReady || CurrentClan == null)
             {
-                onDone?.Invoke(false, "Clan verisi yok.");
+                onDone?.Invoke(false, "Clan data not found.");
                 return;
             }
 
             if (CurrentClan.leaderUid != bootstrap.Uid)
             {
-                onDone?.Invoke(false, "Yalnızca lider düzenleyebilir.");
+                onDone?.Invoke(false, "Only the leader can edit.");
                 return;
             }
 
@@ -331,7 +331,7 @@ namespace Match3.Backend
 
             if (trimmed.Length < 3)
             {
-                onDone?.Invoke(false, "Clan adı en az 3 karakter olmalı.");
+                onDone?.Invoke(false, "Clan name must be at least 3 characters.");
                 return;
             }
 
@@ -373,7 +373,7 @@ namespace Match3.Backend
 
                     if (!nameTaken) Debug.LogError("Clan güncellenemedi: " + task.Exception);
 
-                    onDone?.Invoke(false, nameTaken ? "Bu isim alınmış." : "Güncellenemedi.");
+                    onDone?.Invoke(false, nameTaken ? "That name is taken." : "Couldn't update.");
                     return;
                 }
 
@@ -398,7 +398,7 @@ namespace Match3.Backend
 
             if (bootstrap == null || !bootstrap.IsReady)
             {
-                onDone?.Invoke(false, "Bağlantı yok.");
+                onDone?.Invoke(false, "No connection.");
                 return;
             }
 
@@ -406,19 +406,19 @@ namespace Match3.Backend
 
             if (!string.IsNullOrEmpty(user.clanId))
             {
-                onDone?.Invoke(false, "Zaten bir clandasın.");
+                onDone?.Invoke(false, "You're already in a clan.");
                 return;
             }
 
             if (user.highestCompletedLevel < clan.minLevel)
             {
-                onDone?.Invoke(false, "Seviyen yetersiz.");
+                onDone?.Invoke(false, "Your level is too low.");
                 return;
             }
 
             if (clan.memberCount >= clan.maxMembers)
             {
-                onDone?.Invoke(false, "Clan dolu.");
+                onDone?.Invoke(false, "Clan is full.");
                 return;
             }
 
@@ -451,8 +451,8 @@ namespace Match3.Backend
                 if (task.IsFaulted || task.IsCanceled)
                 {
                     string message = task.Exception != null && task.Exception.ToString().Contains("CLAN_FULL")
-                        ? "Clan dolu."
-                        : "Katılınamadı.";
+                        ? "Clan is full."
+                        : "Couldn't join.";
 
                     Debug.LogError("Clana katılma hatası: " + task.Exception);
                     onDone?.Invoke(false, message);

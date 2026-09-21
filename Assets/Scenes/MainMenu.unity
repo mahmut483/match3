@@ -15866,9 +15866,9 @@ MonoBehaviour:
   teamTypeValue: {fileID: 280171410}
   membersValue: {fileID: 1682447985}
   joinTypeLabels:
-  - "A\xE7\u0131k"
-  - "Onayl\u0131"
-  - "Kapal\u0131"
+  - "Open"
+  - "Approval"
+  - "Closed"
   memberRowPrefab: {fileID: 8744574623557217061, guid: de621a4e56c2e4c1ea4365c3f4794ff3, type: 3}
   memberParent: {fileID: 1915854700}
   memberLimit: 50
@@ -16212,7 +16212,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: PLay
+  m_text: "Play"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 9392e474c5b42456ea43e37e15639fd0, type: 2}
@@ -17994,7 +17994,7 @@ MonoBehaviour:
   otherRequestPrefab: {fileID: 6326405797647521557, guid: 976a842b66bbe4b9f887009031ba5a97, type: 3}
   writeButton: {fileID: 973043133}
   maxMessageLength: 120
-  keyboardPlaceholder: "Mesaj\u0131n\u0131 yaz..."
+  keyboardPlaceholder: "Type a message..."
   editorInput: {fileID: 1312512536}
   requestButton: {fileID: 235056975}
   requestTimeoutPanel: {fileID: 535504882}
