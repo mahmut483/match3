@@ -46,21 +46,11 @@ public class HammerStrikeView : MonoBehaviour
     {
         ResolveImpactParticles();
 
-        HashSet<Transform> effectRoots = new();
+        HashSet<Transform> effectRoots = FindEffectRoots();
         float effectLifetime = 0f;
 
-        foreach (ParticleSystem particles in impactParticles)
-        {
-            if (particles == null) continue;
-
-            effectRoots.Add(EffectRootOf(particles));
-
-            ParticleSystem.MainModule main = particles.main;
-            effectLifetime = Mathf.Max(
-                effectLifetime,
-                main.startDelay.constantMax + main.duration + main.startLifetime.constantMax);
-        }
-
+        // Kökler darbe noktasında kalsın diye parent'tan ayrılır ve açılır;
+        // Play, obje aktifken çağrılmalı.
         foreach (Transform effectRoot in effectRoots)
         {
             if (effectRoot == null) continue;
@@ -72,6 +62,12 @@ public class HammerStrikeView : MonoBehaviour
         foreach (ParticleSystem particles in impactParticles)
         {
             if (particles == null) continue;
+
+            ParticleSystem.MainModule main = particles.main;
+            effectLifetime = Mathf.Max(
+                effectLifetime,
+                main.startDelay.constantMax + main.duration + main.startLifetime.constantMax);
+
             particles.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
             particles.Play(false);
         }

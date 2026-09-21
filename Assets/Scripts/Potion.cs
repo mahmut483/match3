@@ -13,7 +13,6 @@ public class Potion : MonoBehaviour
     public int xIndex;
     public int yIndex;
 
-    public bool isMatched;
     public bool isMoving;
 
     private float swapSpeed = .12f;

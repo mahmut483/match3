@@ -117,6 +117,9 @@ public class SpecialStrikes : MonoBehaviour
         // Ayarlar paneli açıkken tahta kilitli; vuruş seçimi de kapalı.
         if (board != null && board.InputLocked) return;
 
+        // Oyun bittiyse (kazanma/kaybetme paneli) hiçbir vuruş seçilemez.
+        if (GameManager.Instance != null && GameManager.Instance.isGameEnded) return;
+
         StrikeSlot slot = SlotFor(kind);
 
         if (slot == null || slot.remaining <= 0) return;
@@ -203,11 +206,13 @@ public class SpecialStrikes : MonoBehaviour
     // kontrolü yapıyor ve dışarıdakini sessizce atlıyor.
     private List<Vector2Int> CellsFor(StrikeKind kind, Vector2Int origin)
     {
-        List<Vector2Int> cells = new() { origin };
+        List<Vector2Int> cells = new();
 
         switch (kind)
         {
             case StrikeKind.Hammer:
+                cells.Add(origin);
+
                 for (int step = 1; step <= hammerReach; step++)
                 {
                     cells.Add(origin + Vector2Int.right * step);
@@ -222,7 +227,7 @@ public class SpecialStrikes : MonoBehaviour
                 {
                     for (int y = origin.y - 1; y <= origin.y + 1; y++)
                     {
-                        if (x != origin.x || y != origin.y) cells.Add(new Vector2Int(x, y));
+                        cells.Add(new Vector2Int(x, y));
                     }
                 }
                 break;

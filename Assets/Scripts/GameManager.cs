@@ -221,6 +221,7 @@ public class GameManager : MonoBehaviour
         }
 
         SetupGoalSlots();
+        RefreshHud();
     }
 
     // Level'da hedef olan tipleri açar, diğerlerini kapatır.
@@ -249,8 +250,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    // HUD yalnızca değer değişince yazılır: Initialize, AddPoints, ProcessTurn
+    // ve RegisterClearedPotion çağırır.
+    private void RefreshHud()
     {
         pointsTXT.text = points.ToString() + " /";
         movesTXT.text = moves.ToString();
@@ -269,13 +271,21 @@ public class GameManager : MonoBehaviour
     // Tipi eşleşen tüm hedeflerin kalan adedi düşülür.
     public void RegisterClearedPotion(PotionType type)
     {
+        bool changed = false;
+
         foreach (PotionGoal potionGoal in potionGoals)
         {
             if (potionGoal.potionType == type && potionGoal.amount > 0)
             {
                 potionGoal.amount--;
+                changed = true;
             }
         }
+
+        if (!changed) return;
+
+        RefreshHud();
+        TryWin();
     }
 
 
@@ -297,30 +307,40 @@ public class GameManager : MonoBehaviour
     public void AddPoints(int amount)
     {
         points += amount;
+        RefreshHud();
+        TryWin();
     }
 
-    public void ProcessTurn(int _pointsToGain)
+    // Kazanma, puan ve TÜM toplama hedefleri tamamlandığı ANDA ilan edilir;
+    // hangi yoldan geldiği (takas, dokunma, özel vuruş) fark etmez. Özel
+    // vuruşlar hamle harcamadığı için ProcessTurn'e uğramaz; kontrol orada
+    // kalsaydı vuruşla tamamlanan hedef bir sonraki takasa kadar fark edilmezdi.
+    // isGameEnded aynı karede tahta ve vuruş girişini kilitler.
+    private void TryWin()
+    {
+        if (isGameEnded) return;
+        if (points < goal || !AreAllPotionGoalsComplete()) return;
+
+        isGameEnded = true;
+        if (charAnim != null) charAnim.PlayWin();
+        backgroundPanel.SetActive(true);
+        confetti.SetActive(true);
+        StartCoroutine(WaitForConfetti());
+        audioSource.PlayOneShot(winClip, winVolume);
+    }
+
+    public void ProcessTurn()
     {
         // Cascade bittikten sonra biriken hamleler arka arkaya düşülüyor.
-        // Oyun bir önceki hamlede bittiyse kalanlar işlenmemeli — yoksa
-        // kazanma panelinin üstüne kaybetme paneli de açılabilir.
+        // Oyun bittiyse (kazanma TryWin'de, kaybetme burada) kalanlar
+        // işlenmemeli — yoksa kazanma panelinin üstüne kaybetme paneli de açılabilir.
         if (isGameEnded) return;
 
-        points += _pointsToGain;
         moves--;
+        RefreshHud();
 
-        // Kazanmak için puan hedefi ve TÜM toplama hedefleri tamamlanmalı.
-        if (points >= goal && AreAllPotionGoalsComplete())
-        {
-            //you've won the game
-            isGameEnded = true;
-            if (charAnim != null) charAnim.PlayWin();
-            backgroundPanel.SetActive(true);
-            confetti.SetActive(true);
-            StartCoroutine(WaitForConfetti());
-            audioSource.PlayOneShot(winClip, winVolume);
-            return;
-        }
+        // Kazanma burada değil, hedef tamamlandığı anda TryWin'de ilan edilir;
+        // buraya gelindiyse oyun hâlâ sürüyordur.
         if (moves <= 3 && moves != 0 && !isPlayedlast3MovesClip)
         {
             audioSource.PlayOneShot(last3MoveClip, last3MoveVolume);
