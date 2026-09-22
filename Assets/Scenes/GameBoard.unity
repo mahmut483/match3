@@ -7175,7 +7175,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "You Failed!"
+  m_text: You Failed!
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: d01daf6da634740eca63a08f4a1f61d6, type: 2}
@@ -14473,37 +14473,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cb7cd5d7a187463a93a0b131a337f42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PotionBoard
-  potionPrefabs:
-  - {fileID: 7927807542344970782, guid: bb60bc505e820734584f3d8bd0a16f53, type: 3}
-  - {fileID: 7927807542344970782, guid: 04a81442ef4438841a0074ba8568d5d9, type: 3}
-  - {fileID: 3930743957587144660, guid: f3e47e37930ff8f48b693da87b4025c7, type: 3}
-  - {fileID: 7927807542344970782, guid: 924c8da2c1342cd41a99abdae62388df, type: 3}
-  potionParent: {fileID: 1190611720}
   specialStrikes: {fileID: 1537404166}
-  destroyParticlesRed: {fileID: 7114066461626933240, guid: f35660e44c91a46a5823256134cbf536, type: 3}
-  destroyParticlesBlue: {fileID: 7114066461626933240, guid: e813785599365452f999a01beb8aa912, type: 3}
-  destroyParticlesGreen: {fileID: 7114066461626933240, guid: c62b72cef73264c6aa64703c98457529, type: 3}
-  destroyParticlesYellow: {fileID: 7114066461626933240, guid: 212ffb3bb0fcc48f2b4709a825a6c3cc, type: 3}
-  explodingPaticles: {fileID: 725748389856807712, guid: 4bda94453d2ca7444a0fff05b2d425f5, type: 3}
-  superExplodingParticles: {fileID: 725748389856807712, guid: 6c2e93fefd4c548069a3bd343de74641, type: 3}
-  rocketSpawnParticles: {fileID: 6856126483460176776, guid: 299ff16e538a14cd7afdff06eae1cb0d, type: 3}
-  rocketFireParticles: {fileID: 3787576505771008625, guid: 6ebd41b6ce0d94d44b58845f26321776, type: 3}
-  doubleRocketParticles: {fileID: 6442537486272230216, guid: d169104dca4044bb486745b8ae51b405, type: 3}
-  matchSource: {fileID: 1016066662}
-  superMatchSource: {fileID: 1016066664}
-  explodingSource: {fileID: 1016066663}
-  matchClip: {fileID: 8300000, guid: ffb159a21c8a04135a5616979c828fab, type: 3}
-  superMatchClip: {fileID: 8300000, guid: 7bd6b897eb5ca4b7d88a205c4a51640c, type: 3}
-  explodingClip: {fileID: 8300000, guid: e53c50cdd14c0004f8f381d4a956ab7b, type: 3}
-  bombClip: {fileID: 0}
-  doubleRocketClip: {fileID: 0}
-  matchVolume: 1
-  superMatchVolume: 1
-  explodingVolume: 1
-  bombVolume: 1
-  doubleRocketVolume: 1
-  dropStaggerDelay: 0.07
-  maxDropStagger: 0.2
   matchSettleDelay: 0.1
   superMatchMergeSpeed: 6
   superMatchMergeMinDuration: 0.14
@@ -14512,7 +14482,6 @@ MonoBehaviour:
   superMatchPoints: 15
   boardGrid: {fileID: 344793428}
   boardPresentation: {fileID: 2100001002}
-  boardVfxRoot: {fileID: 0}
 --- !u!82 &1016066662
 AudioSource:
   m_ObjectHideFlags: 0
@@ -14832,14 +14801,14 @@ MonoBehaviour:
   superMatchClip: {fileID: 8300000, guid: 7bd6b897eb5ca4b7d88a205c4a51640c, type: 3}
   explodingClip: {fileID: 8300000, guid: e53c50cdd14c0004f8f381d4a956ab7b, type: 3}
   bombClip: {fileID: 0}
-  hammerClip: {fileID: 8300000, guid: a85be36680de54dfc8da71784994507e, type: 3}
   doubleRocketClip: {fileID: 0}
+  hammerClip: {fileID: 8300000, guid: a85be36680de54dfc8da71784994507e, type: 3}
   matchVolume: 1
   superMatchVolume: 1
   explodingVolume: 1
   bombVolume: 1
-  hammerVolume: 1
   doubleRocketVolume: 1
+  hammerVolume: 1
   boardVfxRoot: {fileID: 0}
 --- !u!114 &1016066666
 MonoBehaviour:
@@ -16634,14 +16603,14 @@ RectTransform:
   m_GameObject: {fileID: 1466043359}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.4685, y: 1.4685, z: 1.4685}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 116241352}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 276.4, y: 1006}
+  m_AnchoredPosition: {x: 306, y: 1006}
   m_SizeDelta: {x: 626.8, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1466043361
@@ -16664,7 +16633,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Pirate Hammer"
+  m_text: Pirate Hammer
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
   m_sharedMaterial: {fileID: 524515893638682886, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
@@ -22023,8 +21992,8 @@ MonoBehaviour:
     selectedVisual: {fileID: 582594513}
     canvas: {fileID: 1009743578}
     panelIcon: {fileID: 21300000, guid: ba6c7177c4b75425ea93e3bb7652a966, type: 3}
-    title: "Pirate Hammer"
-    description: "Pick a piece to smash!"
+    title: Pirate Hammer
+    description: Pick a piece to smash!
     remaining: 0
   - kind: 1
     button: {fileID: 425707176}
@@ -22032,8 +22001,8 @@ MonoBehaviour:
     selectedVisual: {fileID: 1531845127}
     canvas: {fileID: 425707179}
     panelIcon: {fileID: 21300000, guid: 7ad2567951caa42f8b86a8ad7f1a7dcd, type: 3}
-    title: "Royal Cannon"
-    description: "Pick a row to blast!"
+    title: Royal Cannon
+    description: Pick a row to blast!
     remaining: 0
   - kind: 2
     button: {fileID: 1785195480}
@@ -22041,8 +22010,8 @@ MonoBehaviour:
     selectedVisual: {fileID: 365775061}
     canvas: {fileID: 1785195483}
     panelIcon: {fileID: 21300000, guid: c21bf215e8fe14b57b87de5c2d6ca86c, type: 3}
-    title: "Hand Bomb"
-    description: "Pick a piece to blow up!"
+    title: Hand Bomb
+    description: Pick a piece to blow up!
     remaining: 0
   hammerReach: 1
   specialShotPanel: {fileID: 116241351}
@@ -23344,15 +23313,15 @@ RectTransform:
   m_GameObject: {fileID: 1924058644}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.3601145, y: 1.3601145, z: 1.3601145}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 116241352}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 276.4, y: 841}
-  m_SizeDelta: {x: 626.8, y: 186.1}
+  m_AnchoredPosition: {x: 193, y: 779}
+  m_SizeDelta: {x: 506.3, y: 186.1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1924058646
 MonoBehaviour:
@@ -23374,7 +23343,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Pick a piece to smash!"
+  m_text: Pick a piece to smash!
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}
   m_sharedMaterial: {fileID: 524515893638682886, guid: eb2825f6975a240d6a200b2e5f556a43, type: 2}

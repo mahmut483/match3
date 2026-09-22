@@ -12,6 +12,7 @@ namespace Match3.Menu
         [SerializeField] private Image avatarImage;
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private TMP_Text levelText;
+        [SerializeField] private TMP_Text scoreText;     // üyenin toplam puanı
         [SerializeField] private TMP_Text roleText;      // opsiyonel: Lider / Üye
         [SerializeField] private AvatarCatalog avatarCatalog;
 
@@ -19,6 +20,7 @@ namespace Match3.Menu
         {
             if (nameText != null) nameText.text = member.displayName;
             if (levelText != null) levelText.text = member.highestCompletedLevel.ToString();
+            if (scoreText != null) scoreText.text = member.totalScore.ToString();
             if (roleText != null) roleText.text = isLeader ? "Leader" : "Member";
 
             if (avatarImage == null || avatarCatalog == null) return;

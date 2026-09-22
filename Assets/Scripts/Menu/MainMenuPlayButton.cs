@@ -56,7 +56,8 @@ namespace Match3.Menu
             playButton.interactable = catalog != null
                 && bootstrap != null
                 && bootstrap.IsReady
-                && bootstrap.User != null;
+                && bootstrap.User != null
+                && bootstrap.User.lives > 0;
         }
 
         private void Play()

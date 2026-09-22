@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Match3.Backend;
 using Match3.Gameplay.Potions;
 using Match3.Levels;
 using Match3.Shared;
@@ -70,6 +71,7 @@ namespace Match3.Gameplay.Session
         [SerializeField] private Button nextLevelButton;
         [SerializeField] private Button victoryScreenCloseButton;
         [SerializeField] private LevelCatalog levelCatalog;
+        [SerializeField] private int winGoldReward = 50;
 
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip last3MoveClip;
@@ -304,12 +306,26 @@ namespace Match3.Gameplay.Session
                 confetti.SetActive(true);
                 StartCoroutine(WaitForConfetti());
                 audioSource.PlayOneShot(winClip, winVolume);
+
+                // İlerleme kazanıldığı anda yazılır; panel çarpıyla kapansa da kaybolmaz.
+                if (FirebaseBootstrap.Instance != null)
+                {
+                    FirebaseBootstrap.Instance.CompleteLevel(ActiveLevel.level, session.Points, winGoldReward);
+                }
             }
             else
             {
                 if (charAnim != null) charAnim.PlayLose();
                 outOfMovesPanel.SetActive(true);
                 audioSource.PlayOneShot(lostClip, loseVolume);
+
+                // Kaybedilen her bölüm bir can götürür; can kalmadıysa Try Again kapanır
+                // (editörde doğrudan GameBoard açılırsa bootstrap yoktur, her şey açık kalır).
+                if (FirebaseBootstrap.Instance != null && FirebaseBootstrap.Instance.User != null)
+                {
+                    FirebaseBootstrap.Instance.SpendLife();
+                    if (tryAgainButton != null) tryAgainButton.interactable = FirebaseBootstrap.Instance.User.lives > 0;
+                }
             }
         }
 

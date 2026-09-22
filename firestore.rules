@@ -1,0 +1,90 @@
+rules_version = '2';
+
+// Koddaki erişim desenlerinden türetildi (FirebaseBootstrap, ClanService, ClanChatService,
+// LeaderboardPanel). Yayınlamak için: README'deki "Firestore" bölümü.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function myClanId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clanId;
+    }
+
+    // Kullanıcı: herkes okur (sıralama, üye listesi); yalnızca sahibi yazar.
+    // Puan ve bölüm geri gitmez, can 0..5, altın eksiye düşmez.
+    match /users/{uid} {
+      allow read: if signedIn();
+
+      allow create: if isOwner(uid)
+        && request.resource.data.highestCompletedLevel == 0
+        && request.resource.data.totalScore == 0
+        && request.resource.data.gold == 0
+        && request.resource.data.lives >= 0 && request.resource.data.lives <= 5;
+
+      allow update: if isOwner(uid)
+        && request.resource.data.lives >= 0 && request.resource.data.lives <= 5
+        && request.resource.data.gold >= 0
+        && request.resource.data.totalScore >= resource.data.totalScore
+        && request.resource.data.highestCompletedLevel >= resource.data.highestCompletedLevel;
+
+      allow delete: if false;
+    }
+
+    // Clan: herkes okur. Kuran kişi lider olur. Lider her alanı düzenler;
+    // diğer üyeler/katılanlar yalnızca memberCount ve totalScore'a dokunur
+    // (katılma, ayrılma, bölüm puanı). Silme yalnızca liderde (son üye ayrılınca).
+    match /clans/{clanId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.leaderUid == request.auth.uid
+        && request.resource.data.memberCount == 1;
+
+      allow update: if signedIn()
+        && (resource.data.leaderUid == request.auth.uid
+            || changedKeys().hasOnly(['memberCount', 'totalScore']));
+
+      allow delete: if signedIn() && resource.data.leaderUid == request.auth.uid;
+
+      // Mesajlar: yalnızca o clanın üyeleri okur/yazar. Bağış: sadece donorUids
+      // değişir ve bağışçı kendi uid'ini ekler. Kapatma (claimed): sadece isteğin sahibi.
+      match /messages/{messageId} {
+        allow read: if signedIn() && myClanId() == clanId;
+
+        allow create: if signedIn() && myClanId() == clanId
+          && request.resource.data.senderUid == request.auth.uid;
+
+        allow update: if signedIn() && myClanId() == clanId
+          && (
+            (changedKeys().hasOnly(['donorUids'])
+              && request.auth.uid in request.resource.data.donorUids)
+            || (changedKeys().hasOnly(['claimed'])
+              && resource.data.senderUid == request.auth.uid)
+          );
+
+        allow delete: if false;
+      }
+    }
+
+    // Clan adı rezervasyonu: benzersizlik için. Herkes okur/oluşturur (kurma/yeniden
+    // adlandırma işlemi içinde); silmeyi yalnızca o clanın lideri yapar.
+    match /clanNames/{nameLower} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.clanId is string;
+      allow update: if false;
+      allow delete: if signedIn()
+        && get(/databases/$(database)/documents/clans/$(resource.data.clanId)).data.leaderUid == request.auth.uid;
+    }
+  }
+}

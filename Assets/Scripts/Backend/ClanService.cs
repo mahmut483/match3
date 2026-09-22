@@ -11,13 +11,17 @@ namespace Match3.Backend
     // Sahneye eklenmez; statik olarak çağrılır.
     public static class ClanService
     {
-        // Şimdilik clan kurmak ücretsiz. Ücretlendirmeye geçilince bu değeri artırmak yeterli.
-        public const int CreateCost = 0;
+        // Clan kurma bedeli; butonun üzerindeki değerle aynı olmalı.
+        public const int CreateCost = 100;
 
         // Oyuncunun clan durumu değiştiğinde tetiklenir (kurdu / katıldı).
         public static event Action ClanChanged;
 
         private static FirebaseFirestore Db => FirebaseFirestore.DefaultInstance;
+
+        // Kullanıcı verisi hazır değilse Firestore'a hiç gidilmez.
+        private static bool IsReady =>
+            FirebaseBootstrap.Instance != null && FirebaseBootstrap.Instance.IsReady;
 
         // Oyuncunun içinde olduğu clan — bir kez okunup burada tutulur.
         public static ClanData CurrentClan { get; private set; }
@@ -68,6 +72,13 @@ namespace Match3.Backend
         // Listeleme: en güçlü clanlar önce. Tüm koleksiyon değil, yalnızca ilk 'limit' kayıt çekilir.
         public static void LoadClans(int limit, Action<List<ClanData>> onDone)
         {
+            // Giriş tamamlanmadan sorgu atılmaz: Firestore'a kimliksiz istek gider.
+            if (!IsReady)
+            {
+                onDone?.Invoke(new List<ClanData>());
+                return;
+            }
+
             Query query = Db.Collection("clans")
                 .OrderByDescending("totalScore")
                 .Limit(limit);
@@ -81,7 +92,7 @@ namespace Match3.Backend
         {
             string q = (text ?? "").Trim().ToLowerInvariant();
 
-            if (string.IsNullOrEmpty(q))
+            if (!IsReady || string.IsNullOrEmpty(q))
             {
                 onDone?.Invoke(new List<ClanData>());
                 return;
@@ -203,6 +214,27 @@ namespace Match3.Backend
         }
 
         // Clanın üyeleri: users koleksiyonunda clanId'si eşleşen kayıtlar.
+        // Sayaç gerçek üye sayısından büyükse (çift katılım, elle silinen kullanıcı vb.)
+        // lider clan dökümanını düzeltir. Yalnızca lider yazar; liste limitle kesilmişse dokunulmaz.
+        public static void RepairMemberCount(ClanData clan, int actualCount, int limit)
+        {
+            FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
+
+            if (bootstrap == null || !bootstrap.IsReady || clan == null) return;
+            if (clan.leaderUid != bootstrap.Uid) return;
+            if (actualCount >= limit || actualCount >= clan.memberCount) return;
+
+            clan.memberCount = actualCount;
+
+            Db.Collection("clans").Document(clan.id)
+                .UpdateAsync("memberCount", actualCount)
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsFaulted) Debug.LogWarning("memberCount onarılamadı: " + task.Exception);
+                    else ClanChanged?.Invoke();
+                });
+        }
+
         public static void LoadMembers(string clanId, int limit, Action<List<UserData>> onDone)
         {
             if (string.IsNullOrEmpty(clanId))
@@ -392,8 +424,14 @@ namespace Match3.Backend
         }
 
         // Clana katılma: üye sayısı artırılır, kullanıcının clanId'si yazılır.
+        // Aynı anda ikinci bir katılma isteği yok sayılır; yoksa çift dokunuş
+        // memberCount'u iki kez artırırdı.
+        private static bool isJoining;
+
         public static void JoinClan(ClanData clan, Action<bool, string> onDone)
         {
+            if (isJoining) return;
+
             FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
 
             if (bootstrap == null || !bootstrap.IsReady)
@@ -407,6 +445,13 @@ namespace Match3.Backend
             if (!string.IsNullOrEmpty(user.clanId))
             {
                 onDone?.Invoke(false, "You're already in a clan.");
+                return;
+            }
+
+            // 0 = herkese açık; diğer türlerde davet/onay sistemi olmadığı için katılım kapalı.
+            if (clan.joinType != 0)
+            {
+                onDone?.Invoke(false, "This clan is closed.");
                 return;
             }
 
@@ -425,11 +470,21 @@ namespace Match3.Backend
             DocumentReference clanDoc = Db.Collection("clans").Document(clan.id);
             DocumentReference userDoc = Db.Collection("users").Document(bootstrap.Uid);
 
+            isJoining = true;
+
             Db.RunTransactionAsync(async transaction =>
             {
                 DocumentSnapshot clanSnapshot = await transaction.GetSnapshotAsync(clanDoc);
+                DocumentSnapshot userSnapshot = await transaction.GetSnapshotAsync(userDoc);
 
                 if (!clanSnapshot.Exists) throw new Exception("CLAN_GONE");
+
+                // Sunucudaki gerçek duruma bakılır: yerel kopya eski olabilir (çift dokunuş,
+                // iki cihaz). Zaten üyeyse sayaç bir daha artmaz.
+                if (userSnapshot.Exists && userSnapshot.TryGetValue("clanId", out string existingClanId) && !string.IsNullOrEmpty(existingClanId))
+                {
+                    throw new Exception("ALREADY_MEMBER");
+                }
 
                 ClanData current = clanSnapshot.ConvertTo<ClanData>();
 
@@ -448,10 +503,13 @@ namespace Match3.Backend
                 });
             }).ContinueWithOnMainThread(task =>
             {
+                isJoining = false;
+
                 if (task.IsFaulted || task.IsCanceled)
                 {
-                    string message = task.Exception != null && task.Exception.ToString().Contains("CLAN_FULL")
-                        ? "Clan is full."
+                    string error = task.Exception != null ? task.Exception.ToString() : "";
+                    string message = error.Contains("CLAN_FULL") ? "Clan is full."
+                        : error.Contains("ALREADY_MEMBER") ? "You're already in a clan."
                         : "Couldn't join.";
 
                     Debug.LogError("Clana katılma hatası: " + task.Exception);

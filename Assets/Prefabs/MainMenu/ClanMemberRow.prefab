@@ -255,6 +255,7 @@ MonoBehaviour:
   avatarImage: {fileID: 6390226576302405003}
   nameText: {fileID: 4284639280191830641}
   levelText: {fileID: 5410940752285719144}
+  scoreText: {fileID: 9019099977275422908}
   roleText: {fileID: 3093463626746289557}
   avatarCatalog: {fileID: 11400000, guid: 0703d37da45a44974a1ff85bb879e6cd, type: 2}
 --- !u!1 &4318341454846016185

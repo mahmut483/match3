@@ -3,6 +3,7 @@ using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+using Match3.Backend;
 using Match3.Gameplay.Board;
 using Match3.Shared;
 
@@ -94,8 +95,14 @@ namespace Match3.Gameplay.Session
             if (board != null) board.InputLocked = false;
         }
 
+        // Bölüm bitmeden çıkmak kaybetmek sayılır: bir can gider.
         private void LeaveToMenu()
         {
+            if (FirebaseBootstrap.Instance != null && GameManager.Instance != null && !GameManager.Instance.IsGameEnded)
+            {
+                FirebaseBootstrap.Instance.SpendLife();
+            }
+
             SceneManager.LoadScene(ButtonControl.MainMenuScene);
         }
 

@@ -182,7 +182,12 @@ namespace Match3.Backend
             UserData user = bootstrap.User;
 
             int gained = Mathf.Min(request.DonorCount, LivesPerRequest);
-            int newLives = Mathf.Min(user.lives + gained, 5);
+            int newLives = Mathf.Min(user.lives + gained, LifeRules.MaxLives);
+
+            // Sayaç yalnızca can dolunca sıfırlanır; eksik kaldıysa kaldığı yerden devam eder.
+            Timestamp livesUpdatedAt = newLives >= LifeRules.MaxLives
+                ? Timestamp.FromDateTime(DateTime.UtcNow)
+                : user.livesUpdatedAt;
 
             DocumentReference messageDoc = Messages(user.clanId).Document(request.id);
             DocumentReference userDoc = Db.Collection("users").Document(bootstrap.Uid);
@@ -197,12 +202,13 @@ namespace Match3.Backend
                 }
 
                 user.lives = newLives;
+                user.livesUpdatedAt = livesUpdatedAt;
                 bootstrap.NotifyUserUpdated();
 
                 userDoc.UpdateAsync(new Dictionary<string, object>
                 {
                     { "lives", newLives },
-                    { "livesUpdatedAt", Timestamp.FromDateTime(DateTime.UtcNow) }
+                    { "livesUpdatedAt", livesUpdatedAt }
                 });
 
                 onDone?.Invoke(gained);

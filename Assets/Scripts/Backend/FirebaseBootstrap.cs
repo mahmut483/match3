@@ -23,7 +23,6 @@ namespace Match3.Backend
         public bool IsReady { get; private set; }
 
         [Header("Yeni oyuncu varsayılanları")]
-        [SerializeField] private int startingLives = 5;
         [SerializeField] private string defaultNamePrefix = "Oyuncu";
 
         private FirebaseAuth auth;
@@ -50,8 +49,9 @@ namespace Match3.Backend
                 }
 
                 auth = FirebaseAuth.DefaultInstance;
-                db = FirebaseFirestore.DefaultInstance;
 
+                // Firestore örneği bilerek burada kurulmaz: kimlik bilgilerini kurulduğu anda
+                // alıyor, girişten önce kurulursa tüm istekler kimliksiz gidiyor.
                 SignIn();
             });
         }
@@ -80,6 +80,9 @@ namespace Match3.Backend
         private void OnSignedIn(string uid)
         {
             Uid = uid;
+
+            // Giriş tamamlandıktan sonra ilk kez oluşturulur; böylece kimlikli çalışır.
+            db = FirebaseFirestore.DefaultInstance;
 
             DocumentReference doc = db.Collection("users").Document(uid);
 
@@ -119,7 +122,7 @@ namespace Match3.Backend
                 highestCompletedLevel = 0,
                 totalScore = 0,
                 bestScores = new Dictionary<string, int>(),
-                lives = startingLives,
+                lives = LifeRules.MaxLives,
                 livesUpdatedAt = now,
                 gold = 0,
                 clanId = null
@@ -181,9 +184,9 @@ namespace Match3.Backend
             if (User != null) UserReady?.Invoke(User);
         }
 
-        // Can sıfırdayken yenilenme süresi dolduğunda yerel veriyi hemen yeniler
-        // ve aynı değeri Firestore'a kalıcı olarak yazar.
-        public void RefillLivesToFull(int maximumLives, Action<bool> onDone = null)
+        // Sayaç dolmuşsa dolan aralık başına bir can ekler (LifeRules), yerel veri hemen,
+        // Firestore arkadan güncellenir. Eklenecek can yoksa hiçbir şey yazmaz.
+        public void RegenerateLives(Action<bool> onDone = null)
         {
             if (!IsReady || User == null)
             {
@@ -191,23 +194,47 @@ namespace Match3.Backend
                 return;
             }
 
-            if (User.lives > 0)
+            DateTime now = DateTime.UtcNow;
+            DateTime updatedAt = User.livesUpdatedAt.ToDateTime();
+            int gained = LifeRules.GainedLives(User.lives, updatedAt, now);
+
+            if (gained == 0)
             {
                 onDone?.Invoke(true);
                 return;
             }
 
-            int safeMaximum = Mathf.Max(1, maximumLives);
-            Timestamp now = Timestamp.FromDateTime(DateTime.UtcNow);
+            DateTime nextUpdatedAt = LifeRules.NextUpdatedAt(User.lives, updatedAt, gained, now);
+            WriteLives(User.lives + gained, Timestamp.FromDateTime(nextUpdatedAt), "Canlar yenilenirken", onDone);
+        }
 
-            User.lives = safeMaximum;
-            User.livesUpdatedAt = now;
+        // Bölüm kaybedilince/terk edilince bir can düşer. Sayaç yalnızca dolu durumdan
+        // düşerken başlar; can zaten eksikse kaldığı yerden devam eder.
+        public void SpendLife(Action<bool> onDone = null)
+        {
+            if (!IsReady || User == null || User.lives <= 0)
+            {
+                onDone?.Invoke(false);
+                return;
+            }
+
+            Timestamp updatedAt = User.lives >= LifeRules.MaxLives
+                ? Timestamp.FromDateTime(DateTime.UtcNow)
+                : User.livesUpdatedAt;
+
+            WriteLives(User.lives - 1, updatedAt, "Can düşülürken", onDone);
+        }
+
+        private void WriteLives(int lives, Timestamp updatedAt, string context, Action<bool> onDone)
+        {
+            User.lives = lives;
+            User.livesUpdatedAt = updatedAt;
             NotifyUserUpdated();
 
             Dictionary<string, object> fields = new Dictionary<string, object>
             {
-                { "lives", safeMaximum },
-                { "livesUpdatedAt", now }
+                { "lives", lives },
+                { "livesUpdatedAt", updatedAt }
             };
 
             db.Collection("users").Document(Uid).UpdateAsync(fields)
@@ -215,13 +242,63 @@ namespace Match3.Backend
                 {
                     if (task.IsFaulted || task.IsCanceled)
                     {
-                        Debug.LogError("Canlar yenilenirken Firestore güncellenemedi: " + task.Exception);
+                        Debug.LogError(context + " Firestore güncellenemedi: " + task.Exception);
                         onDone?.Invoke(false);
                         return;
                     }
 
                     onDone?.Invoke(true);
                 });
+        }
+
+        // Bölüm kazanılınca ilerleme: en yüksek bölüm, toplam puan, altın, bölüm rekoru.
+        // Puan/altın Increment ile yazılır ki başka bir yazma üstüne binmesin; kullanıcı
+        // bir clandaysa clanın toplam puanı da aynı miktar artar (üye toplamı olarak tutuluyor).
+        public void CompleteLevel(int level, int points, int goldReward, Action<bool> onDone = null)
+        {
+            if (!IsReady || User == null)
+            {
+                onDone?.Invoke(false);
+                return;
+            }
+
+            string levelKey = level.ToString();
+            User.bestScores ??= new Dictionary<string, int>();
+            User.bestScores.TryGetValue(levelKey, out int previousBest);
+            int bestScore = Math.Max(previousBest, points);
+
+            User.highestCompletedLevel = Math.Max(User.highestCompletedLevel, level);
+            User.totalScore += points;
+            User.gold += goldReward;
+            User.bestScores[levelKey] = bestScore;
+            NotifyUserUpdated();
+
+            WriteBatch batch = db.StartBatch();
+
+            batch.Update(db.Collection("users").Document(Uid), new Dictionary<FieldPath, object>
+            {
+                { new FieldPath("highestCompletedLevel"), User.highestCompletedLevel },
+                { new FieldPath("totalScore"), FieldValue.Increment(points) },
+                { new FieldPath("gold"), FieldValue.Increment(goldReward) },
+                { new FieldPath("bestScores", levelKey), bestScore }
+            });
+
+            if (!string.IsNullOrEmpty(User.clanId))
+            {
+                batch.Update(db.Collection("clans").Document(User.clanId), "totalScore", FieldValue.Increment(points));
+            }
+
+            batch.CommitAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsFaulted || task.IsCanceled)
+                {
+                    Debug.LogError("Bölüm ilerlemesi Firestore'a yazılamadı: " + task.Exception);
+                    onDone?.Invoke(false);
+                    return;
+                }
+
+                onDone?.Invoke(true);
+            });
         }
 
         // Son görülme zamanı — başka bir alana dokunmaz.

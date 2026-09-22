@@ -131,6 +131,10 @@ namespace Match3.Menu
                     row.Setup(member, member.uid == clan.leaderUid);
                     rows.Add(row);
                 }
+
+                // Sayaç listeden büyükse lider düzeltir; etiket hemen gerçek sayıyı gösterir.
+                ClanService.RepairMemberCount(clan, members.Count, memberLimit);
+                if (membersValue != null) membersValue.text = clan.memberCount + "/" + clan.maxMembers;
             });
         }
 
