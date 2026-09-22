@@ -56,6 +56,9 @@ namespace Match3.Gameplay.Board
         // Tahtanın görsel tilemap'inin yükleneceği Grid objesi.
         [SerializeField] private Transform boardGrid;
 
+        // Tahta şeklinden maske üretir; tahta dışı ve kapalı hücreler gizlenir.
+        [SerializeField] private BoardMask boardMask;
+
         [Header("Cannon Strike Presentation")]
         [Tooltip("Grid ve Potions'un ortak root'u. Yalnızca Cannon sinematiğinde hareket eder.")]
         [SerializeField] private Transform boardPresentation;
@@ -156,6 +159,10 @@ namespace Match3.Gameplay.Board
 
             grid = new BoardGrid(levelLayout);
             matchFinder = new MatchFinder(grid);
+
+            // Maske tahtanın şeklinden üretilir; elle yerleştirilmiş çerçeveler yalnızca
+            // dikdörtgen tahtalarda doğruydu.
+            if (boardMask != null) boardMask.Build(levelLayout, geometry, boardPresentation);
 
             refill.Initialize(grid, geometry);
             specialChain.Initialize(grid, geometry, effects, ReturnPotionToPool);

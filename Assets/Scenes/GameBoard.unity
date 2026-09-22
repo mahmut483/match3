@@ -479,10 +479,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1284, y: 2778}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -7303,10 +7303,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1284, y: 2778}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -13621,10 +13621,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1284, y: 2778}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -14481,6 +14481,7 @@ MonoBehaviour:
   matchPoints: 10
   superMatchPoints: 15
   boardGrid: {fileID: 344793428}
+  boardMask: {fileID: 1833530414}
   boardPresentation: {fileID: 2100001002}
 --- !u!82 &1016066662
 AudioSource:
@@ -15286,6 +15287,7 @@ MonoBehaviour:
   nextLevelButton: {fileID: 0}
   victoryScreenCloseButton: {fileID: 0}
   levelCatalog: {fileID: 0}
+  winGoldReward: 50
   audioSource: {fileID: 1076215352}
   last3MoveClip: {fileID: 8300000, guid: c5e2a73ad4706440f93bf05df0b465fe, type: 3}
   winClip: {fileID: 8300000, guid: 2667a0a008b044e218b63df62e2be749, type: 3}
@@ -22908,6 +22910,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1833530413}
+  - component: {fileID: 1833530414}
   m_Layer: 0
   m_Name: Masks
   m_TagString: Untagged
@@ -22915,6 +22918,28 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1833530414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1833530412}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42a562921e7d4d30a6b28f9194ee9be6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shapeMasks:
+  - {fileID: 1178704823}
+  - {fileID: 1606638733}
+  legacyFrames:
+  - {fileID: 861945045}
+  - {fileID: 1975755287}
+  - {fileID: 982901552}
+  - {fileID: 296377382}
+  - {fileID: 326226020}
+  - {fileID: 660777812}
 --- !u!4 &1833530413
 Transform:
   m_ObjectHideFlags: 0
