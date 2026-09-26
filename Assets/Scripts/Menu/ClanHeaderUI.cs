@@ -28,12 +28,6 @@ namespace Match3.Menu
             if (infoPanel != null) infoPanel.SetActive(false);
         }
 
-        private void OnDestroy()
-        {
-            if (infoButton != null) infoButton.onClick.RemoveListener(OpenInfo);
-            if (closeInfoButton != null) closeInfoButton.onClick.RemoveListener(CloseInfo);
-        }
-
         private void OnEnable()
         {
             // Clan bilgileri düzenlenince başlık kendiliğinden tazelenir.

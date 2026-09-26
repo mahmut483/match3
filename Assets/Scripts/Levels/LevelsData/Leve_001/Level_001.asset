@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: Level_001
   m_EditorClassIdentifier: Assembly-CSharp::LevelData
   level: 1
-  moves: 3
-  goal: 100
+  moves: 80
+  goal: 90
   potionGoals:
   - potionType: 0
-    amount: 3
+    amount: 90
   - potionType: 1
-    amount: 6
+    amount: 90
   hammerCount: 5
   cannonCount: 5
   bombCount: 5

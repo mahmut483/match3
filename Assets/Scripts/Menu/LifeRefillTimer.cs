@@ -19,12 +19,15 @@ namespace Match3.Menu
                 safeDuration);
         }
 
+        // Sayaç YALNIZCA can tükendiğinde görünür. Aradaki değerlerde (1..max-1)
+        // yenilenme arka planda aynı şekilde işler; oyuncuya gösterilmez, çünkü
+        // hâlâ oynayabiliyorken geri sayım bir baskı değil gürültüdür.
         public static string FormatStatus(int lives, int maximum, int remainingSeconds)
         {
             int safeMaximum = Mathf.Max(1, maximum);
             int safeLives = Mathf.Clamp(lives, 0, safeMaximum);
 
-            if (safeLives >= safeMaximum)
+            if (safeLives > 0)
             {
                 return $"{safeLives}/{safeMaximum}";
             }

@@ -21,22 +21,26 @@ namespace Match3.Menu
 
         private readonly List<LeaderboardRow> spawnedRows = new();
         private bool isLoading;
+        private bool hasLoaded;
+        private long ownRank;
 
         private void OnEnable()
         {
+            FirebaseBootstrap.UserReady += HandleUserUpdated;
             Load();
+        }
+
+        private void OnDisable()
+        {
+            FirebaseBootstrap.UserReady -= HandleUserUpdated;
         }
 
         public void Load()
         {
             FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
 
-            if (bootstrap == null || !bootstrap.IsReady)
-            {
-                // Veri henüz gelmediyse hazır olunca tekrar dene.
-                FirebaseBootstrap.UserReady += OnUserReady;
-                return;
-            }
+            // Veri henüz gelmediyse bir şey yapma; hazır olunca HandleUserUpdated çağıracak.
+            if (bootstrap == null || !bootstrap.IsReady) return;
 
             if (isLoading) return;
 
@@ -48,16 +52,32 @@ namespace Match3.Menu
             LoadOwnRank(db, bootstrap.User);
         }
 
-        private void OnUserReady(UserData user)
+        // Oyuncunun verisi değişti (profil kaydı, can, bölüm ilerlemesi).
+        //
+        // Liste bilerek yeniden ÇEKİLMİYOR: bu olay can yenilenmesiyle dakikada bir de
+        // geliyor, her seferinde 100 dökümanlık sorgu atmak kabul edilemez. Yalnızca bu
+        // oyuncuya ait satırlar yerinde tazeleniyor — zaten değişen tek veri o. Diğer
+        // oyuncuların bilgisi menüye her dönüşte (sahne yeniden yükleniyor) güncelleniyor.
+        //
+        // Bu tazeleme şart, çünkü sayfalar hiç deaktive edilmiyor: Rank sayfasına
+        // kaydırmak OnEnable tetiklemez, liste sahne açıldığı gibi kalır.
+        private void HandleUserUpdated(UserData user)
         {
-            FirebaseBootstrap.UserReady -= OnUserReady;
+            if (user == null) return;
 
-            if (isActiveAndEnabled) Load();
-        }
+            // Veri ilk kez hazırsa asıl yükleme şimdi yapılır.
+            if (!hasLoaded)
+            {
+                Load();
+                return;
+            }
 
-        private void OnDisable()
-        {
-            FirebaseBootstrap.UserReady -= OnUserReady;
+            if (ownRow != null && ownRank > 0) ownRow.Setup(ownRank, user);
+
+            foreach (LeaderboardRow row in spawnedRows)
+            {
+                if (row != null && row.Uid == user.uid) row.Setup(row.Rank, user);
+            }
         }
 
         // En yüksek seviyeli oyuncular. Tüm koleksiyonu değil, yalnızca ilk topCount kaydı çeker.
@@ -78,6 +98,7 @@ namespace Match3.Menu
                 }
 
                 ClearRows();
+                hasLoaded = true;
 
                 long rank = 1;
 
@@ -85,8 +106,12 @@ namespace Match3.Menu
                 {
                     UserData user = doc.ConvertTo<UserData>();
 
+                    // uid Firestore'da alan değil, döküman kimliği. Satırın kime ait
+                    // olduğunu bilmesi için elle taşınır.
+                    user.uid = doc.Id;
+
                     LeaderboardRow row = Instantiate(rowPrefab, rowParent);
-                    row.Setup(rank, user.displayName, user.highestCompletedLevel);
+                    row.Setup(rank, user);
 
                     spawnedRows.Add(row);
                     rank++;
@@ -112,9 +137,10 @@ namespace Match3.Menu
                     return;
                 }
 
-                long rank = task.Result.Count + 1;
+                // Sıra saklanır: profil değişince satır yeni sorgu atmadan tazelenir.
+                ownRank = task.Result.Count + 1;
 
-                ownRow.Setup(rank, user.displayName, user.highestCompletedLevel);
+                ownRow.Setup(ownRank, user);
             });
         }
 

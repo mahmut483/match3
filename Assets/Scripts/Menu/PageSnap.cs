@@ -18,7 +18,6 @@ namespace Match3.Menu
         [SerializeField] private RectTransform startPage;
 
         private int pageCount;
-        private int currentPage;
 
         private float targetPosition;
 
@@ -125,8 +124,6 @@ namespace Match3.Menu
                 0,
                 pageCount - 1
             );
-
-            currentPage = pageIndex;
 
             if (pageCount <= 1)
                 targetPosition = 0f;

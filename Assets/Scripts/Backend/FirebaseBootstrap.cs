@@ -309,6 +309,11 @@ namespace Match3.Backend
 
         private void Finish()
         {
+            // Firestore uid'i alan olarak tutmuyor (döküman kimliği). Yerel kopyaya
+            // burada yazılır ki UI "bu kayıt bana mı ait?" sorusunu UserData üzerinden
+            // cevaplayabilsin; aksi halde User.uid hep null kalıyordu.
+            if (User != null) User.uid = Uid;
+
             IsReady = true;
             NotifyUserUpdated();
         }

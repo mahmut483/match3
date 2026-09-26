@@ -2,15 +2,8 @@
   <Project Path="Match3.csproj" />
   <Project Path="spine-unity-editor.csproj" />
   <Project Path="spine-unity.csproj" />
-  <Project Path="spine-unity-examples.csproj" />
-  <Project Path="KinoBloom.Runtime.csproj" />
-  <Project Path="ToonyColorsPro.Demo.Editor.csproj" />
-  <Project Path="spine-unity-examples-editor.csproj" />
-  <Project Path="Match3.Tests.PlayMode.csproj" />
-  <Project Path="Match3.Tests.EditMode.csproj" />
   <Project Path="CFXRRuntime.csproj" />
   <Project Path="Match3.Editor.csproj" />
   <Project Path="CFXREditor.csproj" />
-  <Project Path="CFXRDemo.csproj" />
   <Project Path="Firebase.App.Internal.csproj" />
 </Solution>

@@ -36,14 +36,6 @@ namespace Match3.Menu
             if (searchInput != null) searchInput.onSubmit.AddListener(_ => Search());
         }
 
-        private void OnDestroy()
-        {
-            if (searchButton != null) searchButton.onClick.RemoveListener(Search);
-            if (clearButton != null) clearButton.onClick.RemoveListener(Clear);
-            if (viewClansButton != null) viewClansButton.onClick.RemoveListener(ShowJoinPage);
-            if (searchInput != null) searchInput.onSubmit.RemoveAllListeners();
-        }
-
         public void Search()
         {
             if (searchInput == null || resultList == null) return;

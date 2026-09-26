@@ -46,12 +46,8 @@ namespace Match3.Gameplay.Session
         [SerializeField] private AudioToggle music = new();
         [SerializeField] private AudioToggle sfx = new();
 
-        private GameAudioSettings audioSettings;
-
         private void Start()
         {
-            audioSettings = GameAudioSettings.Shared;
-
             if (settingsOpenButton != null) settingsOpenButton.onClick.AddListener(OpenSettings);
             if (settingsCloseButton != null) settingsCloseButton.onClick.AddListener(CloseSettings);
             if (leaveButton != null) leaveButton.onClick.AddListener(LeaveToMenu);
@@ -59,8 +55,8 @@ namespace Match3.Gameplay.Session
             if (music.button != null) music.button.onClick.AddListener(ToggleMusic);
             if (sfx.button != null) sfx.button.onClick.AddListener(ToggleSfx);
 
-            music.isOn = audioSettings.IsEnabled(GameAudioChannel.Music);
-            sfx.isOn = audioSettings.IsEnabled(GameAudioChannel.Sfx);
+            music.isOn = GameAudioSettings.IsEnabled(GameAudioChannel.Music);
+            sfx.isOn = GameAudioSettings.IsEnabled(GameAudioChannel.Sfx);
 
             Apply(music, GameAudioChannel.Music);
             Apply(sfx, GameAudioChannel.Sfx);
@@ -118,7 +114,7 @@ namespace Match3.Gameplay.Session
 
         private void Toggle(AudioToggle view, GameAudioChannel channel)
         {
-            view.isOn = audioSettings.Toggle(channel);
+            view.isOn = GameAudioSettings.Toggle(channel);
             Apply(view, channel);
         }
 
@@ -128,7 +124,7 @@ namespace Match3.Gameplay.Session
             {
                 mixer.SetFloat(
                     GameAudioSettings.GetMixerParameter(channel),
-                    audioSettings.GetVolumeDb(channel));
+                    GameAudioSettings.GetVolumeDb(channel));
             }
 
             // Değişecek görsel butonun kendi paneli; ikon ona dokunulmadan üstte durur.

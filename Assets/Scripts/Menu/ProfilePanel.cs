@@ -41,14 +41,6 @@ namespace Match3.Menu
             SelectAvatar(0);
         }
 
-        private void OnDestroy()
-        {
-            if (saveButton != null) saveButton.onClick.RemoveListener(Save);
-            if (closeButton != null) closeButton.onClick.RemoveListener(Close);
-            if (previousAvatarButton != null) previousAvatarButton.onClick.RemoveListener(ShowPreviousAvatar);
-            if (nextAvatarButton != null) nextAvatarButton.onClick.RemoveListener(ShowNextAvatar);
-        }
-
         // Panel her açıldığında mevcut kullanıcı bilgileriyle doldurulur.
         private void OnEnable()
         {

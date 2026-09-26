@@ -13,7 +13,9 @@ namespace Match3.Backend
         public const int LivesPerRequest = 5;
 
         // İki can isteği arasında beklenmesi gereken süre (saniye).
-        public const int RequestCooldownSeconds = 1800;
+        // ŞU AN TEST DEĞERİ (10 sn). Yayına çıkmadan önce gerçek değere çekilmeli;
+        // önceki değer 1800 (30 dakika) idi.
+        public const int RequestCooldownSeconds = 10;
 
         // Mesajlar bu süre sonunda Firestore TTL politikasıyla silinir.
         private const int MessageLifetimeDays = 7;
@@ -171,6 +173,8 @@ namespace Match3.Backend
         }
 
         // Kendi isteğine gelen canları toplar. Yalnızca istek sahibi çağırabilir.
+        // İsteğin kapanması ve canların eklenmesi tek batch'te yazılır: biri tutup
+        // diğeri düşerse istek kapanmış ama can gelmemiş olurdu.
         public static void ClaimLives(ClanMessage request, Action<int> onDone = null)
         {
             FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
@@ -192,11 +196,20 @@ namespace Match3.Backend
             DocumentReference messageDoc = Messages(user.clanId).Document(request.id);
             DocumentReference userDoc = Db.Collection("users").Document(bootstrap.Uid);
 
-            messageDoc.UpdateAsync("claimed", true).ContinueWithOnMainThread(task =>
+            WriteBatch batch = Db.StartBatch();
+
+            batch.Update(messageDoc, "claimed", true);
+            batch.Update(userDoc, new Dictionary<string, object>
+            {
+                { "lives", newLives },
+                { "livesUpdatedAt", livesUpdatedAt }
+            });
+
+            batch.CommitAsync().ContinueWithOnMainThread(task =>
             {
                 if (task.IsFaulted || task.IsCanceled)
                 {
-                    Debug.LogError("İstek kapatılamadı: " + task.Exception);
+                    Debug.LogError("Canlar toplanamadı: " + task.Exception);
                     onDone?.Invoke(0);
                     return;
                 }
@@ -204,12 +217,6 @@ namespace Match3.Backend
                 user.lives = newLives;
                 user.livesUpdatedAt = livesUpdatedAt;
                 bootstrap.NotifyUserUpdated();
-
-                userDoc.UpdateAsync(new Dictionary<string, object>
-                {
-                    { "lives", newLives },
-                    { "livesUpdatedAt", livesUpdatedAt }
-                });
 
                 onDone?.Invoke(gained);
             });

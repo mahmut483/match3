@@ -32,14 +32,6 @@ namespace Match3.Menu
             FirebaseBootstrap.UserReady -= OnUserReady;
         }
 
-        private void OnDestroy()
-        {
-            if (playButton != null)
-            {
-                playButton.onClick.RemoveListener(Play);
-            }
-        }
-
         private void OnUserReady(UserData user)
         {
             RefreshInteractable();

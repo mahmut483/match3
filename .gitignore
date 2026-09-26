@@ -109,3 +109,11 @@ InitTestScene*.unity*
 # Firebase desktop/editor binaries (GitHub 100MB limit)
 Assets/Firebase/Plugins/x86_64/
 Assets/Firebase/Plugins/x86_64.meta
+
+# macOS
+.DS_Store
+
+# Unity Recorder ciktilari (oyun varligi degil, cok buyuk)
+/Assets/Recordings/
+/Assets/Recordings.meta
+/Recordings/

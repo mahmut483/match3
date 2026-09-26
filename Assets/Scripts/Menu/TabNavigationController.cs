@@ -17,7 +17,6 @@ namespace Match3.Menu
 
             // Aşağıdakiler Start'ta root'un içinden bulunur.
             [System.NonSerialized] public Button button;
-            [System.NonSerialized] public Image background;
             [System.NonSerialized] public RectTransform icon;
             [System.NonSerialized] public CanvasGroup title;
             [System.NonSerialized] public CanvasGroup highlight; // opsiyonel "Highlight" alt objesi
@@ -46,10 +45,9 @@ namespace Match3.Menu
                  "Bar'daki HorizontalLayoutGroup'ta Control Child Size > Width işaretli olmalı.")]
         [SerializeField] private float selectedExtraWidth = 0.6f;
 
-        [Header("Tab Colors")]
+        [Header("Tab Color")]
+        [Tooltip("Tab zeminlerinin sabit rengi. Seçili zemini kayan plaka verir.")]
         [SerializeField] private Color normalColor = new Color(0.55f, 0.05f, 0.18f, 1f);
-
-        [SerializeField] private Color selectedColor = new Color(0.85f, 0.12f, 0.32f, 1f);
 
         private Vector2[] normalIconPositions;
 
@@ -127,8 +125,10 @@ namespace Match3.Menu
 
                 // Alt objeleri ve bileşenleri kendisi bulur — elle sürüklemeye gerek yok.
                 tab.button = tab.root.GetComponent<Button>();
-                tab.background = tab.root.GetComponent<Image>();
                 tab.icon = tab.root.Find("Icon") as RectTransform;
+
+                Image background = tab.root.GetComponent<Image>();
+                if (background != null) background.color = normalColor;
 
                 Transform titleTransform = tab.root.Find("Title");
                 tab.title = titleTransform != null ? titleTransform.GetComponent<CanvasGroup>() : null;
@@ -176,22 +176,6 @@ namespace Match3.Menu
             UpdateTabs(scrollRect.horizontalNormalizedPosition);
         }
 
-        private void OnDestroy()
-        {
-            if (scrollRect != null)
-            {
-                scrollRect.onValueChanged.RemoveListener(OnScroll);
-            }
-
-            if (tabs != null)
-            {
-                for (int i = 0; i < tabs.Length; i++)
-                {
-                    if (tabs[i].button != null) tabs[i].button.onClick.RemoveAllListeners();
-                }
-            }
-        }
-
         // Tab'ın açtığı sayfanın Content içindeki sırası. Sayfa atanmamışsa -1.
         private static int PageIndexOf(Tab tab)
         {
@@ -219,18 +203,6 @@ namespace Match3.Menu
             if (tabs == null || tabs.Length == 0) return;
 
             normalizedPosition = Mathf.Clamp01(normalizedPosition);
-
-            if (pageCount <= 1)
-            {
-                for (int i = 0; i < tabs.Length; i++)
-                {
-                    SetTabSelection(i, PageIndexOf(tabs[i]) == 0 ? 1f : 0f);
-                }
-
-                RebuildAndUpdateIndicator(0f);
-
-                return;
-            }
 
             // Scroll'un 0-1 değerini sayfa numarasına çevir.
             // Bölen SAYFA sayısıdır — PageSnap de aynı hesabı kullanır.
@@ -287,15 +259,6 @@ namespace Match3.Menu
                 // Layout group boş alanı flexibleWidth oranında paylaştırır:
                 // seçili tab daha büyük pay alır, toplam genişlik hep bar'a tam oturur.
                 tab.layout.flexibleWidth = 1f + selectedExtraWidth * selection;
-            }
-
-            if (tab.background != null)
-            {
-                // Kayan plaka seçili zemini verdiği için tab zeminleri sabit kalır.
-                // Plaka atanmamış eski sahnelerde önceki renk geçişi çalışmaya devam eder.
-                tab.background.color = selectionIndicator != null
-                    ? normalColor
-                    : Color.Lerp(normalColor, selectedColor, selection);
             }
         }
 

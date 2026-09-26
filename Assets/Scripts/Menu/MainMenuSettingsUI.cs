@@ -9,14 +9,11 @@ namespace Match3.Menu
 {
     public class MainMenuSettingsUI : MonoBehaviour
     {
+        // Sprite'ı değişen görsel butonun Target Graphic'idir.
         [Serializable]
         private class AudioToggleView
         {
             public Button button;
-
-            [Tooltip("Boş bırakılırsa butonun Target Graphic görseli kullanılır.")]
-            public Image image;
-
             public Sprite onSprite;
             public Sprite offSprite;
         }
@@ -33,12 +30,8 @@ namespace Match3.Menu
         [SerializeField] private AudioToggleView music;
         [SerializeField] private AudioToggleView sfx;
 
-        private GameAudioSettings settings;
-
         private void Awake()
         {
-            settings = GameAudioSettings.Shared;
-
             if (settingsOpenButton != null) settingsOpenButton.onClick.AddListener(OpenSettings);
             if (settingsCloseButton != null) settingsCloseButton.onClick.AddListener(CloseSettings);
             if (quitButton != null) quitButton.onClick.AddListener(QuitGame);
@@ -49,15 +42,6 @@ namespace Match3.Menu
             ApplyAndRefresh(GameAudioChannel.Sfx, sfx);
 
             if (settingsPanel != null) settingsPanel.SetActive(false);
-        }
-
-        private void OnDestroy()
-        {
-            if (settingsOpenButton != null) settingsOpenButton.onClick.RemoveListener(OpenSettings);
-            if (settingsCloseButton != null) settingsCloseButton.onClick.RemoveListener(CloseSettings);
-            if (quitButton != null) quitButton.onClick.RemoveListener(QuitGame);
-            if (music.button != null) music.button.onClick.RemoveListener(ToggleMusic);
-            if (sfx.button != null) sfx.button.onClick.RemoveListener(ToggleSfx);
         }
 
         private void OpenSettings()
@@ -75,25 +59,25 @@ namespace Match3.Menu
 
         private void ToggleMusic()
         {
-            settings.Toggle(GameAudioChannel.Music);
+            GameAudioSettings.Toggle(GameAudioChannel.Music);
             ApplyAndRefresh(GameAudioChannel.Music, music);
         }
 
         private void ToggleSfx()
         {
-            settings.Toggle(GameAudioChannel.Sfx);
+            GameAudioSettings.Toggle(GameAudioChannel.Sfx);
             ApplyAndRefresh(GameAudioChannel.Sfx, sfx);
         }
 
         private void ApplyAndRefresh(GameAudioChannel channel, AudioToggleView view)
         {
-            bool isEnabled = settings.IsEnabled(channel);
+            bool isEnabled = GameAudioSettings.IsEnabled(channel);
 
             if (mixer != null)
             {
                 mixer.SetFloat(
                     GameAudioSettings.GetMixerParameter(channel),
-                    settings.GetVolumeDb(channel));
+                    GameAudioSettings.GetVolumeDb(channel));
             }
 
             if (channel == GameAudioChannel.Music)
@@ -101,9 +85,7 @@ namespace Match3.Menu
                 ApplyMusicPlayback(isEnabled);
             }
 
-            Image image = view.image != null
-                ? view.image
-                : (view.button != null ? view.button.targetGraphic as Image : null);
+            Image image = view.button != null ? view.button.targetGraphic as Image : null;
 
             if (image == null) return;
 

@@ -27,13 +27,6 @@ namespace Match3.Menu
             createButton.onClick.AddListener(CreatePage);
         }
 
-        void OnDestroy()
-        {
-            joinButton.onClick.RemoveListener(JoinPage);
-            searchButton.onClick.RemoveListener(SearchPage);
-            createButton.onClick.RemoveListener(CreatePage);
-        }
-
         // Clan sayfası her açıldığında Join sekmesine döner.
         void OnEnable()
         {

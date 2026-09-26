@@ -150,7 +150,7 @@ namespace Match3.Backend
                 return;
             }
 
-            if (CreateCost > 0 && user.gold < CreateCost)
+            if (user.gold < CreateCost)
             {
                 onDone?.Invoke(false, "Not enough gold.");
                 return;
@@ -177,16 +177,11 @@ namespace Match3.Backend
 
                 transaction.Set(nameDoc, new Dictionary<string, object> { { "clanId", clanDoc.Id } });
                 transaction.Set(clanDoc, clan);
-
-                Dictionary<string, object> userFields = new Dictionary<string, object>
+                transaction.Update(userDoc, new Dictionary<string, object>
                 {
-                    { "clanId", clanDoc.Id }
-                };
-
-                // Ücret varsa altını da düş.
-                if (CreateCost > 0) userFields["gold"] = newGold;
-
-                transaction.Update(userDoc, userFields);
+                    { "clanId", clanDoc.Id },
+                    { "gold", newGold }
+                });
             }).ContinueWithOnMainThread(task =>
             {
                 if (task.IsFaulted || task.IsCanceled)
@@ -203,8 +198,7 @@ namespace Match3.Backend
                 // Yerel kopyayı da güncelle.
                 clan.id = clanDoc.Id;
                 user.clanId = clanDoc.Id;
-
-                if (CreateCost > 0) user.gold = newGold;
+                user.gold = newGold;
 
                 // Kuran kişi otomatik olarak clanın üyesi olur.
                 bootstrap.NotifyUserUpdated();
@@ -272,7 +266,15 @@ namespace Match3.Backend
             });
         }
 
-        // Clandan ayrılma. Lider yalnızca son üyeyse ayrılabilir; o durumda clan silinir.
+        // Halef aranırken çekilecek en fazla üye sayısı. Clan kapasitesinin (maxMembers)
+        // üstünde tutulmalı, yoksa liste kesilir ve en güçlü üye gözden kaçabilir.
+        private const int SuccessorQueryLimit = 100;
+
+        // Clandan ayrılma. Lider ayrılırsa yönetim en yüksek seviyeli üyeye geçer;
+        // geride kimse kalmıyorsa clan ve isim rezervasyonu silinir.
+        //
+        // Üye listesi transaction'dan ÖNCE okunur: Firestore transaction'ı yalnızca
+        // tek tek döküman okuyabilir, sorgu çalıştıramaz.
         public static void LeaveClan(Action<bool, string> onDone)
         {
             FirebaseBootstrap bootstrap = FirebaseBootstrap.Instance;
@@ -283,41 +285,124 @@ namespace Match3.Backend
                 return;
             }
 
-            UserData user = bootstrap.User;
             ClanData clan = CurrentClan;
-            bool isLeader = clan.leaderUid == bootstrap.Uid;
 
-            if (isLeader && clan.memberCount > 1)
+            if (clan.leaderUid != bootstrap.Uid)
             {
-                onDone?.Invoke(false, "The leader can't leave while others are in the clan.");
+                RunLeave(bootstrap, clan, null, onDone);
                 return;
             }
 
+            LoadMembers(clan.id, SuccessorQueryLimit, members =>
+                RunLeave(bootstrap, clan, ChooseSuccessor(members, bootstrap.Uid), onDone));
+        }
+
+        // Ayrılan liderin yerine geçecek üye: en yüksek bölüm, eşitlikte en yüksek
+        // puan, o da eşitse uid sırası (her cihazda aynı sonucu vermesi için).
+        // Başka üye yoksa null — clan silinecek demektir.
+        private static UserData ChooseSuccessor(List<UserData> members, string leavingUid)
+        {
+            UserData best = null;
+
+            foreach (UserData member in members)
+            {
+                if (member.uid == leavingUid) continue;
+
+                if (best == null || OutranksForLeadership(member, best)) best = member;
+            }
+
+            return best;
+        }
+
+        private static bool OutranksForLeadership(UserData candidate, UserData best)
+        {
+            if (candidate.highestCompletedLevel != best.highestCompletedLevel)
+            {
+                return candidate.highestCompletedLevel > best.highestCompletedLevel;
+            }
+
+            if (candidate.totalScore != best.totalScore) return candidate.totalScore > best.totalScore;
+
+            return string.CompareOrdinal(candidate.uid, best.uid) < 0;
+        }
+
+        // successor null ise ayrılan kişi ya sıradan bir üyedir ya da clanda kalan
+        // son kişidir; hangisi olduğuna liderlik bilgisi karar verir.
+        private static void RunLeave(
+            FirebaseBootstrap bootstrap, ClanData clan, UserData successor, Action<bool, string> onDone)
+        {
+            UserData user = bootstrap.User;
+            bool isLeader = clan.leaderUid == bootstrap.Uid;
+            bool deleteClan = isLeader && successor == null;
+
             DocumentReference clanDoc = Db.Collection("clans").Document(clan.id);
-            DocumentReference nameDoc = Db.Collection("clanNames").Document(clan.nameLower);
             DocumentReference userDoc = Db.Collection("users").Document(bootstrap.Uid);
+            DocumentReference successorDoc = successor != null
+                ? Db.Collection("users").Document(successor.uid)
+                : null;
+
+            // UpdateClan ile aynı gerekçe: rezervasyon olmayabilir, adı boş olabilir.
+            DocumentReference nameDoc = string.IsNullOrEmpty(clan.nameLower)
+                ? null
+                : Db.Collection("clanNames").Document(clan.nameLower);
 
             Db.RunTransactionAsync(async transaction =>
             {
+                // Firestore tüm okumaları yazmalardan ÖNCE ister.
                 DocumentSnapshot snapshot = await transaction.GetSnapshotAsync(clanDoc);
+
+                // Var olmayan rezervasyonu silmek kuralca reddedilir ve clan hiç
+                // silinemez hale gelir; önce gerçekten bu clana ait mi diye bakılır.
+                bool ownsName = false;
+
+                if (deleteClan && nameDoc != null)
+                {
+                    DocumentSnapshot reservation = await transaction.GetSnapshotAsync(nameDoc);
+
+                    ownsName = reservation.Exists
+                        && reservation.TryGetValue("clanId", out string reservedClanId)
+                        && reservedClanId == clan.id;
+                }
+
+                // Liste okunduktan sonra halef de ayrılmış olabilir. Doğrulamadan
+                // yazarsak clan, üyesi olmayan bir lidere kilitlenir: kimse düzenleyemez,
+                // kimse silemez. Böyle bir durumda işlem iptal edilir, oyuncu yeniden dener.
+                if (successorDoc != null)
+                {
+                    DocumentSnapshot successorSnapshot = await transaction.GetSnapshotAsync(successorDoc);
+
+                    bool stillMember = successorSnapshot.Exists
+                        && successorSnapshot.TryGetValue("clanId", out string successorClanId)
+                        && successorClanId == clan.id;
+
+                    if (!stillMember) throw new Exception("SUCCESSOR_GONE");
+                }
 
                 if (snapshot.Exists)
                 {
                     ClanData current = snapshot.ConvertTo<ClanData>();
 
-                    if (isLeader)
+                    if (deleteClan)
                     {
-                        // Son üye ayrılıyor: clan ve isim rezervasyonu silinir.
+                        // Son üye ayrılıyor: clan ve (bize aitse) isim rezervasyonu silinir.
                         transaction.Delete(clanDoc);
-                        transaction.Delete(nameDoc);
+
+                        if (ownsName) transaction.Delete(nameDoc);
                     }
                     else
                     {
-                        transaction.Update(clanDoc, new Dictionary<string, object>
+                        Dictionary<string, object> fields = new Dictionary<string, object>
                         {
                             { "memberCount", Math.Max(0, current.memberCount - 1) },
                             { "totalScore", Math.Max(0, current.totalScore - user.totalScore) }
-                        });
+                        };
+
+                        // Yönetim devri yalnızca lider ayrılırken yazılır. Güvenlik
+                        // kuralları leaderUid'i yalnızca mevcut liderin değiştirmesine
+                        // izin veriyor; bu yazma daha lider kendisiyken yapılıyor.
+                        if (isLeader) fields["leaderUid"] = successor.uid;
+
+                        transaction.Update(clanDoc, fields);
                     }
                 }
 
@@ -326,14 +411,21 @@ namespace Match3.Backend
             {
                 if (task.IsFaulted || task.IsCanceled)
                 {
-                    Debug.LogError("Clandan ayrılınamadı: " + task.Exception);
-                    onDone?.Invoke(false, "Couldn't leave the clan.");
+                    bool successorGone = task.Exception != null &&
+                                         task.Exception.ToString().Contains("SUCCESSOR_GONE");
+
+                    if (!successorGone) Debug.LogError("Clandan ayrılınamadı: " + task.Exception);
+
+                    onDone?.Invoke(false, successorGone
+                        ? "The clan just changed. Try again."
+                        : "Couldn't leave the clan.");
                     return;
                 }
 
                 user.clanId = null;
                 CurrentClan = null;
 
+                bootstrap.NotifyUserUpdated();
                 ClanChanged?.Invoke();
                 onDone?.Invoke(true, "");
             });
@@ -372,8 +464,14 @@ namespace Match3.Backend
             bool nameChanged = oldNameLower != newNameLower;
 
             DocumentReference clanDoc = Db.Collection("clans").Document(CurrentClan.id);
-            DocumentReference oldNameDoc = Db.Collection("clanNames").Document(oldNameLower);
             DocumentReference newNameDoc = Db.Collection("clanNames").Document(newNameLower);
+
+            // Eski rezervasyon hiç olmayabilir: clanNames kuralları eklenmeden önce
+            // kurulmuş bir clan, konsoldan elle düzenleme ya da yarıda kalmış bir
+            // kurulum. Adı boşsa döküman referansı bile oluşturulamaz.
+            DocumentReference oldNameDoc = string.IsNullOrEmpty(oldNameLower)
+                ? null
+                : Db.Collection("clanNames").Document(oldNameLower);
 
             Db.RunTransactionAsync(async transaction =>
             {
@@ -383,8 +481,25 @@ namespace Match3.Backend
 
                     if (taken.Exists) throw new Exception("NAME_TAKEN");
 
+                    // Var olmayan dökümanı silmeye kalkmak TÜM işlemi düşürür: silme
+                    // kuralı resource.data.clanId'yi okuyor, döküman yoksa resource null
+                    // olduğu için kural hata verip reddediyor ve transaction
+                    // "Missing or insufficient permissions" ile geri dönüyor.
+                    // Rezervasyon başka bir clana aitse de dokunulmaz; o bizim değil.
+                    bool ownsOldName = false;
+
+                    if (oldNameDoc != null)
+                    {
+                        DocumentSnapshot oldReservation = await transaction.GetSnapshotAsync(oldNameDoc);
+
+                        ownsOldName = oldReservation.Exists
+                            && oldReservation.TryGetValue("clanId", out string reservedClanId)
+                            && reservedClanId == CurrentClan.id;
+                    }
+
                     transaction.Set(newNameDoc, new Dictionary<string, object> { { "clanId", CurrentClan.id } });
-                    transaction.Delete(oldNameDoc);
+
+                    if (ownsOldName) transaction.Delete(oldNameDoc);
                 }
 
                 transaction.Update(clanDoc, new Dictionary<string, object>

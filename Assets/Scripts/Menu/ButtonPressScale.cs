@@ -1,11 +1,10 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace Match3.Menu
 {
-    // Butona basılınca üzerindeki yazıyı küçültür, bırakınca eski boyutuna döndürür.
-    // Butonun kendisine eklenir; yazı atanmazsa alt objelerden otomatik bulunur.
+    // Butona basılınca hedefi küçültür, bırakınca eski boyutuna döndürür.
+    // Butonun kendisine eklenir; hedef boşsa butonun kendisi küçülür.
     public class ButtonPressScale : MonoBehaviour,
         IPointerDownHandler,
         IPointerUpHandler
@@ -18,27 +17,18 @@ namespace Match3.Menu
 
         private void Awake()
         {
-            if (target == null)
-            {
-                TMP_Text label = GetComponentInChildren<TMP_Text>(true);
+            if (target == null) target = (RectTransform)transform;
 
-                if (label != null) target = label.rectTransform;
-            }
-
-            if (target != null) normalScale = target.localScale;
+            normalScale = target.localScale;
         }
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (target == null) return;
-
             target.localScale = normalScale * pressedScale;
         }
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            if (target == null) return;
-
             target.localScale = normalScale;
         }
     }

@@ -66,15 +66,6 @@ namespace Match3.Menu
             StopCooldown();
         }
 
-        private void OnDestroy()
-        {
-            StopListening();
-
-            if (writeButton != null) writeButton.onClick.RemoveAllListeners();
-            if (requestButton != null) requestButton.onClick.RemoveAllListeners();
-            if (editorInput != null) editorInput.onSubmit.RemoveAllListeners();
-        }
-
         #region Yazma
 
         // Cihazda sistem klavyesini açar. Editörde klavye desteklenmediği için

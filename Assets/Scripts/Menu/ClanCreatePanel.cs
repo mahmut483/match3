@@ -41,12 +41,6 @@ namespace Match3.Menu
             ApplyEmblem();
         }
 
-        private void OnDestroy()
-        {
-            if (createButton != null) createButton.onClick.RemoveListener(Create);
-            if (emblemButton != null) emblemButton.onClick.RemoveListener(NextEmblem);
-        }
-
         private void NextEmblem()
         {
             if (emblemCatalog == null || emblemCatalog.Count == 0) return;

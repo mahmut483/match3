@@ -7,6 +7,10 @@ using Match3.Backend;
 namespace Match3.Menu
 {
     // Clan düzenleme paneli. Mevcut clan ayarlarını yükler, lider kaydedebilir.
+    //
+    // Amblem seçimi ClanCreatePanel ile aynı düzende: yan yana dizilmiş butonlar
+    // yerine tek önizleme ve katalogda ilerleyen bir "Change" butonu. Katalog
+    // büyüdükçe panele buton eklemek gerekmiyor.
     public class ClanEditPanel : MonoBehaviour
     {
         [Header("Alanlar")]
@@ -14,58 +18,55 @@ namespace Match3.Menu
         [SerializeField] private TMP_InputField descriptionInput;
         [SerializeField] private Button saveButton;
 
+        [Tooltip("Kaydetmeden çıkar. Form kilitliyken de çalışır: oyuncu hiçbir " +
+                 "durumda panelde mahsur kalmamalı.")]
+        [SerializeField] private Button closeButton;
+
         [Header("Seçiciler")]
         [SerializeField] private OptionSelector joinTypeSelector;
         [SerializeField] private OptionSelector minLevelSelector;
         [SerializeField] private OptionSelector minCupSelector;
 
         [Header("Amblem")]
-        [SerializeField] private Button[] emblemButtons;   // sıra = emblemIndex
+        [SerializeField] private Image emblemPreview;
+
+        [Tooltip("Amblemi katalogdaki bir sonrakine geçiren buton (Change).")]
+        [SerializeField] private Button emblemButton;
+
         [SerializeField] private AvatarCatalog emblemCatalog;
-        [SerializeField] private float normalScale = 1f;
-        [SerializeField] private float selectedScale = 1.2f;
 
         [Header("Kurallar")]
+        [SerializeField] private int minNameLength = 3;
         [SerializeField] private int maxNameLength = 20;
+        [SerializeField] private int maxDescriptionLength = 80;
 
-        private int selectedEmblem;
+        private int emblemIndex;
 
         private void Awake()
         {
             if (saveButton != null) saveButton.onClick.AddListener(Save);
+            if (closeButton != null) closeButton.onClick.AddListener(Close);
+            if (emblemButton != null) emblemButton.onClick.AddListener(NextEmblem);
+
             if (nameInput != null) nameInput.characterLimit = maxNameLength;
-
-            for (int i = 0; i < emblemButtons.Length; i++)
-            {
-                int index = i;
-
-                if (emblemButtons[i] == null) continue;
-
-                emblemButtons[i].onClick.AddListener(() => SelectEmblem(index));
-
-                // Görselleri katalogdan al — sıra kaymasını engeller.
-                if (emblemCatalog != null && emblemButtons[i].image != null)
-                {
-                    Sprite sprite = emblemCatalog.Get(index);
-
-                    if (sprite != null) emblemButtons[i].image.sprite = sprite;
-                }
-            }
+            if (descriptionInput != null) descriptionInput.characterLimit = maxDescriptionLength;
         }
 
-        private void OnDestroy()
+        // Kaydetmeden çıkış. Formdaki değişiklikler bilerek geri alınmıyor: panel her
+        // açılışta clanın güncel verisiyle baştan dolduruluyor, yani yarım kalan
+        // düzenleme kendiliğinden kayboluyor.
+        private void Close()
         {
-            if (saveButton != null) saveButton.onClick.RemoveListener(Save);
-
-            foreach (Button button in emblemButtons)
-            {
-                if (button != null) button.onClick.RemoveAllListeners();
-            }
+            gameObject.SetActive(false);
         }
 
         // Panel açıldığında mevcut clan ayarları yüklenir.
         private void OnEnable()
         {
+            // Veri gelene kadar kaydetme kapalı: boş formun üstüne basılıp clanın
+            // adı silinmesin.
+            SetEditable(false);
+
             if (ClanService.CurrentClan != null)
             {
                 Fill(ClanService.CurrentClan);
@@ -89,50 +90,88 @@ namespace Match3.Menu
 
             SelectEmblem(clan.emblemIndex);
 
-            // Lider değilse kaydetme kapalı — kurallar zaten reddeder, kullanıcıyı boşuna uğraştırma.
+            // Lider değilse form kapalı — kurallar zaten reddeder, kullanıcıyı
+            // boşuna uğraştırma.
             bool isLeader = FirebaseBootstrap.Instance != null &&
                             clan.leaderUid == FirebaseBootstrap.Instance.Uid;
 
-            if (saveButton != null) saveButton.interactable = isLeader;
+            SetEditable(isLeader);
+        }
+
+        // Kaydetme sırasında ve lider olmayan üyede tüm form aynı anda kilitlenir.
+        private void SetEditable(bool editable)
+        {
+            if (saveButton != null) saveButton.interactable = editable;
+            if (emblemButton != null) emblemButton.interactable = editable;
+            if (nameInput != null) nameInput.interactable = editable;
+            if (descriptionInput != null) descriptionInput.interactable = editable;
+        }
+
+        private void NextEmblem()
+        {
+            if (emblemCatalog == null || emblemCatalog.Count == 0) return;
+
+            SelectEmblem((emblemIndex + 1) % emblemCatalog.Count);
         }
 
         private void SelectEmblem(int index)
         {
-            if (emblemButtons.Length == 0) return;
-
-            selectedEmblem = Mathf.Clamp(index, 0, emblemButtons.Length - 1);
-
-            for (int i = 0; i < emblemButtons.Length; i++)
+            if (emblemCatalog == null || emblemCatalog.Count == 0)
             {
-                if (emblemButtons[i] == null) continue;
-
-                emblemButtons[i].transform.localScale =
-                    Vector3.one * (i == selectedEmblem ? selectedScale : normalScale);
+                emblemIndex = 0;
+                return;
             }
+
+            // Katalogdan avatar silinmiş olabilir; kayıtlı index aralığa çekilir.
+            emblemIndex = Mathf.Clamp(index, 0, emblemCatalog.Count - 1);
+
+            if (emblemPreview == null) return;
+
+            Sprite sprite = emblemCatalog.Get(emblemIndex);
+
+            if (sprite != null) emblemPreview.sprite = sprite;
         }
 
         private void Save()
         {
-            saveButton.interactable = false;
+            string clanName = nameInput != null ? nameInput.text.Trim() : "";
+
+            // Sunucuya gitmeden önce elenebilecek hata için istek atma.
+            if (clanName.Length < minNameLength)
+            {
+                Debug.LogWarning($"Clan adı en az {minNameLength} karakter olmalı.");
+                return;
+            }
+
+            SetEditable(false);
 
             ClanService.UpdateClan(
-                nameInput != null ? nameInput.text : "",
-                descriptionInput != null ? descriptionInput.text : "",
-                selectedEmblem,
+                clanName,
+                descriptionInput != null ? descriptionInput.text.Trim() : "",
+                emblemIndex,
                 joinTypeSelector != null ? joinTypeSelector.SelectedValue : 0,
                 minLevelSelector != null ? minLevelSelector.SelectedValue : 0,
                 minCupSelector != null ? minCupSelector.SelectedValue : 0,
                 (success, message) =>
                 {
-                    saveButton.interactable = true;
+                    // Yazma sürerken oyuncu paneli kapatmış olabilir. Kapalı panele
+                    // dokunursak, panel yeniden açıldığında Fill'in kurduğu kilit
+                    // durumunu bozarız.
+                    if (!isActiveAndEnabled)
+                    {
+                        if (!success) Debug.LogWarning("Clan güncellenemedi: " + message);
+                        return;
+                    }
 
                     if (!success)
                     {
+                        // Form açık kalır: oyuncu ismi düzeltip tekrar denesin.
+                        SetEditable(true);
                         Debug.LogWarning("Clan güncellenemedi: " + message);
                         return;
                     }
 
-                    gameObject.SetActive(false);
+                    Close();
                 });
         }
     }

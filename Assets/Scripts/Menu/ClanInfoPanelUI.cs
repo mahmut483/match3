@@ -45,13 +45,6 @@ namespace Match3.Menu
             if (closeButton != null) closeButton.onClick.AddListener(Close);
         }
 
-        private void OnDestroy()
-        {
-            if (editButton != null) editButton.onClick.RemoveListener(OpenEdit);
-            if (leaveButton != null) leaveButton.onClick.RemoveListener(Leave);
-            if (closeButton != null) closeButton.onClick.RemoveListener(Close);
-        }
-
         private void OnEnable()
         {
             ClanService.ClanChanged += Refresh;

@@ -286,7 +286,6 @@ GameObject:
   - component: {fileID: 2486217573621297170}
   - component: {fileID: 3029867622919226755}
   - component: {fileID: 8081617029019288232}
-  - component: {fileID: 7579978367956491346}
   m_Layer: 5
   m_Name: PP
   m_TagString: Untagged
@@ -394,32 +393,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3029867622919226755}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
---- !u!114 &7579978367956491346
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2802994963749254665}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3c1f878a000140fc96048aacf4e1e6a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AvatarImage
-  catalog: {fileID: 11400000, guid: 0703d37da45a44974a1ff85bb879e6cd, type: 2}
+      m_Calls: []
 --- !u!1 &3138380391517135161
 GameObject:
   m_ObjectHideFlags: 0
@@ -654,6 +628,8 @@ MonoBehaviour:
   rankText: {fileID: 7383087310252551165}
   nameText: {fileID: 6680542129777157671}
   levelText: {fileID: 4215244036074984363}
+  avatarImage: {fileID: 3029867622919226755}
+  avatarCatalog: {fileID: 11400000, guid: 0703d37da45a44974a1ff85bb879e6cd, type: 2}
 --- !u!1 &7530744646854299762
 GameObject:
   m_ObjectHideFlags: 0
